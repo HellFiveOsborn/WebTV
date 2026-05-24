@@ -1,168 +1,145 @@
 # WebTV
 
-Sistema de streaming de TV multiplataforma com frontend React e app Android nativo em Kotlin.
+Sistema de streaming de TV com frontend React e app Android nativo em Kotlin.
 
-## Estrutura
+## Estrutura do Projeto
 
 ```
 WebTV/
-├── frontend/          # Aplicação React (Vite + TypeScript + Tailwind CSS)
-├── kotlin-app/        # App Android nativo em Kotlin (WebView + injeção JS)
-├── .github/workflows/ # CI/CD automatizado
-└── AGENTS.md          # Diretrizes de desenvolvimento
+├── frontend/          # Aplicação React com Vite + TypeScript
+├── kotlin-app/        # App Android WebView em Kotlin
+├── scratch/          # Arquivos temporários e testes
+├── docs/             # Documentação
+└── .github/workflows # CI/CD pipelines
 ```
 
 ## Frontend
 
-Aplicação web React com TypeScript, usando Vite para desenvolvimento e Tailwind CSS para estilização.
+Aplicação web React para streaming de TV com interface moderna.
 
-### Desenvolvimento
+### Tecnologias
+
+- React 18 + TypeScript
+- Vite (bundler)
+- Tailwind CSS
+- React Router DOM
+- Deploy automático no GitHub Pages
+
+### Comandos
 
 ```bash
 cd frontend
 
-# Instalar dependências
-npm install
+# Desenvolvimento
+npm run dev          # Inicia servidor em http://localhost:3000/WebTV/
 
-# Servidor de desenvolvimento (http://localhost:3000)
-npm run dev
+# Produção
+npm run build        # Build para dist/
+npm run preview      # Preview do build
 
-# Build de produção
-npm run build
-
-# Preview do build
-npm run preview
+# Qualidade
+npm run lint         # ESLint
+npm run type-check   # TypeScript check
 ```
 
-### Deploy no GitHub Pages
+### Deploy
 
-O frontend está configurado para deploy no GitHub Pages com o caminho base `/WebTV/`.
+- **Desenvolvimento**: `http://localhost:3000/WebTV/`
+- **Produção**: `https://<username>.github.io/WebTV/`
 
-**Deploy automático**: Push para a branch `main` dispara o workflow `.github/workflows/deploy-frontend.yml`.
-
-**Habilitar GitHub Pages**:
-1. Vá para Repo Settings → Pages
-2. Em "Source", selecione **GitHub Actions**
-3. O primeiro push irá construir e publicar automaticamente
-
-### Scripts Importantes
-
-- `npm run dev` - Inicia servidor de desenvolvimento Vite
-- `npm run build` - Compila TypeScript e gera build otimizado
-- `npm run preview` - Preview local do build de produção
-- `npm run lint` - Verificação de código com ESLint
+O deploy é automatizado via GitHub Actions em pushes para `main`.
 
 ## Kotlin App
 
-Aplicativo Android nativo escrito em Kotlin que carrega o frontend em uma WebView e injeta scripts JavaScript.
+Aplicativo Android nativo que carrega o frontend em WebView.
 
-### Desenvolvimento
+### Funcionalidades
+
+- WebView com suporte a múltiplas janelas
+- Injeção de scripts JavaScript
+- Sistema de eventos via JavaScript Interface
+- Splash screen
+- Controle de navegação (back button)
+
+### Build
 
 ```bash
 cd kotlin-app
 
-# Build de debug
+# Debug
 ./gradlew assembleDebug
-
-# Install no dispositivo conectado
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Limpar build
-./gradlew clean
+# Release (requer keystore)
+./gradlew assembleRelease
 ```
 
-### Requisitos
+### Estrutura
 
-- Android SDK (API 24+)
-- JDK 17+
-- Gradle 8.0+
-
-### Permissões
-
-O app requer as seguintes permissões Android:
-- `INTERNET` - Acesso à internet para carregar streams
-- `ACCESS_NETWORK_STATE` - Verificar conectividade
-- `WAKE_LOCK` - Manter tela ativa durante reprodução
-
-### Build de Release com CI/CD
-
-Releases são gerados automaticamente quando uma tag `v*` é criada:
-
-```bash
-# Criar tag de release
-git tag v1.0.0
-git push origin v1.0.0
+```
+kotlin-app/
+├── app/src/main/kotlin/com/webtv/
+│   ├── SplashActivity.kt      # Tela inicial
+│   ├── MainActivity.kt        # WebView principal
+│   ├── ScriptInjector.kt      # Injeção de JS
+│   ├── WebTVBridge.kt         # Interface JS↔Kotlin
+│   └── WebTVLog.kt           # Sistema de logs
+└── app/build.gradle.kts       # Configuração Android
 ```
 
-**Configuração de Secrets no GitHub**:
+## CI/CD
 
-Para builds de release assinados, adicione estes secrets no GitHub:
+### Workflows
 
-- `KEYSTORE_BASE64` - Keystore codificado em base64:
-  ```bash
-  base64 -w 0 keystore/release.jks > keystore.b64
-  # Copie o conteúdo para o secret
-  ```
+1. **deploy-frontend.yml**
+   - Trigger: push para `main` com mudanças em `frontend/`
+   - Build do React e deploy para GitHub Pages
+   - Artefato: site publicado em `https://<username>.github.io/WebTV/`
 
-- `KEYSTORE_PASSWORD` - Senha do keystore
-- `KEY_ALIAS` - Nome do alias do keystore
-- `KEY_PASSWORD` - Senha da chave
+2. **release-kotlin.yml**
+   - Trigger: tags `v*`
+   - Build release do APK assinado
+   - Upload automático para GitHub Releases
 
-O APK assinado será anexado automaticamente ao GitHub Release.
+### Secrets Necessários
 
-## Arquitetura
+Para releases Android, configure no GitHub:
 
-### Comunicação Frontend ↔ Kotlin
-
-A comunicação entre o app Kotlin e o frontend React usa o padrão WebView JavaScript Bridge:
-
-1. **Frontend expõe API**: `window.WebTV` com métodos JavaScript
-2. **Kotlin injeta scripts**: Após `onPageFinished`, o Kotlin injeta os scripts necessários
-3. **Eventos bidirecionais**: Sistema de eventos customizado permite comunicação em ambas direções
-
-### Estrutura de Canais
-
-Os canais são definidos em `frontend/src/data/*.ts` com a seguinte estrutura:
-
-```typescript
-interface Channel {
-  id: string
-  name: string
-  url: string
-  category: string
-  type: 'iframe' | 'redirect' | 'mixed'
-}
+```
+ANDROID_KEYSTORE_BASE64    # Keystore codificado em base64
+ANDROID_KEYSTORE_PASSWORD  # Senha do keystore
+ANDROID_KEY_ALIAS          # Alias da chave
+ANDROID_KEY_PASSWORD       # Senha da chave
 ```
 
-## Contribuindo
+## Configuração
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/HellFiveOsborn/WebTV.git
-   cd WebTV
-   ```
+### Base URL
 
-2. Configure o frontend:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+O frontend usa `base: '/WebTV/'` no `vite.config.ts` para GitHub Pages.
 
-3. Configure o app Android:
-   ```bash
-   cd ../kotlin-app
-   ./gradlew assembleDebug
-   ```
+Para domínio customizado:
+1. Altere `base` em `frontend/vite.config.ts` para `'/'`
+2. Configure CNAME no GitHub Pages
+3. Ajuste `basename` no BrowserRouter se necessário
 
-4. Teste em dispositivo real ou emulador Android
+### Router
+
+O app usa `BrowserRouter` com `basename` configurado para funcionar em subpaths:
+
+```tsx
+<BrowserRouter basename={import.meta.env.BASE_URL}>
+```
+
+## Desenvolvimento Local
+
+1. Clone o repositório
+2. Instale dependências do frontend: `cd frontend && npm install`
+3. Inicie o servidor: `npm run dev`
+4. Abra `http://localhost:3000/WebTV/`
+
+Para Android, use Android Studio ou command-line tools.
 
 ## Licença
 
 ISC
-
-## Links
-
-- **Frontend Live**: https://hellfiveosborn.github.io/WebTV/
-- **Repositório**: https://github.com/HellFiveOsborn/WebTV
-- **Issues**: https://github.com/HellFiveOsborn/WebTV/issues
