@@ -62,6 +62,99 @@ Quando o usuário escrever **"Continue"**, **"Try Again"** ou **"Tente Novamente
 - **`redirect`** → WebView navega para URL externa; scripts são injetados em `onPageFinished` após `channel:clicked` marcar o canal como ativo
 - **`mixed`** → Combina iframe + redirecionamento
 
+## Fluxo de Trabalho Git
+
+### Estrutura do Repositório
+
+Este é um **monorepo** (não usa submodules). Toda a base de código (frontend + Android) vive no mesmo repositório para facilitar sincronização entre mudanças que afetam ambos os lados.
+
+### Critérios de Commit
+
+**Quando fazer commits:**
+- Completar uma feature autocontida (mesmo que pequena)
+- Corrigir um bug específico
+- Aplicar uma refatoração isolada
+- Adicionar/atualizar documentação
+- Após testes passarem e lint/typecheck estiver limpo
+
+**Princípios:**
+- **Commits atômicos**: cada commit deve representar uma mudança coesa e logicamente completa
+- **Escopo reduzido**: não misture mudanças não relacionadas (ex: não combine fix de bug com refactor não relacionado)
+- **Trabalho primeiro, commit depois**: faça commits locais sem push enquanto estiver no meio de uma feature; só commite o trabalho finalizado
+- **Nunca commite mudanças que quebrem build ou testes**
+
+**Não faça commits:**
+- Mudanças temporárias ou experimentais (use `git stash` ou branch separado)
+- Arquivos gerados (build outputs, node_modules, .gradle, etc.)
+- Credenciais, tokens ou informações sensíveis
+
+### Convenções de Commit Message
+
+Use **Conventional Commits** (seguindo o padrão do projeto):
+
+```
+<type>(<scope>): <description>
+```
+
+**Tipos comuns:**
+- `feat`: nova feature
+- `fix`: correção de bug
+- `refactor`: refatoração sem mudança de comportamento
+- `docs`: documentação
+- `chore`: manutenção geral (dependências, configurações, limpezas)
+- `style`: formatação, espaços, ponto-e-vírgula (sem mudança de lógica)
+- `test`: adição ou correção de testes
+
+**Escopos usados neste projeto:**
+- `frontend`: mudanças no app React
+- `kotlin-app`: mudanças no app Android
+- `docs`: documentação
+- `ci`: workflows e pipelines
+
+**Exemplos:**
+```
+feat(kotlin-app): adicionar suporte a múltiplas janelas no WebView
+fix(frontend): corrigir cache de scripts ao recarregar página
+refactor(kotlin-app): extrair lógica de injeção de scripts
+docs: documentar fluxo de versionamento no AGENTS.md
+chore(ci): atualizar workflow de deploy do GitHub Pages
+```
+
+**Regras:**
+- Descrição em português (seguindo o padrão do projeto)
+- Descrição concisa que explain **o que** e **por quê** (não o como)
+- Não coloque ponto final no fim da descrição
+- Use verbos no infinitivo ("adicionar" em vez de "adiciona" ou "adicionei")
+
+### Versionamento (SemVer)
+
+O projeto segue **Semantic Versioning** (`MAJOR.MINOR.PATCH`):
+
+- **MAJOR** (`1.0.0` → `2.0.0`): mudanças incompatíveis na Events API, reestruturação completa que quebra compatibilidade
+- **MINOR** (`1.0.0` → `1.1.0`): novas features compatíveis (novos endpoints de API, novos componentes reutilizáveis, novas funcionalidades que não quebram código existente)
+- **PATCH** (`1.0.0` → `1.0.1`): correções de bug compatíveis, melhorias de performance, atualizações de documentação
+
+**Quando subir de versão:**
+- Após completar uma feature significativa (MINOR)
+- Após corrigir bug crítico que afeta usuários (PATCH)
+- Após mudança breaking na API ou reestruturação (MAJOR)
+- **Nunca** automaticamente — versionamento é decisão consciente
+
+**Onde atualizar a versão:**
+- Frontend: `frontend/package.json` (`version` field)
+- Android: `kotlin-app/app/build.gradle.kts` (`versionName` para SemVer, `versionCode` para inteiro incrementado)
+
+**Fluxo de release Android:**
+```bash
+# Atualizar versão no build.gradle.kts (ou passar via script)
+./kotlin-app/build-webtv.ps1 -Version "1.0.0" --version-code 3
+
+# Gerar APK assinado
+./kotlin-app/build-webtv.ps1 -Version "1.0.0"
+
+# Output: kotlin-app/output/WebTV-v1.0.0-v3-universal.apk
+```
+
 ## Comandos Rápidos
 
 ### Frontend
