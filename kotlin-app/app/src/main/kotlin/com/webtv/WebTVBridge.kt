@@ -161,4 +161,46 @@ class WebTVBridge(private val activity: MainActivity) {
             }
         }
     }
+
+    @JavascriptInterface
+    fun onChannelAlternativeSelected(eventJson: String) {
+        activity.runOnUiThread {
+            try {
+                val event = JSONObject(eventJson)
+                val payload = event.getJSONObject("payload")
+                val channelId = payload.getString("channelId")
+                val channelTitle = payload.getString("channelTitle")
+                val url = payload.getString("url")
+                val type = payload.optString("type", "")
+                WebTVLog.d("Bridge", "Alternative URL selected: $channelTitle -> $url (type: $type)")
+                activity.navigateToAlternativeUrl(channelId, channelTitle, url)
+            } catch (e: Exception) {
+                WebTVLog.e("Bridge", "Error parsing channel:alternative:selected payload", e)
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun onWidgetAction(payload: String) {
+        activity.runOnUiThread {
+            try {
+                val json = JSONObject(payload)
+                val name = json.optString("name", "")
+                val data = json.optJSONObject("payload")
+                WebTVLog.d("Bridge", "Widget action: $name, payload: $data")
+
+                if (name == "channel:alternative:selected" && data != null) {
+                    val channelId = data.optString("channelId", "")
+                    val channelTitle = data.optString("channelTitle", "")
+                    val url = data.optString("url", "")
+                    val type = data.optString("type", "")
+
+                    WebTVLog.d("Bridge", "Alternative URL selected: $channelTitle -> $url (type: $type)")
+                    activity.navigateToAlternativeUrl(channelId, channelTitle, url)
+                }
+            } catch (e: Exception) {
+                WebTVLog.e("Bridge", "Error parsing widget action payload", e)
+            }
+        }
+    }
 }

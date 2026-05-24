@@ -21,7 +21,7 @@ android {
         applicationId = "com.webtv"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
+        versionCode = 3
         versionName = "1.0.0"
 
         ndk {
@@ -73,6 +73,7 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.webkit:webkit:1.9.0")
 }
+
 
 
 

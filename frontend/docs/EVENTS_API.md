@@ -31,31 +31,430 @@ eventBus.on('channel:clicked', (event) => {
 })
 ```
 
-## Eventos Disponíveis
+### Do Script Injetado (Player Control)
 
-### `app:loaded`
-Emitido quando o app carrega completamente.
+O script `script-with-autoplay.js` injetado em páginas de streaming expõe a API do player via `window.WebTV.player`:
 
-**Payload:**
+```javascript
+// Dentro do script injetado na WebView
+window.WebTV.player.play();
+window.WebTV.player.pause();
+window.WebTV.player.seek(120);
+window.WebTV.player.volumeUp(0.1);
+
+// Eventos são emitidos automaticamente via:
+// - CustomEvent (e.g. 'player:play', 'player:volume:changed')
+// - window.postMessage (cross-origin)
+// - window.WebViewBridge.postMessage (Kotlin bridge)
+window.addEventListener('player:play', (e) => {
+  console.log('Player started:', e.detail.payload);
+});
+```
+
+**Comunicação de comandos via postMessage:**
+
+```javascript
+// De um iframe parent para o script injetado
+iframe.contentWindow.postMessage({
+  source: 'webtv:command',
+  method: 'play',        // play | pause | stop | rewind | forward | seek | volumeUp | volumeDown | mute | unmute
+  args: [],              // Argumentos do método (ex: [10] para rewind(10))
+  id: 'cmd-001'          // ID para correlacionar resposta
+}, '*');
+
+// Resposta recebida
+window.addEventListener('message', (e) => {
+  if (e.data.source === 'webtv:response') {
+    console.log('Comando executado:', e.data.method, e.data.result);
+  }
+});
+```
+
+---
+
+## Comandos de Controle do Player
+
+O script injetado (`script-with-autoplay.js`) expõe uma API completa em `window.WebTV.player` para controle do player de vídeo. Comandos podem ser enviados via **chamada direta** ou **postMessage**.
+
+### Métodos Disponíveis
+
+| Método | Argumentos | Descrição | Exemplo |
+|--------|------------|-----------|---------|
+| `play()` | — | Inicia/reinicia a reprodução | `WebTV.player.play()` |
+| `pause()` | — | Pausa a reprodução | `WebTV.player.pause()` |
+| `stop()` | — | Pausa e reinicia para o início (currentTime = 0) | `WebTV.player.stop()` |
+| `rewind(seconds)` | `seconds: number` (default: 10) | Retrocede N segundos | `WebTV.player.rewind(30)` |
+| `forward(seconds)` | `seconds: number` (default: 10) | Avança N segundos | `WebTV.player.forward(15)` |
+| `seek(time)` | `time: number` | Pula para posição específica (segundos) | `WebTV.player.seek(120)` |
+| `volumeUp(step)` | `step: number` (default: 0.1) | Aumenta volume (0.0-1.0) | `WebTV.player.volumeUp(0.2)` |
+| `volumeDown(step)` | `step: number` (default: 0.1) | Diminui volume (0.0-1.0) | `WebTV.player.volumeDown(0.1)` |
+| `mute()` | — | Silencia o áudio | `WebTV.player.mute()` |
+| `unmute()` | — | Reativa o áudio | `WebTV.player.unmute()` |
+| `getStatus()` | — | Retorna estado atual do player | `WebTV.player.getStatus()` |
+
+### Envio de Comandos via postMessage
+
+Para controlar o player remotamente (ex: de um iframe parent ou do app Kotlin):
+
+```javascript
+// Enviar comando
+iframe.contentWindow.postMessage({
+  source: 'webtv:command',
+  method: 'rewind',
+  args: [30],
+  id: 'cmd-123'
+}, '*');
+```
+
+**Estrutura do comando:**
 ```typescript
 {
-  channels: number      // Quantidade total de canais
-  categories: number    // Quantidade de categorias
-  timestamp: number     // Timestamp Unix do carregamento
+  source: 'webtv:command',  // Identificador obrigatório
+  method: string,           // Nome do método da API
+  args: any[],              // Array de argumentos
+  id: string                // ID único para correlacionar resposta
 }
 ```
 
-**Exemplo Kotlin:**
+### Respostas aos Comandos
+
+Todos os comandos retornam uma resposta via postMessage:
+
+```javascript
+{
+  source: 'webtv:response',
+  method: 'rewind',
+  id: 'cmd-123',
+  result: {
+    ok: true,
+    time: 1532.45  // Nova posição do player (quando aplicável)
+  },
+  timestamp: 1234567890
+}
+```
+
+**Estrutura da resposta:**
+```typescript
+{
+  source: 'webtv:response',
+  method: string,           // Método que foi executado
+  id: string,               // ID do comando original
+  result: {
+    ok: boolean,            // Sucesso da operação
+    time?: number,          // Posição atual (para play/pause/seek/rewind/forward)
+    volume?: number,        // Volume atual (para mute/unmute/volumeUp/volumeDown)
+    muted?: boolean,        // Estado de mudo
+    reason?: string         // Motivo do erro (quando ok: false)
+  },
+  timestamp: number
+}
+```
+
+### Exemplos Práticos
+
+**Controlador remoto via postMessage:**
+```javascript
+class PlayerRemote {
+  constructor(iframe) {
+    this.iframe = iframe;
+    this.listeners = new Map();
+    
+    window.addEventListener('message', (e) => {
+      if (e.data.source === 'webtv:response') {
+        const callback = this.listeners.get(e.data.id);
+        if (callback) callback(e.data.result);
+      }
+    });
+  }
+
+  send(method, args = []) {
+    const id = `cmd-${Date.now()}-${Math.random()}`;
+    
+    return new Promise((resolve) => {
+      this.listeners.set(id, resolve);
+      
+      this.iframe.contentWindow.postMessage({
+        source: 'webtv:command',
+        method,
+        args,
+        id
+      }, '*');
+    });
+  }
+
+  play() { return this.send('play'); }
+  pause() { return this.send('pause'); }
+  rewind(seconds) { return this.send('rewind', [seconds]); }
+  forward(seconds) { return this.send('forward', [seconds]); }
+  seek(time) { return this.send('seek', [time]); }
+  volumeUp(step) { return this.send('volumeUp', [step]); }
+  volumeDown(step) { return this.send('volumeDown', [step]); }
+  mute() { return this.send('mute'); }
+  unmute() { return this.send('unmute'); }
+  getStatus() { return this.send('getStatus'); }
+}
+
+// Uso
+const remote = new PlayerRemote(document.getElementById('player-iframe'));
+remote.play().then(result => console.log('Playing:', result));
+```
+
+**Controle via Kotlin WebView:**
 ```kotlin
+// Enviar comando play
 webView.evaluateJavascript("""
-  window.WebTV.events.on('app:loaded', (event) => {
-    const { channels, categories } = event.payload;
-    console.log(`App loaded: ${channels} canais, ${categories} categorias`);
+  window.postEvent('webtv:command', {
+    method: 'play',
+    args: [],
+    id: 'cmd-${System.currentTimeMillis()}'
+  });
+""", null)
+
+// Ouvir respostas
+webView.evaluateJavascript("""
+  window.addEventListener('message', (e) => {
+    if (e.data.source === 'webtv:response') {
+      window.AndroidBridge.onPlayerResponse(JSON.stringify(e.data));
+    }
   });
 """, null)
 ```
 
+### Eventos Emitidos Automaticamente
+
+Cada comando que altera o estado do player emite eventos correspondentes:
+
+| Comando | Evento Disparado | Payload Relevante |
+|---------|------------------|-------------------|
+| `play()` | `player:play` | `{ time: number, source: 'user' }` |
+| `pause()` | `player:pause` | `{ time: number }` |
+| `stop()` | `player:pause` | `{ time: 0 }` |
+| `seek(time)` | `player:seek` | `{ time: number }` |
+| `rewind(seconds)` | `player:seek` | `{ time: number, direction: 'backward' }` |
+| `forward(seconds)` | `player:seek` | `{ time: number, direction: 'forward' }` |
+| `volumeUp(step)` | `player:volume:changed` | `{ volume: number, direction: 'up' }` |
+| `volumeDown(step)` | `player:volume:changed` | `{ volume: number, direction: 'down' }` |
+| `mute()` | `player:mute` | `{}` |
+| `unmute()` | `player:unmute` | `{ volume: number }` |
+
 ---
+
+## Eventos do Player (Script Injetado)
+
+O script `script-with-autoplay.js` emite automaticamente eventos quando o estado do player muda. Estes eventos seguem o mesmo padrão dos eventos principais.
+
+### `player:play`
+Emitido quando a reprodução inicia.
+
+**Payload:**
+```typescript
+{
+  channelId?: string,        // ID do canal (se disponível)
+  time: number,              // Posição atual do player (segundos)
+  source: 'user' | 'auto',  // Origem do comando (usuário ou autoplay)
+  isLive?: boolean,          // Se é canal ao vivo
+  url?: string               // URL da stream (se aplicável)
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:play', (e) => {
+  const { time, source } = e.detail.payload;
+  console.log(`Reprodução iniciada em ${time}s via ${source}`);
+});
+```
+
+---
+
+### `player:pause`
+Emitido quando a reprodução pausa.
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  time: number              // Posição onde pausou (segundos)
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:pause', (e) => {
+  console.log(`Pausado em ${e.detail.payload.time}s`);
+});
+```
+
+---
+
+### `player:ended`
+Emitido quando a reprodução termina ou é interrompida (stop).
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  time: number              // Sempre 0 (stop reinicia para o início)
+}
+```
+
+---
+
+### `player:muted`
+Emitido quando o áudio é silenciado.
+
+**Payload:**
+```typescript
+{
+  channelId?: string
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:muted', (e) => {
+  console.log('Áudio mutado');
+});
+```
+
+---
+
+### `player:unmuted`
+Emitido quando o áudio é reativado.
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  volume: number            // Volume atual (0.0-1.0)
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:unmuted', (e) => {
+  console.log(`Áudio reativado, volume: ${e.detail.payload.volume}`);
+});
+```
+
+---
+
+### `player:volume:changed`
+Emitido quando o volume é alterado.
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  volume: number,           // Novo volume (0.0-1.0)
+  direction: 'up' | 'down'  // Direção da mudança
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:volume:changed', (e) => {
+  const { volume, direction } = e.detail.payload;
+  console.log(`Volume ${direction}: ${Math.round(volume * 100)}%`);
+});
+```
+
+---
+
+### `player:seeked`
+Emitido quando a posição do player muda (seek, rewind, forward).
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  time: number,                    // Nova posição (segundos)
+  direction?: 'forward' | 'backward'  // Direção (para rewind/forward)
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:seeked', (e) => {
+  const { time, direction } = e.detail.payload;
+  console.log(`Pulou para ${time}s${direction ? ` (${direction})` : ''}`);
+});
+```
+
+---
+
+### `player:loaded`
+Emitido quando o script é injetado e o player está pronto.
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  duration?: number,        // Duração do vídeo (se disponível)
+  isLive?: boolean          // Se é canal ao vivo
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:loaded', (e) => {
+  console.log('Player pronto para uso');
+});
+```
+
+---
+
+### `player:audio:unlocked`
+Emitido quando o usuário desbloqueia o áudio (overlay de áudio clicada).
+
+**Payload:**
+```typescript
+{
+  channelId?: string,
+  volume: number            // Volume atual após desbloqueio
+}
+```
+
+**Como ouvir:**
+```javascript
+window.addEventListener('player:audio:unlocked', (e) => {
+  console.log('Áudio desbloqueado pelo usuário');
+});
+```
+
+---
+
+### Estrutura Completa de Evento do Player
+
+Todos os eventos do player seguem esta estrutura:
+
+```typescript
+{
+  source: 'webtv',          // Identificador do sistema
+  name: 'player:evento',    // Nome do evento
+  payload: {                // Dados específicos
+    channelId?: string,
+    // ... campos específicos do evento
+  },
+  timestamp: number         // Timestamp Unix
+}
+```
+
+**Exemplo completo:**
+```javascript
+{
+  source: 'webtv',
+  name: 'player:play',
+  payload: {
+    channelId: 'globo-sp',
+    time: 123.456,
+    source: 'user',
+    isLive: true,
+    url: 'blob:https://...'
+  },
+  timestamp: 1704567890123
+}
+```
 
 ### `app:reloaded`
 Emitido quando o usuário recarrega manualmente.
@@ -258,6 +657,100 @@ Emitido quando a página faz scroll.
   element: 'window' | string
 }
 ```
+
+---
+
+## Widget de Canal (Script Injetado)
+
+O widget (`widget.js`) é um script JavaScript puro injetado pelo app Kotlin em páginas externas de player. Ele cria um iframe transparente no canto inferior direito que renderiza um card expansível com informações do canal e URLs alternativas.
+
+### Fluxo de Injeção
+
+```
+Kotlin (onPageFinished)
+  ├─ Injeta appBridge.js (cria window.WebTV.events shim se ausente)
+  ├─ Injeta eventListenerGuard (registra listeners via WebTV.events.on())
+  ├─ Injeta window.__webtvActiveChannelId
+  ├─ Injeta window.__webtvBaseUrl
+  └─ Injeta widget.js (carregado de assets/scripts/widget.js)
+
+widget.js (auto-executa)
+  ├─ Cria window.WebTV.events shim (se ainda não existir)
+  ├─ Cria <iframe id="__webtv_widget">
+  │    src = baseUrl + "widget/" + channelId
+  ├─ Posiciona fixo bottom:16px right:16px
+  ├─ Escuta postMessage do iframe (source: 'webtv')
+  └─ Encaminha eventos via window.WebTV.events.emit(type, payload)
+
+WidgetPage.tsx (React, dentro do iframe)
+  ├─ fetch('/WebTV/data/channels.json')
+  ├─ Busca canal por ID, resolve categoria
+  ├─ Renderiza botão circular (recolhido)
+  ├─ Suporte D-PAD (ArrowUp/Down/Left/Right/Enter/Escape)
+  └─ Ao expandir: card com info + URLs alternativas
+
+Fluxo completo de evento (ex: channel:alternative:selected):
+  WidgetPage → parent.postMessage({ source:'webtv', type, payload })
+    → widget.js → window.WebTV.events.emit(type, payload)
+      → EventListenerGuard → WebTVBridge.onChannelAlternativeSelected(json)
+        → navigateToAlternativeUrl(channelId, title, url)
+```
+
+### Eventos do Widget
+
+#### `channel:alternative:selected`
+Emitido quando o usuário seleciona uma URL alternativa no card expandido (via click ou D-PAD Enter). Segue o padrão `window.WebTV.events.emit()` como todos os eventos da API.
+
+**Direção:** Widget → listenerGuard → Kotlin
+
+**Type:** `channel:alternative:selected`
+
+**Payload:**
+```typescript
+{
+  channelId: string    // ID do canal atual
+  channelTitle: string // Nome do canal
+  url: string          // Nova URL para navegar
+  type: string         // 'iframe' | 'redirect'
+}
+```
+
+**Escuta (EventListenerGuard):**
+```javascript
+window.WebTV.events.on('channel:alternative:selected', (event) => {
+  WebTVBridge.onChannelAlternativeSelected(JSON.stringify(event));
+});
+```
+
+#### `widget:expanded` / `widget:collapsed`
+Emitidos quando o card do widget expande ou recolhe (via click ou D-PAD).
+
+**Direção:** Widget (informational, sem handler obrigatório)
+
+**Payload:** `{ channelId: string, channelTitle: string }`
+
+#### `widget:resize`
+Emitido pelo iframe React para redimensionar o iframe container quando o card expande/recolhe.
+
+**Direção:** Widget iframe → widget.js (via postMessage)
+
+**Payload:**
+```typescript
+{
+  width: number   // 56 (recolhido) ou 280 (expandido)
+  height: number  // altura calculada automaticamente
+}
+```
+
+### Estrutura de Arquivos
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `frontend/public/widget.js` | Script JS puro servido pelo frontend |
+| `kotlin-app/assets/scripts/widget.js` | Cópia nos assets do app Android |
+| `frontend/src/pages/WidgetPage.tsx` | Página React do widget (rota `/widget/:channelId`) |
+| `WebTVBridge.kt` | Handlers `onChannelAlternativeSelected()` + `onWidgetAction()` |
+| `MainActivity.kt` | `injectEventListenerGuard()` com listener `channel:alternative:selected` + `injectWidgetScript()` + `navigateToAlternativeUrl()` |
 
 ---
 

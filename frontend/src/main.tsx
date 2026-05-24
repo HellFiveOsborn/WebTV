@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import { OwnPage } from './pages/OwnPage'
+import { WidgetPage } from './pages/WidgetPage'
 import { eventBus } from './lib/eventBus'
 import { ScriptManager } from './lib/scriptManager'
 import './index.css'
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/channel/:id" element={<App />} />
+        <Route path="/widget/:channelId" element={<WidgetPage />} />
         <Route path="/own" element={<OwnPage />} />
       </Routes>
     </BrowserRouter>

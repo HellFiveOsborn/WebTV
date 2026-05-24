@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private var activeChannelName: String? = null
     private var closedChannelPayload: String? = null
     private var appBridgeScriptCache: String? = null
+    private var widgetScriptCache: String? = null
     private var pendingMicPermissionRequest: PermissionRequest? = null
 
     private val requestMicPermission = registerForActivityResult(
@@ -155,6 +156,7 @@ class MainActivity : AppCompatActivity() {
                             resetScriptFlags()
                             injectControlScript()
                             injectAppBridgeScript()
+                            injectWidgetScript()
 
                             if (preloadedScriptsPayload != null) {
                                 injectPreloadedScripts()
@@ -473,6 +475,10 @@ class MainActivity : AppCompatActivity() {
                         WebTVBridge.onScriptsPreloaded(JSON.stringify(event.payload));
                     });
 
+                    window.WebTV.events.on('channel:alternative:selected', (event) => {
+                        WebTVBridge.onChannelAlternativeSelected(JSON.stringify(event));
+                    });
+
                     window.__webtvListenersActive = true;
                     WebTVBridge.onListenersReady();
                     console.log('[WebTV] Listeners installed successfully');
@@ -623,6 +629,44 @@ class MainActivity : AppCompatActivity() {
         val script = "javascript:(function() { $appBridgeScriptCache })();"
         webView.evaluateJavascript(script, null)
         WebTVLog.d("WebTV", "AppBridge script injetado")
+    }
+
+    private fun injectWidgetScript() {
+        if (activeChannelId == null) {
+            WebTVLog.d("WebTV", "No active channel, skipping widget injection")
+            return
+        }
+
+        if (widgetScriptCache == null) {
+            try {
+                widgetScriptCache = assets.open("scripts/widget.js").bufferedReader().use { it.readText() }
+                WebTVLog.d("WebTV", "Widget script carregado dos assets")
+            } catch (e: Exception) {
+                WebTVLog.e("WebTV", "Erro ao carregar widget script: ${e.message}")
+                return
+            }
+        }
+
+        val baseUrlScript = """
+            (function() {
+                window.__webtvBaseUrl = '${START_URL}';
+                window.__webtvActiveChannelId = '$activeChannelId';
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(baseUrlScript, null)
+
+        val script = "javascript:(function() { $widgetScriptCache })();"
+        webView.evaluateJavascript(script, null)
+        WebTVLog.d("WebTV", "Widget script injetado para canal: $activeChannelId")
+    }
+
+    fun navigateToAlternativeUrl(channelId: String, channelTitle: String, url: String) {
+        WebTVLog.d("WebTV", "Navegando para URL alternativa: $channelTitle -> $url")
+        activeChannelId = channelId
+        activeChannelName = channelTitle
+        resetScriptFlags()
+        webView.loadUrl(url)
     }
 
     private fun injectChannelCloseEvent(payload: String) {
