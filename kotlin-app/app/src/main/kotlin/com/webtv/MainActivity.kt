@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val FILE_CHOOSER_RESULT_CODE = 1001
-        private const val START_URL = "https://representation-aggregate-auction-patio.trycloudflare.com"
+        private const val START_URL = "https://hellfiveosborn.github.io/WebTV/"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                     val previousUrl = currentPageUrl
                     currentPageUrl = url
 
-                    if ((url.contains(START_URL) || url.contains("trycloudflare.com")) && !url.contains("/channel/")) {
+                    if ((url.contains(START_URL) || url.contains("hellfiveosborn.github.io/WebTV")) && !url.contains("/channel/")) {
                         val pendingClose = closedChannelPayload
                         closedChannelPayload = null
 
@@ -567,7 +567,7 @@ class MainActivity : AppCompatActivity() {
 
     fun isOnHomePage(): Boolean {
         val url = currentPageUrl ?: return true
-        return (url.contains(START_URL) || url.contains("trycloudflare.com")) && !url.contains("/channel/")
+        return (url.contains(START_URL) || url.contains("hellfiveosborn.github.io/WebTV")) && !url.contains("/channel/")
     }
 
     fun setCurrentChannel(channelId: String, channelName: String) {
