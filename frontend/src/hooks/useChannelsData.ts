@@ -4,7 +4,7 @@ import { Script } from '../types/script'
 import { defaultChannelsData } from '../data/defaultChannels'
 import { ScriptManager } from '../lib/scriptManager'
 
-const JSON_URL = '/data/channels.json'
+const JSON_URL = `${import.meta.env.BASE_URL}data/channels.json`
 
 export const useChannelsData = () => {
   const [channels, setChannels] = useState<Channel[]>([])
