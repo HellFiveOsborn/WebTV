@@ -1,0 +1,87 @@
+{
+  "channels": [
+    {
+      "title": "Casa do Patrão 1",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "categoryIds": [
+        "1779514560138"
+      ],
+      "active": true,
+      "id": "1779514821057",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao01",
+          "type": "redirect"
+        },
+        {
+          "url": "https://www.embedtv.lat/acasadopatrao1",
+          "type": "redirect"
+        }
+      ]
+    },
+    {
+      "title": "Casa do Patrão 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "categoryIds": [
+        "1779514560138"
+      ],
+      "active": true,
+      "id": "1779518073295",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao02",
+          "type": "redirect"
+        },
+        {
+          "url": "https://www.embedtv.lat/acasadopatrao2",
+          "type": "redirect"
+        }
+      ]
+    },
+    {
+      "title": "Globo SP",
+      "logoUrl": "https://embedcanaisdetv.com/images/globo.webp",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=globosp",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": [
+        "1779525104846"
+      ],
+      "active": true,
+      "id": "1779525189328"
+    }
+  ],
+  "categories": [
+    {
+      "id": "1779514560138",
+      "name": "Casa do Patrão"
+    },
+    {
+      "id": "1779525104846",
+      "name": "TV Aberto"
+    }
+  ],
+  "scripts": [
+    {
+      "name": "EmbedCanais: Player Control, Remove Promo Banner",
+      "domain": "embedcanaisdetv.xyz",
+      "subdomains": [],
+      "domains": [
+        "embedcanaisdetv.xyz"
+      ],
+      "urls": [
+        "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao01",
+        "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao02",
+        "https://embedcanaisdetv.xyz/e/index.php?canal=globosp"
+      ],
+      "code": "(function(){'use strict';const AD_OVERLAY_SELECTORS=['[class*=\"ad-\"]','[id*=\"ad-\"]','[class*=\"overlay\"]','[class*=\"popup\"]','[class*=\"modal\"]:not(#webtv-audio-overlay)','iframe[src*=\"ad\"]','iframe[src*=\"banner\"]','[onclick*=\"window.open\"]'];function suppressAdOverlays(){const observer=new MutationObserver((mutations)=>{mutations.forEach(m=>{m.addedNodes.forEach(node=>{if(node.nodeType===1){AD_OVERLAY_SELECTORS.forEach(sel=>{try{if(node.matches&&node.matches(sel)&&node.id!=='webtv-audio-overlay'){node.remove();}}catch(e){}});}});});});observer.observe(document.body,{childList:true,subtree:true});setInterval(()=>{AD_OVERLAY_SELECTORS.forEach(sel=>{try{document.querySelectorAll(sel).forEach(el=>{if(el.id!=='webtv-audio-overlay'){el.style.pointerEvents='none';el.style.zIndex='-1';}});}catch(e){}});},1000);console.log('[WebTV] Ad overlay suppression active');}const postEvent=(type,data)=>{if(window.parent&&window.parent!==window){window.parent.postMessage({source:'inject-script',type,timestamp:Date.now(),data:data||{}},'*');}};const VIP_CSS=`\n    #vipModal,\n    #vipModal *,\n    .vip-modal,\n    .vip-modal *,\n    [class*=\"vip-modal\"],\n    .is-vip,\n    #vip-banner,\n    [id*=\"vip-banner\"] {\n      display: none !important;\n      visibility: hidden !important;\n      z-index: -9999 !important;\n      pointer-events: none !important;\n    }\n  `;function injectVipCss(){const id='webtv-vip-block';if(document.getElementById(id))return;const s=document.createElement('style');s.id=id;s.textContent=VIP_CSS;document.head.appendChild(s);}function removeVipElements(){const selectors=['#vipModal','[class*=\"vip-modal\"]','[id*=\"vip\"]','[class*=\"vip\"]','.vip-modal'];for(const sel of selectors){for(const el of document.querySelectorAll(sel)){if(el!==window&&!el.closest('#player')){el.remove();}}}}const _origSetTimeout=window.setTimeout;const _origSetInterval=window.setInterval;const _origClearTimeout=window.clearTimeout;window.setTimeout=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetTimeout.call(window,fn,delay,...args);};window.setInterval=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetInterval.call(window,fn,delay,...args);};if(typeof window.showVipModal==='function'){window.showVipModal=function(){};}Object.defineProperty(window,'showVipModal',{get:()=>function(){},set:()=>{},configurable:false});function requestFs(el){if(!el)return Promise.resolve(false);const fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;if(!fn)return Promise.resolve(false);return fn.call(el).then(()=>true).catch(()=>false);}function exitFs(){const fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;if(!fn)return Promise.resolve(false);return fn.call(document).then(()=>true).catch(()=>false);}const KEY_ENTER=13;const KEY_PLAY_PAUSE=179;const KEY_MEDIA_PLAY=126;const KEY_MEDIA_PAUSE=127;const KEY_UP=38;const KEY_DOWN=40;const KEY_LEFT=37;const KEY_RIGHT=39;const KEY_BACK=10009;const KEY_BACK_KEYCODE=8;const KEY_ESCAPE=27;let videoRef=null;function onKey(e){const code=e.keyCode||e.which;const v=videoRef;if(code===KEY_BACK||code===KEY_BACK_KEYCODE||code===KEY_ESCAPE){e.preventDefault();e.stopPropagation();if(document.fullscreenElement||document.webkitFullscreenElement){exitFs();}postEvent('back',{source:'dpad'});if(window.__webtvActiveChannelId&&window.WebTVBridge&&window.WebTVBridge.onChannelClosed){const payload={channelId:window.__webtvActiveChannelId,channelName:window.__webtvActiveChannelName||'Unknown',timestamp:Date.now()};window.WebTVBridge.onChannelClosed(JSON.stringify(payload));}else{window.history.back();}return;}if(!v)return;switch(code){case KEY_ENTER:case KEY_PLAY_PAUSE:case KEY_MEDIA_PLAY:case KEY_MEDIA_PAUSE:e.preventDefault();if(v.paused)v.play();else v.pause();break;case KEY_UP:e.preventDefault();v.volume=Math.min(1,v.volume + 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_DOWN:e.preventDefault();v.volume=Math.max(0,v.volume - 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_LEFT:e.preventDefault();if(v.duration)v.currentTime=Math.max(0,v.currentTime - 10);postEvent('seek',{currentTime:v.currentTime,direction:'backward'});break;case KEY_RIGHT:e.preventDefault();if(v.duration)v.currentTime=Math.min(v.duration,v.currentTime + 10);postEvent('seek',{currentTime:v.currentTime,direction:'forward'});break;}}document.addEventListener('keydown',onKey,true);function waitVideo(){return new Promise((resolve)=>{const tryFind=()=>{const v=document.querySelector('video[data-html5-video]')||document.querySelector('video');if(v){videoRef=v;resolve(v);}else{setTimeout(tryFind,300);}};tryFind();});}function setupVideo(v){console.log('[WebTV] Player script attached');v.addEventListener('play',()=>{postEvent('play',{currentTime:v.currentTime});const container=document.getElementById('player')||v.parentElement;requestFs(container||v);});v.addEventListener('pause',()=>{postEvent('pause',{currentTime:v.currentTime});});v.addEventListener('volumechange',()=>{postEvent('volume',{value:v.volume,muted:v.muted});});v.addEventListener('ended',()=>{postEvent('ended',{currentTime:v.currentTime});});v.addEventListener('playing',()=>{console.log('[WebTV] Autoplay started (muted:',v.muted,')');});v.addEventListener('error',(e)=>{postEvent('error',{message:e.message||'unknown',code:v.error ? v.error.code:-1});});}async function tryAutoplay(v){try{v.muted=true;v.playsInline=true;await v.play();return true;}catch(e){try{v.muted=false;await v.play();return true;}catch(e2){console.log('[WebTV] Autoplay failed:',e2.message);return false;}}}function initVipBlock(){injectVipCss();removeVipElements();const obs=new MutationObserver(()=>removeVipElements());obs.observe(document.body,{childList:true,subtree:true});setInterval(removeVipElements,2000);setInterval(()=>{injectVipCss();},500);console.log('[WebTV] VIP blocker active');}function createAudioUnlockOverlay(){if(document.getElementById('webtv-audio-overlay'))return;const overlay=document.createElement('div');overlay.id='webtv-audio-overlay';overlay.style.cssText=`\n      position: fixed;\n      top: 0;\n      left: 0;\n      right: 0;\n      bottom: 0;\n      z-index: 2147483647;\n      background: rgba(0, 0, 0, 0.85);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      cursor: pointer;\n    `;const icon=document.createElement('div');icon.innerHTML=`\n      <svg width=\"120\" height=\"120\" viewBox=\"0 0 24 24\" fill=\"none\">\n        <path d=\"M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.17v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z\" fill=\"white\"/>\n      </svg>\n    `;overlay.appendChild(icon);document.body.appendChild(overlay);const unlock=()=>{const videos=document.querySelectorAll('video');videos.forEach(v=>{v.muted=false;v.play().catch(e=>console.log('[WebTV] Unmute failed:',e));});overlay.remove();console.log('[WebTV] Audio unlocked');};overlay.addEventListener('click',unlock,{once:true});overlay.addEventListener('touchstart',unlock,{once:true});console.log('[WebTV] Audio unlock overlay created');}suppressAdOverlays();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>initVipBlock());}else{initVipBlock();}waitVideo().then(async(v)=>{setupVideo(v);const started=await tryAutoplay(v);if(started){const container=document.getElementById('player')||v.parentElement;requestFs(container||v);if(v.muted){createAudioUnlockOverlay();}}});console.log('[WebTV] DPAD listener attached');})();",
+      "enabled": true,
+      "id": "webtv-player-1779567691954",
+      "createdAt": 1779567691954,
+      "updatedAt": 1779589544042
+    }
+  ]
+}
