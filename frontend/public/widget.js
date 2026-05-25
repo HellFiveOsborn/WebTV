@@ -94,6 +94,7 @@
   iframe.src = baseUrl + 'widget/' + channelId;
   iframe.allowTransparency = 'true';
   iframe.scrolling = 'no';
+  iframe.tabIndex = -1;
   iframe.style.cssText = [
     'position:fixed',
     'bottom:16px',
@@ -146,6 +147,10 @@
 
       events.emit(type, payload);
       console.log('[WebTV Widget] Emitted event:', type, payload);
+
+      if (type === 'widget:expanded') {
+        setTimeout(function() { iframe.focus(); iframe.contentWindow.focus(); }, 100);
+      }
     }
   });
 
@@ -168,6 +173,17 @@
   events.emit('widget:injected', {
     channelId: channelId,
     baseUrl: baseUrl
+  });
+
+  events.on('channel:close', function(event) {
+    console.log('[WebTV Widget] Channel closed, collapsing widget');
+    iframe.style.width = '56px';
+    iframe.style.height = '56px';
+    iframe.contentWindow.postMessage({ 
+      source: 'webtv', 
+      name: 'channel:close', 
+      payload: event.payload 
+    }, '*');
   });
 
   console.log('[WebTV Widget] Ready, events available at window.WebTV.events');

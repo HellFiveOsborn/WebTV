@@ -61,6 +61,19 @@ export const WidgetPage = () => {
       .finally(() => setLoading(false))
   }, [channelId])
 
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.source === 'webtv' && e.data?.name === 'channel:close') {
+        setExpanded(false)
+        setFocusedIndex(0)
+        setActiveZone('widgetToggle')
+        emitResize(56, 56)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
   useLayoutEffect(() => {
     if (expanded && cardRef.current) {
       const h = cardRef.current.getBoundingClientRect().height
@@ -71,9 +84,9 @@ export const WidgetPage = () => {
   }, [expanded, channel])
 
   const handleAlternativeClick = useCallback((url: string, type: string) => {
-    emitWidgetEvent('channel:alternative:selected', {
+    emitWidgetEvent('player:opened', {
       channelId: channel?.id ?? '',
-      channelTitle: channel?.title ?? '',
+      channelName: channel?.title ?? '',
       url,
       type
     })
@@ -105,6 +118,7 @@ export const WidgetPage = () => {
           setExpanded(true)
           setActiveZone('widgetHeader')
           setFocusedIndex(0)
+          window.focus()
           emitWidgetEvent('widget:expanded', {
             channelId: channel?.id ?? '',
             channelTitle: channel?.title ?? ''

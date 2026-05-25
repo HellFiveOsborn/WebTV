@@ -94,6 +94,7 @@
   iframe.src = baseUrl + 'widget/' + channelId;
   iframe.allowTransparency = 'true';
   iframe.scrolling = 'no';
+  iframe.tabIndex = -1;
   iframe.style.cssText = [
     'position:fixed',
     'bottom:16px',
@@ -146,6 +147,10 @@
 
       events.emit(type, payload);
       console.log('[WebTV Widget] Emitted event:', type, payload);
+
+      if (type === 'widget:expanded') {
+        setTimeout(function() { iframe.focus(); iframe.contentWindow.focus(); }, 100);
+      }
     }
   });
 

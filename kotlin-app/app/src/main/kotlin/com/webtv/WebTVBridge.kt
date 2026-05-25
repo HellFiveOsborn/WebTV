@@ -58,7 +58,7 @@ class WebTVBridge(private val activity: MainActivity) {
                 val channelName = json.getString("channelName")
                 val url = json.getString("url")
                 WebTVLog.d("Bridge", "Player opened: $channelName - $url")
-                activity.injectScriptsForChannel(channelId, url)
+                activity.navigateToAlternativeUrl(channelId, channelName, url)
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing player:opened payload", e)
             }
