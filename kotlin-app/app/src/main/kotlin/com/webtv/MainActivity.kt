@@ -479,6 +479,10 @@ class MainActivity : AppCompatActivity() {
                         WebTVBridge.onChannelAlternativeSelected(JSON.stringify(event));
                     });
 
+                    window.WebTV.events.on('widget:channel:change', (event) => {
+                        WebTVBridge.onWidgetChannelChange(JSON.stringify(event));
+                    });
+
                     window.__webtvListenersActive = true;
                     WebTVBridge.onListenersReady();
                     console.log('[WebTV] Listeners installed successfully');

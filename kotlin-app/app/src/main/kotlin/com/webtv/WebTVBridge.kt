@@ -58,7 +58,7 @@ class WebTVBridge(private val activity: MainActivity) {
                 val channelName = json.getString("channelName")
                 val url = json.getString("url")
                 WebTVLog.d("Bridge", "Player opened: $channelName - $url")
-                activity.navigateToAlternativeUrl(channelId, channelName, url)
+                activity.injectScriptsForChannel(channelId, url)
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing player:opened payload", e)
             }
@@ -176,6 +176,23 @@ class WebTVBridge(private val activity: MainActivity) {
                 activity.navigateToAlternativeUrl(channelId, channelTitle, url)
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing channel:alternative:selected payload", e)
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun onWidgetChannelChange(eventJson: String) {
+        activity.runOnUiThread {
+            try {
+                val event = JSONObject(eventJson)
+                val payload = event.getJSONObject("payload")
+                val channelId = payload.getString("channelId")
+                val channelName = payload.getString("channelName")
+                val url = payload.getString("url")
+                WebTVLog.d("Bridge", "Widget channel change: $channelName -> $url")
+                activity.navigateToAlternativeUrl(channelId, channelName, url)
+            } catch (e: Exception) {
+                WebTVLog.e("Bridge", "Error parsing widget:channel:change payload", e)
             }
         }
     }

@@ -84,7 +84,7 @@ export const WidgetPage = () => {
   }, [expanded, channel])
 
   const handleAlternativeClick = useCallback((url: string, type: string) => {
-    emitWidgetEvent('player:opened', {
+    emitWidgetEvent('widget:channel:change', {
       channelId: channel?.id ?? '',
       channelName: channel?.title ?? '',
       url,
