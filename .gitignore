@@ -1,0 +1,9 @@
+# Workspace temp
+scratch/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.playwright-mcp/
