@@ -90,6 +90,10 @@ export interface ChannelClosedPayload {
   timestamp: number
 }
 
+export interface NavigatedHomePayload {
+  timestamp: number
+}
+
 export interface EventHandlers {
   'app:loaded': AppLoadedPayload
   'app:reloaded': AppReloadedPayload
@@ -105,6 +109,7 @@ export interface EventHandlers {
   'scroll:moved': ScrollMovedPayload
   'script:retrieved': ScriptRetrievedPayload
   'scripts:preloaded': ScriptsPreloadedPayload
+  'navigated:home': NavigatedHomePayload
 }
 
 export type EventType = keyof EventHandlers

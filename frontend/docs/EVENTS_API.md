@@ -93,6 +93,29 @@ webView.evaluateJavascript("""
 
 ---
 
+### `navigated:home`
+Emitido quando o frontend retorna à página inicial (grade de canais), permitindo
+que o app Kotlin resete o estado de injeção de scripts sem depender de verificação
+de URL.
+
+**Payload:**
+```typescript
+{
+  timestamp: number     // Timestamp Unix da navegação
+}
+```
+
+**Exemplo Kotlin:**
+```kotlin
+webView.evaluateJavascript("""
+  window.WebTV.events.on('navigated:home', (event) => {
+    console.log('Returned to home grid:', event.payload.timestamp);
+  });
+""", null)
+```
+
+---
+
 ### `channel:close`
 Emitido quando um canal externo (tipo `redirect` ou `mixed`) é fechado pelo
 usuário (tecla BACK, botão, ou chamada programática).

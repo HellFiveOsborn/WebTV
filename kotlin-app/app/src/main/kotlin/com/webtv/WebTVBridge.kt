@@ -13,9 +13,6 @@ class WebTVBridge(private val activity: MainActivity) {
                 val channels = json.optInt("channels", 0)
                 val categories = json.optInt("categories", 0)
                 WebTVLog.d("Bridge", "App loaded: $channels channels, $categories categories")
-                if (activity.isOnHomePage()) {
-                    activity.clearInjectedScriptsCache()
-                }
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing app:loaded payload", e)
             }
@@ -105,6 +102,14 @@ class WebTVBridge(private val activity: MainActivity) {
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing script:retrieved payload", e)
             }
+        }
+    }
+
+    @JavascriptInterface
+    fun onNavigatedHome(payload: String) {
+        activity.runOnUiThread {
+            WebTVLog.d("Bridge", "Navigated to home")
+            activity.handleNavigatedHome()
         }
     }
 

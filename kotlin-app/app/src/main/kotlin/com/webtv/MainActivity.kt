@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val FILE_CHOOSER_RESULT_CODE = 1001
-        private const val START_URL = "https://hellfiveosborn.github.io/WebTV/"
+        private const val START_URL = "https://administrative-today-fix-seen.trycloudflare.com"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -131,34 +131,18 @@ class MainActivity : AppCompatActivity() {
                     val previousUrl = currentPageUrl
                     currentPageUrl = url
 
-                    if ((url.contains(START_URL) || url.contains("hellfiveosborn.github.io/WebTV")) && !url.contains("/channel/")) {
-                        val pendingClose = closedChannelPayload
-                        closedChannelPayload = null
+                    listenerGuardInstalled = false
+                    WebTVLog.d("Main", "Page changed: $previousUrl -> $url")
 
-                        pendingScriptInjection = null
-                        activeChannelId = null
-                        activeChannelName = null
-                        listenerGuardInstalled = false
+                    if (activeChannelId != null) {
+                        WebTVLog.d("Main", "Channel active ($activeChannelId), injecting into new page")
                         scriptInjector?.clearInjectedScripts()
-                        WebTVLog.d("Main", "Returned to home, reset injection state (keeping preloadedScriptsPayload cache)")
+                        resetScriptFlags()
+                        injectControlScript()
+                        injectAppBridgeScript()
 
-                        if (pendingClose != null) {
-                            webView.post { injectChannelCloseEvent(pendingClose) }
-                        }
-                    } else {
-                        listenerGuardInstalled = false
-                        WebTVLog.d("Main", "Page changed: $previousUrl -> $url")
-
-                        if (activeChannelId != null) {
-                            WebTVLog.d("Main", "Channel active ($activeChannelId), injecting into new page")
-                            scriptInjector?.clearInjectedScripts()
-                            resetScriptFlags()
-                            injectControlScript()
-                            injectAppBridgeScript()
-
-                            if (preloadedScriptsPayload != null) {
-                                injectPreloadedScripts()
-                            }
+                        if (preloadedScriptsPayload != null) {
+                            injectPreloadedScripts()
                         }
                     }
                 }
@@ -469,6 +453,10 @@ class MainActivity : AppCompatActivity() {
                         WebTVBridge.onCategoryChanged(JSON.stringify(event.payload));
                     });
 
+                    window.WebTV.events.on('navigated:home', (event) => {
+                        WebTVBridge.onNavigatedHome(JSON.stringify(event.payload));
+                    });
+
                     window.WebTV.events.on('scripts:preloaded', (event) => {
                         WebTVBridge.onScriptsPreloaded(JSON.stringify(event.payload));
                     });
@@ -559,15 +547,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun handleNavigatedHome() {
+        val pendingClose = closedChannelPayload
+        closedChannelPayload = null
+
+        pendingScriptInjection = null
+        activeChannelId = null
+        activeChannelName = null
+        listenerGuardInstalled = false
+        scriptInjector?.clearInjectedScripts()
+        preloadedScriptsPayload = null
+        WebTVLog.d("Main", "Navigated to home, reset injection state")
+
+        if (pendingClose != null) {
+            webView.post { injectChannelCloseEvent(pendingClose) }
+        }
+    }
+
     fun clearInjectedScriptsCache() {
         scriptInjector?.clearInjectedScripts()
         preloadedScriptsPayload = null
         WebTVLog.d("Main", "Script injection cache cleared")
-    }
-
-    fun isOnHomePage(): Boolean {
-        val url = currentPageUrl ?: return true
-        return (url.contains(START_URL) || url.contains("hellfiveosborn.github.io/WebTV")) && !url.contains("/channel/")
     }
 
     fun setCurrentChannel(channelId: String, channelName: String) {

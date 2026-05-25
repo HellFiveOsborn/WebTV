@@ -108,6 +108,12 @@ function App() {
     }
   }, [channelIdParam, navigate])
 
+  useEffect(() => {
+    if (!channelIdParam && !loading) {
+      eventBus.emit('navigated:home', { timestamp: Date.now() })
+    }
+  }, [channelIdParam, loading])
+
   const handleChannelClick = useCallback((channel: Channel) => {
     addRecentChannel(channel)
     if (!channelIdParam) {

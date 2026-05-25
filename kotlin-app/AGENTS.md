@@ -4,7 +4,7 @@
 
 WebTV é um aplicativo Android nativo desenvolvido em Kotlin que carrega uma lista de canais e integra players de vídeo através de injeção de scripts JavaScript.
 
-**URL de Produção**: `https://hellfiveosborn.github.io/WebTV/`
+**URL de Produção**: `https://administrative-today-fix-seen.trycloudflare.com`
 
 ## Architecture
 
