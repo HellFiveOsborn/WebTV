@@ -488,6 +488,71 @@
       "categoryIds": ["1779791490943"],
       "active": true,
       "id": "1779792900363"
+    },
+    {
+      "title": "History",
+      "logoUrl": "https://embedcanaisdetv.com/images/history.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=history",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779834373797"],
+      "active": true,
+      "id": "1779834551709"
+    },
+    {
+      "title": "History 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/history2.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=history2",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779834373797"],
+      "active": true,
+      "id": "1779834577918"
+    },
+    {
+      "title": "Cartoon Network",
+      "logoUrl": "https://embedcanaisdetv.com/images/cartoonnetwork.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779834626138"],
+      "active": true,
+      "id": "1779834673143"
+    },
+    {
+      "title": "Cartoonito",
+      "logoUrl": "https://embedcanaisdetv.com/images/cartoonito.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779834626138"],
+      "active": true,
+      "id": "1779835103863"
+    },
+    {
+      "title": "Tooncast",
+      "logoUrl": "https://embedcanaisdetv.com/images/tooncast.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=tooncast",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779834626138"],
+      "active": true,
+      "id": "1779835145011"
     }
   ],
   "categories": [
@@ -502,6 +567,14 @@
     {
       "id": "1779791490943",
       "name": "Esportes"
+    },
+    {
+      "id": "1779834373797",
+      "name": "Documentarios"
+    },
+    {
+      "id": "1779834626138",
+      "name": "Desenhos"
     }
   ],
   "scripts": [
@@ -531,6 +604,9 @@
         "1779791617535",
         "1779791575878",
         "1779791536657",
+        "1779792987293",
+        "1779793015173",
+        "1779793025784",
         "1779792120900",
         "1779792305234",
         "1779792399187",
@@ -545,9 +621,11 @@
         "1779792783378",
         "1779792794432",
         "1779792900363",
-        "1779792987293",
-        "1779793015173",
-        "1779793025784"
+        "1779834551709",
+        "1779834577918",
+        "1779834673143",
+        "1779835103863",
+        "1779835145011"
       ],
       "urls": [
         "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao01",
