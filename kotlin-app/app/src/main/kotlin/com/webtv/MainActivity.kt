@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private val urlScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
     private val domainScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
     private val injectedScriptIds = mutableSetOf<String>()
+    private var closeNavigationScheduled = false
 
     private val requestMicPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -387,8 +388,9 @@ class MainActivity : AppCompatActivity() {
                 activeChannelId = null
                 activeChannelName = null
                 injectedScriptIds.clear()
+            } else {
+                playCloseAndNavigate()
             }
-            webView.loadUrl(START_URL)
         } else {
             showExitDialog()
         }
@@ -572,6 +574,7 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
         scriptInjector?.clearInjectedScripts()
         preloadedScriptsPayload = null
         injectedScriptIds.clear()
+        closeNavigationScheduled = false
         WebTVLog.d("Main", "Navigated to home, reset injection state")
 
         if (pendingClose != null) {
@@ -606,7 +609,29 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
         activeChannelId = null
         activeChannelName = null
         
-        webView.loadUrl(START_URL)
+        playCloseAndNavigate()
+    }
+
+    private fun playCloseAndNavigate() {
+        if (closeNavigationScheduled) {
+            WebTVLog.d("Main", "Close navigation already scheduled, ignoring duplicate")
+            return
+        }
+        closeNavigationScheduled = true
+        val script = """
+            (function(){
+                if(window.WebTV&&window.WebTV.events&&typeof window.WebTV.events.emit==='function'){
+                    window.WebTV.events.emit('channel:closing',{});
+                    console.log('[WebTV] channel:closing emitted');
+                } else {
+                    console.log('[WebTV] WebTV not ready, cannot emit channel:closing');
+                }
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(script, null)
+        webView.postDelayed({
+            webView.loadUrl(START_URL)
+        }, 300)
     }
 
     private fun resetScriptFlags() {

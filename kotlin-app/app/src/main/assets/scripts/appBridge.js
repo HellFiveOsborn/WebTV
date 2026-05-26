@@ -38,6 +38,9 @@
       console.log('[WebTV] No active channel to close');
       return;
     }
+
+    window.WebTV.events.emit('channel:closing', {});
+
     var payload = {
       channelId: this.activeId,
       channelName: this.activeName,
@@ -59,6 +62,19 @@
       window.__webtvActiveChannelId = payload.id;
       window.__webtvActiveChannelName = payload.name;
     }
+  });
+
+  window.WebTV.events.on('channel:closing', function() {
+    if (document.getElementById('webtv-close-fade')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'webtv-close-fade';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#000;opacity:0;transition:opacity 250ms ease;pointer-events:none;';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        overlay.style.opacity = '0.92';
+      });
+    });
   });
 
   console.log('[WebTV] appBridge.js loaded (created window.WebTV)');
