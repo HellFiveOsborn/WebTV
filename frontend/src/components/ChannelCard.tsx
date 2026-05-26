@@ -1,36 +1,19 @@
-import { useEffect, useRef } from 'react'
 import { Channel, Category } from '../types/channel'
 import { RecentChannel } from '../hooks/useRecentChannels'
 import { formatRelativeTime } from '../utils/formatRelativeTime'
+import { useFocusable } from '../hooks/FocusContext'
 
 interface ChannelCardProps {
   channel: Channel
   categories: Category[]
-  isFocused: boolean
   onClick: (channel: Channel) => void
   'data-zone'?: string
   'data-index'?: number
   recentInfo?: RecentChannel
 }
 
-export const ChannelCard = ({ channel, categories, isFocused, onClick, 'data-zone': dataZone, 'data-index': dataIndex, recentInfo }: ChannelCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (isFocused && cardRef.current) {
-      const rect = cardRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-
-      const isFullyVisible = rect.top >= 0 && rect.bottom <= viewportHeight
-
-      if (!isFullyVisible) {
-        cardRef.current.scrollIntoView({
-          behavior: 'auto',
-          block: 'nearest'
-        })
-      }
-    }
-  }, [isFocused])
+export const ChannelCard = ({ channel, categories, onClick, 'data-zone': dataZone, 'data-index': dataIndex, recentInfo }: ChannelCardProps) => {
+  const { ref, isFocused } = useFocusable(dataZone || 'grid', dataIndex || 0)
 
   const categoryNames = (channel.categoryIds || [])
     .map(id => categories.find(c => c.id === id)?.name)
@@ -39,7 +22,7 @@ export const ChannelCard = ({ channel, categories, isFocused, onClick, 'data-zon
 
   return (
     <div
-      ref={cardRef}
+      ref={ref as React.RefObject<HTMLDivElement>}
       data-zone={dataZone}
       data-index={dataIndex}
       onClick={() => onClick(channel)}

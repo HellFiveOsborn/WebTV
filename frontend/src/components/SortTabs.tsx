@@ -1,14 +1,12 @@
+import { useFocusable } from '../hooks/FocusContext'
+
 interface SortTabsProps {
-  active: boolean
-  focusedIndex: number
   options: { value: string; label: string }[]
   selectedValue: string
   onSelect: (value: string) => void
 }
 
 export const SortTabs = ({
-  active,
-  focusedIndex,
   options,
   selectedValue,
   onSelect,
@@ -19,12 +17,11 @@ export const SortTabs = ({
       <div className="flex gap-2">
         {options.map((option, index) => {
           const isSelected = option.value === selectedValue
-          const isFocused = active && index === focusedIndex
+          const { ref, isFocused } = useFocusable('sortTabs', index)
           return (
             <button
               key={option.value}
-              data-zone="sortTabs"
-              data-index={index}
+              ref={ref as React.RefObject<HTMLButtonElement>}
               onClick={() => onSelect(option.value)}
               onMouseDown={(e) => e.preventDefault()}
               className={`

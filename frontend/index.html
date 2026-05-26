@@ -14,9 +14,39 @@
       })()
     </script>
     <title>WebTV</title>
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        background-color: #121212;
+        color: #d9d9d9;
+      }
+      #loading-screen {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #121212; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #loading-screen .spinner {
+        width: 40px; height: 40px;
+        border: 3px solid #2a2a2a;
+        border-top-color: #00A884;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      #loading-screen .text {
+        color: #9ca3af; font-size: 16px; letter-spacing: 0.5px;
+      }
+    </style>
   </head>
   <body class="bg-dark-bg text-white">
-    <div id="root"></div>
+    <div id="root">
+      <div id="loading-screen">
+        <div class="spinner"></div>
+        <div class="text">Carregando WebTV...</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

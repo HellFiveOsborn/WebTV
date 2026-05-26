@@ -1,11 +1,61 @@
 {
   "channels": [
     {
+      "title": "Globo SP",
+      "logoUrl": "https://embedcanaisdetv.com/images/globo.webp",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=globosp",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779525104846"],
+      "active": true,
+      "id": "1779525189328"
+    },
+    {
+      "title": "SBT SP",
+      "logoUrl": "https://embedcanaisdetv.com/images/sbtsp.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=sbtsp",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779525104846"],
+      "active": true,
+      "id": "1779788157811"
+    },
+    {
+      "title": "Record SP",
+      "logoUrl": "https://embedcanaisdetv.com/images/record.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=recordsp",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779525104846"],
+      "active": true,
+      "id": "1779744490522"
+    },
+    {
+      "title": "Band SP",
+      "logoUrl": "https://embedcanaisdetv.com/images/bandsp.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=bandsp",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779525104846"],
+      "active": true,
+      "id": "1779788237577"
+    },
+    {
       "title": "Casa do Patrão 1",
       "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
-      "categoryIds": [
-        "1779514560138"
-      ],
+      "categoryIds": ["1779514560138"],
       "active": true,
       "id": "1779514821057",
       "alternativeUrls": [
@@ -22,9 +72,7 @@
     {
       "title": "Casa do Patrão 2",
       "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
-      "categoryIds": [
-        "1779514560138"
-      ],
+      "categoryIds": ["1779514560138"],
       "active": true,
       "id": "1779518073295",
       "alternativeUrls": [
@@ -39,29 +87,421 @@
       ]
     },
     {
-      "title": "Globo SP",
-      "logoUrl": "https://embedcanaisdetv.com/images/globo.webp",
+      "title": "Casa do Patrão 3",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
       "alternativeUrls": [
         {
-          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=globosp",
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao03",
           "type": "redirect"
         }
       ],
-      "categoryIds": [
-        "1779525104846"
-      ],
+      "categoryIds": ["1779514560138"],
       "active": true,
-      "id": "1779525189328"
+      "id": "1779761755792"
+    },
+    {
+      "title": "Casa do Patrão 4",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao04",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779514560138"],
+      "active": true,
+      "id": "1779761772746"
+    },
+    {
+      "title": "Casa do Patrão 5",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao05",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779514560138"],
+      "active": true,
+      "id": "1779761785389"
+    },
+    {
+      "title": "Casa do Patrão 6",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao06",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779514560138"],
+      "active": true,
+      "id": "1779761796320"
+    },
+    {
+      "title": "Casa do Patrão 7",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao07",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779514560138"],
+      "active": true,
+      "id": "1779761808844"
+    },
+    {
+      "title": "Casa do Patrão 8",
+      "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao08",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779514560138"],
+      "active": true,
+      "id": "1779761818788"
+    },
+    {
+      "title": "Premiere 8",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere8",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791685935"
+    },
+    {
+      "title": "Premiere 7",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere7",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791662505"
+    },
+    {
+      "title": "Premiere 6",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere6",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791652731"
+    },
+    {
+      "title": "Premiere 5",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere5",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791641196"
+    },
+    {
+      "title": "Premiere 4",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere4",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791631956"
+    },
+    {
+      "title": "Premiere 3",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere3",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791617535"
+    },
+    {
+      "title": "Premiere 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere2",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791575878"
+    },
+    {
+      "title": "Premiere Clubes",
+      "logoUrl": "https://embedcanaisdetv.com/images/premiere.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=premiereclubes",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779791536657"
+    },
+    {
+      "title": "SporTV",
+      "logoUrl": "https://embedcanaisdetv.com/images/sportv.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792987293"
+    },
+    {
+      "title": "SporTV 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/sportv.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv2",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779793015173"
+    },
+    {
+      "title": "SporTV 3",
+      "logoUrl": "https://embedcanaisdetv.com/images/sportv.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv3",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779793025784"
+    },
+    {
+      "title": "Paramount+",
+      "logoUrl": "https://embedcanaisdetv.com/images/paramountplus.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792120900"
+    },
+    {
+      "title": "Paramount+ 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/paramountplus.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792305234"
+    },
+    {
+      "title": "Amazon Prime",
+      "logoUrl": "https://embedcanaisdetv.com/images/amazonprimevideo.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792399187"
+    },
+    {
+      "title": "Amazon Prime 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/amazonprimevideo.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792437376"
+    },
+    {
+      "title": "Amazon Prime 3",
+      "logoUrl": "https://embedcanaisdetv.com/images/amazonprimevideo.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo03",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792449020"
+    },
+    {
+      "title": "Amazon Prime 4",
+      "logoUrl": "https://embedcanaisdetv.com/images/amazonprimevideo.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo04",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792460208"
+    },
+    {
+      "title": "Amazon Prime 5",
+      "logoUrl": "https://embedcanaisdetv.com/images/amazonprimevideo.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo05",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792471035"
+    },
+    {
+      "title": "ESPN",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792539269"
+    },
+    {
+      "title": "ESPN 2",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn2",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792567878"
+    },
+    {
+      "title": "ESPN 3",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn3",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792705486"
+    },
+    {
+      "title": "ESPN 4",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn4",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792731899"
+    },
+    {
+      "title": "ESPN 5",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn5",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792783378"
+    },
+    {
+      "title": "ESPN 6",
+      "logoUrl": "https://embedcanaisdetv.com/images/espn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=espn6",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792794432"
+    },
+    {
+      "title": "DAZN",
+      "logoUrl": "https://embedcanaisdetv.com/images/dazn.png",
+      "alternativeUrls": [
+        {
+          "url": "https://embedcanaisdetv.xyz/e/index.php?canal=dazn",
+          "type": "redirect"
+        }
+      ],
+      "categoryIds": ["1779791490943"],
+      "active": true,
+      "id": "1779792900363"
     }
   ],
   "categories": [
+    {
+      "id": "1779525104846",
+      "name": "TV Aberto"
+    },
     {
       "id": "1779514560138",
       "name": "Casa do Patrão"
     },
     {
-      "id": "1779525104846",
-      "name": "TV Aberto"
+      "id": "1779791490943",
+      "name": "Esportes"
     }
   ],
   "scripts": [
@@ -69,19 +509,57 @@
       "name": "EmbedCanais: Player Control, Remove Promo Banner",
       "domain": "embedcanaisdetv.xyz",
       "subdomains": [],
-      "domains": [
-        "embedcanaisdetv.xyz"
+      "domains": ["embedcanaisdetv.xyz"],
+      "channelIds": [
+        "1779525189328",
+        "1779788157811",
+        "1779744490522",
+        "1779788237577",
+        "1779514821057",
+        "1779518073295",
+        "1779761755792",
+        "1779761772746",
+        "1779761785389",
+        "1779761796320",
+        "1779761808844",
+        "1779761818788",
+        "1779791685935",
+        "1779791662505",
+        "1779791652731",
+        "1779791641196",
+        "1779791631956",
+        "1779791617535",
+        "1779791575878",
+        "1779791536657",
+        "1779792120900",
+        "1779792305234",
+        "1779792399187",
+        "1779792437376",
+        "1779792449020",
+        "1779792460208",
+        "1779792471035",
+        "1779792539269",
+        "1779792567878",
+        "1779792705486",
+        "1779792731899",
+        "1779792783378",
+        "1779792794432",
+        "1779792900363",
+        "1779792987293",
+        "1779793015173",
+        "1779793025784"
       ],
       "urls": [
         "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao01",
         "https://embedcanaisdetv.xyz/e/index.php?canal=casadopatrao02",
-        "https://embedcanaisdetv.xyz/e/index.php?canal=globosp"
+        "https://embedcanaisdetv.xyz/e/index.php?canal=globosp",
+        "https://embedcanaisdetv.xyz/e/index.php?canal=recordsp"
       ],
-      "code": "(function(){'use strict';const AD_OVERLAY_SELECTORS=['[class*=\"ad-\"]','[id*=\"ad-\"]','[class*=\"overlay\"]','[class*=\"popup\"]','[class*=\"modal\"]:not(#webtv-audio-overlay)','iframe[src*=\"ad\"]','iframe[src*=\"banner\"]','[onclick*=\"window.open\"]'];function suppressAdOverlays(){const observer=new MutationObserver((mutations)=>{mutations.forEach(m=>{m.addedNodes.forEach(node=>{if(node.nodeType===1){AD_OVERLAY_SELECTORS.forEach(sel=>{try{if(node.matches&&node.matches(sel)&&node.id!=='webtv-audio-overlay'){node.remove();}}catch(e){}});}});});});observer.observe(document.body,{childList:true,subtree:true});setInterval(()=>{AD_OVERLAY_SELECTORS.forEach(sel=>{try{document.querySelectorAll(sel).forEach(el=>{if(el.id!=='webtv-audio-overlay'){el.style.pointerEvents='none';el.style.zIndex='-1';}});}catch(e){}});},1000);console.log('[WebTV] Ad overlay suppression active');}const postEvent=(type,data)=>{if(window.parent&&window.parent!==window){window.parent.postMessage({source:'inject-script',type,timestamp:Date.now(),data:data||{}},'*');}};const VIP_CSS=`\n    #vipModal,\n    #vipModal *,\n    .vip-modal,\n    .vip-modal *,\n    [class*=\"vip-modal\"],\n    .is-vip,\n    #vip-banner,\n    [id*=\"vip-banner\"] {\n      display: none !important;\n      visibility: hidden !important;\n      z-index: -9999 !important;\n      pointer-events: none !important;\n    }\n  `;function injectVipCss(){const id='webtv-vip-block';if(document.getElementById(id))return;const s=document.createElement('style');s.id=id;s.textContent=VIP_CSS;document.head.appendChild(s);}function removeVipElements(){const selectors=['#vipModal','[class*=\"vip-modal\"]','[id*=\"vip\"]','[class*=\"vip\"]','.vip-modal'];for(const sel of selectors){for(const el of document.querySelectorAll(sel)){if(el!==window&&!el.closest('#player')){el.remove();}}}}const _origSetTimeout=window.setTimeout;const _origSetInterval=window.setInterval;const _origClearTimeout=window.clearTimeout;window.setTimeout=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetTimeout.call(window,fn,delay,...args);};window.setInterval=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetInterval.call(window,fn,delay,...args);};if(typeof window.showVipModal==='function'){window.showVipModal=function(){};}Object.defineProperty(window,'showVipModal',{get:()=>function(){},set:()=>{},configurable:false});function requestFs(el){if(!el)return Promise.resolve(false);const fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;if(!fn)return Promise.resolve(false);return fn.call(el).then(()=>true).catch(()=>false);}function exitFs(){const fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;if(!fn)return Promise.resolve(false);return fn.call(document).then(()=>true).catch(()=>false);}const KEY_ENTER=13;const KEY_PLAY_PAUSE=179;const KEY_MEDIA_PLAY=126;const KEY_MEDIA_PAUSE=127;const KEY_UP=38;const KEY_DOWN=40;const KEY_LEFT=37;const KEY_RIGHT=39;const KEY_BACK=10009;const KEY_BACK_KEYCODE=8;const KEY_ESCAPE=27;let videoRef=null;function onKey(e){const code=e.keyCode||e.which;const v=videoRef;if(code===KEY_BACK||code===KEY_BACK_KEYCODE||code===KEY_ESCAPE){e.preventDefault();e.stopPropagation();if(document.fullscreenElement||document.webkitFullscreenElement){exitFs();}postEvent('back',{source:'dpad'});if(window.__webtvActiveChannelId&&window.WebTVBridge&&window.WebTVBridge.onChannelClosed){const payload={channelId:window.__webtvActiveChannelId,channelName:window.__webtvActiveChannelName||'Unknown',timestamp:Date.now()};window.WebTVBridge.onChannelClosed(JSON.stringify(payload));}else{window.history.back();}return;}if(!v)return;switch(code){case KEY_ENTER:case KEY_PLAY_PAUSE:case KEY_MEDIA_PLAY:case KEY_MEDIA_PAUSE:e.preventDefault();if(v.paused)v.play();else v.pause();break;case KEY_UP:e.preventDefault();v.volume=Math.min(1,v.volume + 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_DOWN:e.preventDefault();v.volume=Math.max(0,v.volume - 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_LEFT:e.preventDefault();if(v.duration)v.currentTime=Math.max(0,v.currentTime - 10);postEvent('seek',{currentTime:v.currentTime,direction:'backward'});break;case KEY_RIGHT:e.preventDefault();if(v.duration)v.currentTime=Math.min(v.duration,v.currentTime + 10);postEvent('seek',{currentTime:v.currentTime,direction:'forward'});break;}}document.addEventListener('keydown',onKey,true);function waitVideo(){return new Promise((resolve)=>{const tryFind=()=>{const v=document.querySelector('video[data-html5-video]')||document.querySelector('video');if(v){videoRef=v;resolve(v);}else{setTimeout(tryFind,300);}};tryFind();});}function setupVideo(v){console.log('[WebTV] Player script attached');v.addEventListener('play',()=>{postEvent('play',{currentTime:v.currentTime});const container=document.getElementById('player')||v.parentElement;requestFs(container||v);});v.addEventListener('pause',()=>{postEvent('pause',{currentTime:v.currentTime});});v.addEventListener('volumechange',()=>{postEvent('volume',{value:v.volume,muted:v.muted});});v.addEventListener('ended',()=>{postEvent('ended',{currentTime:v.currentTime});});v.addEventListener('playing',()=>{console.log('[WebTV] Autoplay started (muted:',v.muted,')');});v.addEventListener('error',(e)=>{postEvent('error',{message:e.message||'unknown',code:v.error ? v.error.code:-1});});}async function tryAutoplay(v){try{v.muted=true;v.playsInline=true;await v.play();return true;}catch(e){try{v.muted=false;await v.play();return true;}catch(e2){console.log('[WebTV] Autoplay failed:',e2.message);return false;}}}function initVipBlock(){injectVipCss();removeVipElements();const obs=new MutationObserver(()=>removeVipElements());obs.observe(document.body,{childList:true,subtree:true});setInterval(removeVipElements,2000);setInterval(()=>{injectVipCss();},500);console.log('[WebTV] VIP blocker active');}function createAudioUnlockOverlay(){if(document.getElementById('webtv-audio-overlay'))return;const overlay=document.createElement('div');overlay.id='webtv-audio-overlay';overlay.style.cssText=`\n      position: fixed;\n      top: 0;\n      left: 0;\n      right: 0;\n      bottom: 0;\n      z-index: 2147483647;\n      background: rgba(0, 0, 0, 0.85);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      cursor: pointer;\n    `;const icon=document.createElement('div');icon.innerHTML=`\n      <svg width=\"120\" height=\"120\" viewBox=\"0 0 24 24\" fill=\"none\">\n        <path d=\"M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.17v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z\" fill=\"white\"/>\n      </svg>\n    `;overlay.appendChild(icon);document.body.appendChild(overlay);const unlock=()=>{const videos=document.querySelectorAll('video');videos.forEach(v=>{v.muted=false;v.play().catch(e=>console.log('[WebTV] Unmute failed:',e));});overlay.remove();console.log('[WebTV] Audio unlocked');};overlay.addEventListener('click',unlock,{once:true});overlay.addEventListener('touchstart',unlock,{once:true});console.log('[WebTV] Audio unlock overlay created');}suppressAdOverlays();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>initVipBlock());}else{initVipBlock();}waitVideo().then(async(v)=>{setupVideo(v);const started=await tryAutoplay(v);if(started){const container=document.getElementById('player')||v.parentElement;requestFs(container||v);if(v.muted){createAudioUnlockOverlay();}}});console.log('[WebTV] DPAD listener attached');})();",
+      "code": "(function(){'use strict';if(sessionStorage.getItem('webtv_audio_unlocked'))window._webtvAudioUnlocked=true;const AD_OVERLAY_SELECTORS=['[class*=\"ad-\"]','[id*=\"ad-\"]','[class*=\"overlay\"]','[class*=\"popup\"]','[class*=\"modal\"]:not(#webtv-audio-overlay)','iframe[src*=\"ad\"]','iframe[src*=\"banner\"]','[onclick*=\"window.open\"]'];function suppressAdOverlays(){const observer=new MutationObserver((mutations)=>{mutations.forEach(m=>{m.addedNodes.forEach(node=>{if(node.nodeType===1){AD_OVERLAY_SELECTORS.forEach(sel=>{try{if(node.matches&&node.matches(sel)&&node.id!=='webtv-audio-overlay'){node.remove();}}catch(e){}});}});});});observer.observe(document.body,{childList:true,subtree:true});setInterval(()=>{AD_OVERLAY_SELECTORS.forEach(sel=>{try{document.querySelectorAll(sel).forEach(el=>{if(el.id!=='webtv-audio-overlay'){el.style.pointerEvents='none';el.style.zIndex='-1';}});}catch(e){}});},1000);console.log('[WebTV] Ad overlay suppression active');}const postEvent=(type,data)=>{if(window.parent&&window.parent!==window){window.parent.postMessage({source:'inject-script',type,timestamp:Date.now(),data:data||{}},'*');}};const VIP_CSS=`\n    #vipModal,\n    #vipModal *,\n    .vip-modal,\n    .vip-modal *,\n    [class*=\"vip-modal\"],\n    .is-vip,\n    #vip-banner,\n    [id*=\"vip-banner\"] {\n      display: none !important;\n      visibility: hidden !important;\n      z-index: -9999 !important;\n      pointer-events: none !important;\n    }\n    #embedBtn, #reloadFab {display:none;}\n  `;function injectVipCss(){const id='webtv-vip-block';if(document.getElementById(id))return;const s=document.createElement('style');s.id=id;s.textContent=VIP_CSS;document.head.appendChild(s);}function removeVipElements(){const selectors=['#vipModal','[class*=\"vip-modal\"]','[id*=\"vip\"]','[class*=\"vip\"]','.vip-modal'];for(const sel of selectors){for(const el of document.querySelectorAll(sel)){if(el!==window&&!el.closest('#player')){el.remove();}}}}const _origSetTimeout=window.setTimeout;const _origSetInterval=window.setInterval;const _origClearTimeout=window.clearTimeout;window.setTimeout=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetTimeout.call(window,fn,delay,...args);};window.setInterval=function(fn,delay,...args){if(typeof fn==='function'&&String(fn).includes('vipModal')){return -1;}if(typeof fn==='string'&&(fn.includes('vip')||fn.includes('is-visible'))){return -1;}return _origSetInterval.call(window,fn,delay,...args);};if(typeof window.showVipModal==='function'){window.showVipModal=function(){};}Object.defineProperty(window,'showVipModal',{get:()=>function(){},set:()=>{},configurable:false});try{var _md=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'muted')||Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype,'muted');if(_md&&_md.set){var _oms=_md.set;Object.defineProperty(HTMLMediaElement.prototype,'muted',{get:_md.get,set:function(v){if(window._webtvAudioUnlocked&&v===true&&!window._webtvRemoteMute)return;_oms.call(this,v);},configurable:true,enumerable:_md.enumerable});}}catch(e){}function requestFs(el){if(!el)return Promise.resolve(false);const fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;if(!fn)return Promise.resolve(false);return fn.call(el).then(()=>true).catch(()=>false);}function exitFs(){const fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;if(!fn)return Promise.resolve(false);return fn.call(document).then(()=>true).catch(()=>false);}const KEY_ENTER=13;const KEY_PLAY_PAUSE=179;const KEY_MEDIA_PLAY=126;const KEY_MEDIA_PAUSE=127;const KEY_UP=38;const KEY_DOWN=40;const KEY_LEFT=37;const KEY_RIGHT=39;const KEY_BACK=10009;const KEY_BACK_KEYCODE=8;const KEY_ESCAPE=27;let videoRef=null;function onKey(e){const code=e.keyCode||e.which;const v=videoRef;if(code===KEY_BACK||code===KEY_BACK_KEYCODE||code===KEY_ESCAPE){e.preventDefault();e.stopPropagation();if(document.fullscreenElement||document.webkitFullscreenElement){exitFs();}postEvent('back',{source:'dpad'});if(window.__webtvActiveChannelId&&window.WebTVBridge&&window.WebTVBridge.onChannelClosed){const payload={channelId:window.__webtvActiveChannelId,channelName:window.__webtvActiveChannelName||'Unknown',timestamp:Date.now()};window.WebTVBridge.onChannelClosed(JSON.stringify(payload));}else{window.history.back();}return;}if(!v)return;switch(code){case KEY_ENTER:{e.preventDefault();e.stopPropagation();const ov=document.getElementById('webtv-audio-overlay');if(ov){ov.remove();window._webtvAudioUnlocked=true;sessionStorage.setItem('webtv_audio_unlocked','1');const vs=document.querySelectorAll('video');vs.forEach(function(av){av.muted=false;av.play().catch(function(e){});});}else if(v.paused){v.play();}else{v.pause();}break;}case KEY_PLAY_PAUSE:case KEY_MEDIA_PLAY:case KEY_MEDIA_PAUSE:e.preventDefault();if(v.paused)v.play();else v.pause();break;case KEY_UP:e.preventDefault();v.volume=Math.min(1,v.volume + 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_DOWN:e.preventDefault();v.volume=Math.max(0,v.volume - 0.1);postEvent('volume',{value:v.volume,muted:v.muted});break;case KEY_LEFT:e.preventDefault();if(v.duration)v.currentTime=Math.max(0,v.currentTime - 10);postEvent('seek',{currentTime:v.currentTime,direction:'backward'});break;case KEY_RIGHT:e.preventDefault();if(v.duration)v.currentTime=Math.min(v.duration,v.currentTime + 10);postEvent('seek',{currentTime:v.currentTime,direction:'forward'});break;}}document.addEventListener('keydown',onKey,true);function waitVideo(){return new Promise((resolve)=>{const tryFind=()=>{const v=document.querySelector('video[data-html5-video]')||document.querySelector('video');if(v){videoRef=v;resolve(v);}else{setTimeout(tryFind,300);}};tryFind();});}function setupVideo(v){console.log('[WebTV] Player script attached');v.addEventListener('play',()=>{postEvent('play',{currentTime:v.currentTime});const container=document.getElementById('player')||v.parentElement;requestFs(container||v);});v.addEventListener('pause',()=>{postEvent('pause',{currentTime:v.currentTime});});v.addEventListener('volumechange',()=>{postEvent('volume',{value:v.volume,muted:v.muted});});v.addEventListener('ended',()=>{postEvent('ended',{currentTime:v.currentTime});});v.addEventListener('playing',()=>{console.log('[WebTV] Autoplay started (muted:',v.muted,')');});v.addEventListener('error',(e)=>{postEvent('error',{message:e.message||'unknown',code:v.error ? v.error.code:-1});});}async function tryAutoplay(v){try{if(!window._webtvAudioUnlocked){v.muted=true;}v.playsInline=true;await v.play();return true;}catch(e){try{v.muted=false;await v.play();return true;}catch(e2){console.log('[WebTV] Autoplay failed:',e2.message);return false;}}}function initVipBlock(){injectVipCss();removeVipElements();const obs=new MutationObserver(()=>removeVipElements());obs.observe(document.body,{childList:true,subtree:true});setInterval(removeVipElements,2000);setInterval(()=>{injectVipCss();},500);console.log('[WebTV] VIP blocker active');}function createAudioUnlockOverlay(){if(document.getElementById('webtv-audio-overlay')||sessionStorage.getItem('webtv_audio_unlocked'))return;window._webtvAudioUnlocked=false;const overlay=document.createElement('div');overlay.id='webtv-audio-overlay';overlay.style.cssText=`\n      position: fixed;\n      top: 0;\n      left: 0;\n      right: 0;\n      bottom: 0;\n      z-index: 2147483647;\n      background: rgba(0, 0, 0, 0.85);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      cursor: pointer;\n    `;const icon=document.createElement('div');icon.innerHTML=`\n      <svg width=\"120\" height=\"120\" viewBox=\"0 0 24 24\" fill=\"none\">\n        <path d=\"M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.17v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z\" fill=\"white\"/>\n      </svg>\n    `;overlay.appendChild(icon);document.body.appendChild(overlay);const unlock=()=>{const videos=document.querySelectorAll('video');videos.forEach(v=>{v.muted=false;v.play().catch(e=>console.log('[WebTV] Unmute failed:',e));});overlay.remove();console.log('[WebTV] Audio unlocked');window._webtvAudioUnlocked=true;sessionStorage.setItem('webtv_audio_unlocked','1');const _audioWatch=setInterval(()=>{const vs=document.querySelectorAll('video');if(vs.length>0){vs.forEach(function(av){av.muted=false});}else{clearInterval(_audioWatch);}},200);};overlay.addEventListener('click',unlock,{once:true});overlay.addEventListener('touchstart',unlock,{once:true});console.log('[WebTV] Audio unlock overlay created');}suppressAdOverlays();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>initVipBlock());}else{initVipBlock();}waitVideo().then(async(v)=>{setupVideo(v);const started=await tryAutoplay(v);if(started){const container=document.getElementById('player')||v.parentElement;requestFs(container||v);if(v.muted){createAudioUnlockOverlay();}}});console.log('[WebTV] DPAD listener attached');window.WebTV={toggleAudioMute:function(){var vs=document.querySelectorAll('video');if(vs.length===0)return;var m=vs[0].muted;window._webtvRemoteMute=true;vs.forEach(function(av){av.muted=!m;});window._webtvRemoteMute=false;},unmuteAudio:function(){var vs=document.querySelectorAll('video');vs.forEach(function(av){av.muted=false;});window._webtvAudioUnlocked=true;sessionStorage.setItem('webtv_audio_unlocked','1');}};})();",
       "enabled": true,
       "id": "webtv-player-1779567691954",
       "createdAt": 1779567691954,
-      "updatedAt": 1779589544042
+      "updatedAt": 1779745256086
     }
   ]
 }

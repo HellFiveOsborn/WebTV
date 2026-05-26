@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { SearchBar } from './components/SearchBar'
 import { SortTabs } from './components/SortTabs'
 import { ChannelGrid } from './components/ChannelGrid'
@@ -6,10 +6,11 @@ import { ShimmerPlaceholder, ChannelGridSkeleton } from './components/ShimmerPla
 import { FeedbackMessage } from './components/FeedbackMessage'
 import { PlayerModal } from './components/PlayerModal'
 import { ConfirmModal } from './components/ConfirmModal'
-import { useDpadNavigation, Zone } from './hooks/useDpadNavigation'
-import { useRecentChannels } from './hooks/useRecentChannels'
+import { FocusProvider, useFocusable } from './hooks/FocusContext'
+import { useRecentChannels, RecentChannel } from './hooks/useRecentChannels'
 import { useChannelsData } from './hooks/useChannelsData'
 import { Channel } from './types/channel'
+import { ChannelTransition } from './components/ChannelTransition'
 import { useNavigate, useParams } from 'react-router-dom'
 import { eventBus } from './lib/eventBus'
 
@@ -19,6 +20,23 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: 'alphabetical', label: 'Alfabético' },
   { value: 'category', label: 'Categoria' },
 ]
+
+const ReloadButton = ({ onClick }: { onClick: () => void }) => {
+  const { ref, isFocused } = useFocusable('toolbar', 1)
+  return (
+    <button
+      ref={ref as React.RefObject<HTMLButtonElement>}
+      onClick={onClick}
+      onMouseDown={(e) => e.preventDefault()}
+      tabIndex={-1}
+      className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center transition-all duration-150 text-gray-400 hover:text-primary hover:border-primary ${isFocused ? 'ring-4 ring-primary text-primary border-primary' : ''}`}
+    >
+      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    </button>
+  )
+}
 
 function App() {
   const { channels: allChannels, categories, loading } = useChannelsData()
@@ -51,9 +69,10 @@ function App() {
     eventBus.emit('sort:changed', { sortBy: newSort })
   }
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null)
+  const [channelTransition, setChannelTransition] = useState<Channel | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const { recentChannels, addRecentChannel, clearRecentChannels } = useRecentChannels()
-  const searchInputRef = useRef<HTMLInputElement>(null)
+
   const navigate = useNavigate()
   const { id: channelIdParam } = useParams()
 
@@ -69,7 +88,16 @@ function App() {
       if (channel) {
         addRecentChannel(channel)
         const redirectUrl = channel.alternativeUrls.find(u => u.type === 'redirect')
+        const iframeUrls = channel.alternativeUrls.filter(u => u.type === 'iframe')
+
+        eventBus.emit('channel:clicked', {
+          id: channel.id,
+          name: channel.title,
+          type: iframeUrls.length > 0 && redirectUrl ? 'mixed' : redirectUrl ? 'redirect' : 'iframe'
+        })
+
         if (redirectUrl) {
+          setChannelTransition(channel)
           window.open(redirectUrl.url, '_blank')
         }
         setActiveChannel(channel)
@@ -78,6 +106,17 @@ function App() {
       setActiveChannel(null)
     }
   }, [channelIdParam, channels, loading, activeChannel, addRecentChannel])
+
+  const getCategoryIndex = (categoryId: string) => {
+    const idx = categories.findIndex(c => c.id === categoryId)
+    return idx === -1 ? Infinity : idx
+  }
+
+  const getPrimaryCategoryIndex = (channel: Channel) => {
+    const ids = channel.categoryIds || []
+    if (ids.length === 0) return Infinity
+    return Math.min(...ids.map(getCategoryIndex))
+  }
 
   const filteredChannels = useMemo(() => {
     const base = channels.filter(channel =>
@@ -89,42 +128,117 @@ function App() {
         return [...base].sort((a, b) => a.title.localeCompare(b.title))
       case 'category':
         return [...base].sort((a, b) => {
-          const aCat = categories.find(c => (a.categoryIds || []).includes(c.id))?.name || ''
-          const bCat = categories.find(c => (b.categoryIds || []).includes(c.id))?.name || ''
-          return aCat.localeCompare(bCat) || a.title.localeCompare(b.title)
+          const aIdx = getPrimaryCategoryIndex(a)
+          const bIdx = getPrimaryCategoryIndex(b)
+          return aIdx - bIdx || a.title.localeCompare(b.title)
         })
+      default:
+        return base
     }
   }, [channels, searchQuery, sortBy, categories])
 
-  const displayedChannels = filteredChannels
-  const allChannelsCount = displayedChannels.length
-  const visibleRecent = searchQuery.trim() === '' ? recentChannels : []
-  const recentCount = visibleRecent.length
+  interface Section {
+    key: string
+    label: string
+    channels: Channel[]
+    renderHeader: boolean
+  }
+
+  const { gridSections, gridSectionStarts, gridTotalItems } = useMemo(() => {
+    const sections: Section[] = []
+
+    if (!searchQuery && sortBy === 'alphabetical' && recentChannels.length > 0) {
+      const recentSorted = recentChannels
+        .map(rc => [...channels].find(ch => ch.id === rc.id))
+        .filter((ch): ch is Channel => !!ch)
+        .sort((a, b) => {
+          const aTime = recentChannels.find(rc => rc.id === a.id)?.openedAt ?? 0
+          const bTime = recentChannels.find(rc => rc.id === b.id)?.openedAt ?? 0
+          return bTime - aTime
+        })
+        .slice(0, 4)
+      sections.push({ key: 'recent', label: 'Recentes', channels: recentSorted, renderHeader: recentSorted.length > 0 })
+    }
+
+    if (!searchQuery) {
+      if (sortBy === 'category') {
+        const groups = new Map<string, Channel[]>()
+        filteredChannels.forEach(channel => {
+          const catNames = (channel.categoryIds || [])
+            .map(id => categories.find(c => c.id === id)?.name)
+            .filter((n): n is string => !!n)
+          if (catNames.length > 0) {
+            for (const name of catNames) {
+              const group = groups.get(name)
+              if (group) group.push(channel)
+              else groups.set(name, [channel])
+            }
+          } else {
+            const group = groups.get('Outros')
+            if (group) group.push(channel)
+            else groups.set('Outros', [channel])
+          }
+        })
+        Array.from(groups.entries())
+          .sort(([, a], [, b]) => {
+            const ai = getPrimaryCategoryIndex(a[0])
+            const bi = getPrimaryCategoryIndex(b[0])
+            return ai - bi || a[0].title.localeCompare(b[0].title)
+          })
+          .forEach(([name, chs]) => {
+            sections.push({ key: name, label: name, channels: chs, renderHeader: true })
+          })
+      } else {
+        sections.push({ key: 'all', label: 'Todos os Canais', channels: filteredChannels, renderHeader: true })
+      }
+    } else {
+      sections.push({ key: 'search', label: `Resultados para "${searchQuery}"`, channels: filteredChannels, renderHeader: false })
+    }
+
+    const starts: number[] = []
+    let offset = 0
+    for (const s of sections) {
+      starts.push(offset)
+      offset += s.channels.length
+    }
+    return { gridSections: sections, gridSectionStarts: starts, gridTotalItems: offset }
+  }, [searchQuery, sortBy, recentChannels, filteredChannels, categories])
+
+  const recentChannelsMap = useMemo(() => {
+    const map = new Map<string, RecentChannel>()
+    for (const rc of recentChannels) {
+      map.set(rc.id, rc)
+    }
+    return map
+  }, [recentChannels])
 
   const handleClose = useCallback(() => {
     setActiveChannel(null)
+    setChannelTransition(null)
     if (channelIdParam) {
-      navigate('/', { replace: true })
+      navigate('/')
     }
   }, [channelIdParam, navigate])
 
-  useEffect(() => {
-    if (!channelIdParam && !loading) {
-      eventBus.emit('navigated:home', { timestamp: Date.now() })
-    }
-  }, [channelIdParam, loading])
-
   const handleChannelClick = useCallback((channel: Channel) => {
     addRecentChannel(channel)
-    if (!channelIdParam) {
-      navigate(`/channel/${channel.id}`)
+
+    const redirectUrl = channel.alternativeUrls.find(u => u.type === 'redirect')
+    const hasIframe = channel.alternativeUrls.some(u => u.type === 'iframe')
+    const hasRedirect = !!redirectUrl
+
+    if (hasRedirect && !hasIframe) {
+      setChannelTransition(channel)
     }
 
-    const iframeUrls = channel.alternativeUrls.filter(u => u.type === 'iframe')
-    const redirectUrl = channel.alternativeUrls.find(u => u.type === 'redirect')
+    if (!channelIdParam || channelIdParam !== channel.id) {
+      navigate(`/channel/${channel.id}`)
+      return
+    }
 
-    const hasIframe = iframeUrls.length > 0
-    const hasRedirect = !!redirectUrl
+    if (!activeChannel) {
+      setActiveChannel(channel)
+    }
 
     eventBus.emit('channel:clicked', {
       id: channel.id,
@@ -132,92 +246,22 @@ function App() {
       type: hasIframe && hasRedirect ? 'mixed' : hasIframe ? 'iframe' : 'redirect'
     })
 
-    if (hasRedirect && window.WebTV?.scripts) {
-      const url = redirectUrl.url
-      const scriptsForUrl = window.WebTV.scripts.getScriptsForUrl(url)
-
-      if (scriptsForUrl.length > 0) {
-        console.log(`[App] Preloading ${scriptsForUrl.length} scripts for redirect URL:`, url)
-        eventBus.emit('scripts:preloaded', {
-          url,
-          scripts: scriptsForUrl.map(s => ({
-            id: s.id,
-            name: s.name,
-            code: s.code,
-            createdAt: s.createdAt,
-            updatedAt: s.updatedAt
-          }))
-        })
-      }
-    }
-
     if (hasIframe) {
       setActiveChannel(channel)
+      const iframeUrl = channel.alternativeUrls.find(u => u.type === 'iframe')
+      if (iframeUrl) {
+        eventBus.emit('player:opened', {
+          channelId: channel.id,
+          channelName: channel.title,
+          url: iframeUrl.url
+        })
+      }
     } else if (redirectUrl) {
       setTimeout(() => {
         window.open(redirectUrl.url, '_blank')
       }, 100)
     }
   }, [addRecentChannel, channelIdParam, navigate])
-
-  const zones: Zone[] = recentCount > 0
-    ? ['toolbar', 'sortTabs', 'recentGrid', 'allGrid']
-    : ['toolbar', 'sortTabs', 'allGrid']
-
-  const getZoneConfig = useCallback((zone: Zone) => {
-    switch (zone) {
-      case 'toolbar':
-        return { columns: 2, itemsCount: 2 }
-      case 'sortTabs':
-        return { columns: sortOptions.length, itemsCount: sortOptions.length }
-      case 'recentGrid':
-        return { columns: 4, itemsCount: recentCount }
-      case 'allGrid':
-        return { columns: 4, itemsCount: allChannelsCount }
-      default:
-        return { columns: 4, itemsCount: 0 }
-    }
-  }, [recentCount, allChannelsCount])
-
-  const onActivate = useCallback((zone: Zone, index: number) => {
-    switch (zone) {
-      case 'toolbar':
-        if (index === 0 && searchInputRef.current) {
-          searchInputRef.current.focus()
-        } else if (index === 1) {
-          setShowConfirmModal(true)
-        }
-        break
-      case 'sortTabs':
-        setSortBy(sortOptions[index].value as SortOption)
-        break
-      case 'recentGrid': {
-        const channel = visibleRecent[index]
-        if (channel) handleChannelClick(channel)
-        break
-      }
-      case 'allGrid': {
-        const channel = displayedChannels[index]
-        if (channel) handleChannelClick(channel)
-        break
-      }
-    }
-  }, [displayedChannels, visibleRecent, handleChannelClick])
-
-  const { activeZone, focusedIndex } = useDpadNavigation({
-    zones,
-    getZoneConfig,
-    onActivate,
-    isPaused: showConfirmModal
-  })
-
-  useEffect(() => {
-    if (activeZone === 'toolbar' && focusedIndex === 0 && searchInputRef.current) {
-      searchInputRef.current.focus()
-    } else if (searchInputRef.current) {
-      searchInputRef.current.blur()
-    }
-  }, [activeZone, focusedIndex])
 
   if (loading) {
     return (
@@ -245,10 +289,14 @@ function App() {
               </div>
             </div>
           </div>
-          <ChannelGridSkeleton count={12} />
+          <ChannelGridSkeleton />
         </div>
       </div>
     )
+  }
+
+  if (channelTransition) {
+    return <ChannelTransition channel={channelTransition} />
   }
 
   if (activeChannel && activeChannel.alternativeUrls.some(u => u.type === 'iframe')) {
@@ -261,89 +309,64 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
-      {showConfirmModal && (
-        <ConfirmModal
-          onConfirm={handleReload}
-          onCancel={() => setShowConfirmModal(false)}
-        />
-      )}
-      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
-        <div className="mb-3 sm:mb-4 md:mb-6 space-y-2 sm:space-y-3">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex-grow">
-              <SearchBar
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={handleSearchChange}
-                isFocused={activeZone === 'toolbar' && focusedIndex === 0}
-              />
+    <FocusProvider isPaused={showConfirmModal}>
+      <div className="min-h-screen bg-dark-bg">
+        {showConfirmModal && (
+          <ConfirmModal
+            onConfirm={handleReload}
+            onCancel={() => setShowConfirmModal(false)}
+          />
+        )}
+        <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
+          <div className="mb-3 sm:mb-4 md:mb-6 space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex-grow">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
+              </div>
+              <ReloadButton onClick={() => setShowConfirmModal(true)} />
             </div>
-            <button
-              onClick={() => setShowConfirmModal(true)}
-              onMouseDown={(e) => e.preventDefault()}
-              className={`
-                shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center
-                transition-all duration-150
-                ${activeZone === 'toolbar' && focusedIndex === 1 ? 'ring-4 ring-primary border-primary text-primary' : 'text-gray-400'}
-              `}
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
             <SortTabs
               options={sortOptions}
               selectedValue={sortBy}
               onSelect={(value) => handleSortChange(value as SortOption)}
-              active={activeZone === 'sortTabs'}
-              focusedIndex={focusedIndex}
             />
-        </div>
-
-        {searchQuery && (
-          <div className="mb-4">
-            <h2 className="text-2xl text-white font-bold">
-              Resultados para "{searchQuery}"
-            </h2>
           </div>
-        )}
 
-        {!searchQuery && visibleRecent.length > 0 && (
-          <>
+          {searchQuery && (
             <div className="mb-4">
-              <h2 className="text-2xl text-white font-bold">Recentes</h2>
+              <h2 className="text-2xl text-white font-bold">
+                Resultados para "{searchQuery}"
+              </h2>
             </div>
-            <ChannelGrid
-              channels={visibleRecent}
-              categories={categories}
-              active={activeZone === 'recentGrid'}
-              focusedIndex={focusedIndex}
-              onChannelClick={handleChannelClick}
-            />
-          </>
-        )}
+          )}
 
-        {!searchQuery && (
-          <div className={`mb-4 ${visibleRecent.length > 0 ? 'mt-6' : ''}`}>
-            <h2 className="text-2xl text-white font-bold">Todos os Canais</h2>
-          </div>
-        )}
+          {gridSections.map((section, secIdx) => (
+            <div key={section.key} className="mb-6">
+              {section.renderHeader && (
+                <div className="mb-3">
+                  <h2 className="text-2xl text-white font-bold">{section.label}</h2>
+                </div>
+              )}
+              <ChannelGrid
+                channels={section.channels}
+                categories={categories}
+                onChannelClick={handleChannelClick}
+                recentChannelsMap={recentChannelsMap}
+                startIndex={gridSectionStarts[secIdx]}
+                zone="channelsGrid"
+              />
+            </div>
+          ))}
 
-        {displayedChannels.length > 0 ? (
-          <ChannelGrid
-            channels={displayedChannels}
-            categories={categories}
-            active={activeZone === 'allGrid'}
-            focusedIndex={focusedIndex}
-            onChannelClick={handleChannelClick}
-          />
-        ) : (
-          <FeedbackMessage type="info" message={searchQuery ? "Nenhum canal encontrado." : "Sem canais disponíveis."} />
-        )}
+          {gridTotalItems === 0 && (
+            <FeedbackMessage type="info" message={searchQuery ? "Nenhum canal encontrado." : "Sem canais disponíveis."} />
+          )}
+        </div>
       </div>
-    </div>
+    </FocusProvider>
   )
 }
 

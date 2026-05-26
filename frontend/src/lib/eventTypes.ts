@@ -84,6 +84,17 @@ export interface ScriptsPreloadedPayload {
   }>
 }
 
+export interface ScriptsLoadedPayload {
+  scripts: Array<{
+    id: string
+    name: string
+    code: string
+    domains: string[]
+    urls: string[]
+    channelIds?: string[]
+  }>
+}
+
 export interface ChannelClosedPayload {
   channelId: string
   channelName: string
@@ -108,7 +119,7 @@ export interface EventHandlers {
   'focus:changed': FocusChangedPayload
   'scroll:moved': ScrollMovedPayload
   'script:retrieved': ScriptRetrievedPayload
-  'scripts:preloaded': ScriptsPreloadedPayload
+  'scripts:loaded': ScriptsLoadedPayload
   'navigated:home': NavigatedHomePayload
 }
 

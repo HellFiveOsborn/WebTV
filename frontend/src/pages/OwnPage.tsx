@@ -18,6 +18,7 @@ export const OwnPage = () => {
     deleteChannel,
     toggleChannelActive,
     reorderChannels,
+    reorderCategories,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -66,6 +67,7 @@ export const OwnPage = () => {
             onAdd={addCategory}
             onUpdate={updateCategory}
             onDelete={deleteCategory}
+            onReorder={reorderCategories}
           />
         )}
 

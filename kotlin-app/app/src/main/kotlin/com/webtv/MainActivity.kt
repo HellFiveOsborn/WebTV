@@ -43,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     private var closedChannelPayload: String? = null
     private var appBridgeScriptCache: String? = null
     private var pendingMicPermissionRequest: PermissionRequest? = null
+    private val channelScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
+    private val urlScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
+    private val domainScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
+    private val injectedScriptIds = mutableSetOf<String>()
 
     private val requestMicPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -134,12 +138,14 @@ class MainActivity : AppCompatActivity() {
                     listenerGuardInstalled = false
                     WebTVLog.d("Main", "Page changed: $previousUrl -> $url")
 
+                    injectAppBridgeScript()
+
                     if (activeChannelId != null) {
                         WebTVLog.d("Main", "Channel active ($activeChannelId), injecting into new page")
                         scriptInjector?.clearInjectedScripts()
                         resetScriptFlags()
                         injectControlScript()
-                        injectAppBridgeScript()
+                        injectChannelScripts(url)
 
                         if (preloadedScriptsPayload != null) {
                             injectPreloadedScripts()
@@ -357,15 +363,17 @@ class MainActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (activeChannelId != null) {
-            WebTVLog.d("WebTV", "BACK pressionado com canal ativo: $activeChannelName")
-            val script = """
-                javascript:(function() {
-                    if (window.WebTV && window.WebTV.channel && window.WebTV.channel.close) {
-                        window.WebTV.channel.close();
-                    } else {
-                        console.log('[WebTV] window.WebTV.channel.close não disponível, usando fallback');
-                        if (window.WebTVBridge && window.WebTVBridge.onChannelClosed) {
+        val onGrid = currentPageUrl != null && currentPageUrl!!.startsWith(START_URL) &&
+            !currentPageUrl!!.contains("/channel/")
+
+        if (!onGrid) {
+            WebTVLog.d("WebTV", "BACK: not on grid (url=$currentPageUrl), returning to $START_URL")
+            if (activeChannelId != null) {
+                val script = """
+                    javascript:(function() {
+                        if (window.WebTV && window.WebTV.channel && window.WebTV.channel.close) {
+                            window.WebTV.channel.close();
+                        } else if (window.WebTVBridge && window.WebTVBridge.onChannelClosed) {
                             var payload = JSON.stringify({
                                 channelId: window.__webtvActiveChannelId || 'unknown',
                                 channelName: window.__webtvActiveChannelName || 'Unknown',
@@ -373,12 +381,14 @@ class MainActivity : AppCompatActivity() {
                             });
                             window.WebTVBridge.onChannelClosed(payload);
                         }
-                    }
-                })();
-            """.trimIndent()
-            webView.evaluateJavascript(script, null)
-        } else if (webView.canGoBack()) {
-            webView.goBack()
+                    })();
+                """.trimIndent()
+                webView.evaluateJavascript(script, null)
+                activeChannelId = null
+                activeChannelName = null
+                injectedScriptIds.clear()
+            }
+            webView.loadUrl(START_URL)
         } else {
             showExitDialog()
         }
@@ -414,51 +424,55 @@ class MainActivity : AppCompatActivity() {
                         return;
                     }
 
-                    window.WebTV.events.on('app:loaded', (event) => {
-                        WebTVBridge.onAppLoaded(JSON.stringify(event.payload));
+window.WebTV.events.on('app:loaded', (event) => {
+                        WebTVBridge.onAppLoaded(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('channel:clicked', (event) => {
-                        const channelId = event.payload.id;
+                        const channelId = event.id;
                         const now = Date.now();
                         const cached = window.__webtvChannelCache[channelId];
-                        
+
                         if (cached && (now - cached) < 500) {
                             console.log('Ignored duplicate channel:clicked for ' + channelId);
                             return;
                         }
-                        
+
                         window.__webtvChannelCache[channelId] = now;
                         console.log('Dispatching channel:clicked for ' + channelId);
-                        WebTVBridge.onChannelClicked(JSON.stringify(event.payload));
+                        WebTVBridge.onChannelClicked(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('player:opened', (event) => {
-                        WebTVBridge.onPlayerOpened(JSON.stringify(event.payload));
+                        WebTVBridge.onPlayerOpened(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('player:closed', (event) => {
-                        WebTVBridge.onPlayerClosed(JSON.stringify(event.payload));
+                        WebTVBridge.onPlayerClosed(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('script:retrieved', (event) => {
-                        WebTVBridge.onScriptRetrieved(JSON.stringify(event.payload));
+                        WebTVBridge.onScriptRetrieved(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('search:changed', (event) => {
-                        WebTVBridge.onSearchChanged(JSON.stringify(event.payload));
+                        WebTVBridge.onSearchChanged(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('category:changed', (event) => {
-                        WebTVBridge.onCategoryChanged(JSON.stringify(event.payload));
+                        WebTVBridge.onCategoryChanged(JSON.stringify(event));
                     });
 
                     window.WebTV.events.on('navigated:home', (event) => {
-                        WebTVBridge.onNavigatedHome(JSON.stringify(event.payload));
+                        WebTVBridge.onNavigatedHome(JSON.stringify(event));
                     });
 
-                    window.WebTV.events.on('scripts:preloaded', (event) => {
-                        WebTVBridge.onScriptsPreloaded(JSON.stringify(event.payload));
+window.WebTV.events.on('scripts:preloaded', (event) => {
+                        WebTVBridge.onScriptsPreloaded(JSON.stringify(event));
+                    });
+
+                    window.WebTV.events.on('scripts:loaded', (event) => {
+                        WebTVBridge.onScriptsLoaded(JSON.stringify(event));
                     });
 
                     window.__webtvListenersActive = true;
@@ -557,6 +571,7 @@ class MainActivity : AppCompatActivity() {
         listenerGuardInstalled = false
         scriptInjector?.clearInjectedScripts()
         preloadedScriptsPayload = null
+        injectedScriptIds.clear()
         WebTVLog.d("Main", "Navigated to home, reset injection state")
 
         if (pendingClose != null) {
@@ -647,5 +662,71 @@ class MainActivity : AppCompatActivity() {
     fun setPendingScriptInjection(channelId: String, channelName: String) {
         pendingScriptInjection = Pair(channelId, channelName)
         WebTVLog.d("Main", "Pending script injection set for: $channelName ($channelId)")
+    }
+
+    fun storeChannelScript(channelId: String, scriptId: String, name: String, code: String) {
+        channelScripts.getOrPut(channelId) { mutableListOf() }.add(Triple(scriptId, name, code))
+    }
+
+    fun storeUrlScript(url: String, scriptId: String, name: String, code: String) {
+        urlScripts.getOrPut(url) { mutableListOf() }.add(Triple(scriptId, name, code))
+    }
+
+    fun storeDomainScript(domain: String, scriptId: String, name: String, code: String) {
+        domainScripts.getOrPut(domain) { mutableListOf() }.add(Triple(scriptId, name, code))
+    }
+
+    private fun injectChannelScripts(url: String) {
+        if (activeChannelId == null) return
+
+        val scriptsToInject = mutableListOf<Triple<String, String, String>>()
+
+        channelScripts[activeChannelId]?.let { scriptsToInject.addAll(it) }
+
+        val domain = try {
+            java.net.URI(url).host ?: ""
+        } catch (e: Exception) { "" }
+        if (domain.isNotEmpty()) {
+            domainScripts[domain]?.let { scriptsToInject.addAll(it) }
+        }
+
+        urlScripts[url]?.let { scriptsToInject.addAll(it) }
+
+        if (scriptsToInject.isEmpty()) {
+            WebTVLog.d("Main", "No scripts found for channel=$activeChannelId, url=$url")
+            return
+        }
+
+        WebTVLog.d("Main", "Injecting ${scriptsToInject.size} scripts for channel=$activeChannelId on $url")
+        for ((scriptId, name, code) in scriptsToInject) {
+            if (injectedScriptIds.contains(scriptId)) {
+                WebTVLog.d("Main", "Script already injected: $name, skipping")
+                continue
+            }
+            injectedScriptIds.add(scriptId)
+
+            val escapedCode = code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
+            val injectJs = """
+                (function() {
+                    try {
+                        var s = document.createElement('script');
+                        s.textContent = '$escapedCode';
+                        document.body.appendChild(s);
+                        console.log('[WebTV] Script injected: $name');
+                        return 'success';
+                    } catch(e) {
+                        return 'error: ' + e.message;
+                    }
+                })();
+            """.trimIndent()
+
+            webView.evaluateJavascript(injectJs) { result ->
+                if (result != null && result.contains("success")) {
+                    WebTVLog.d("Main", "Script injected: $name")
+                } else {
+                    WebTVLog.e("Main", "Failed to inject script: $name, result=$result")
+                }
+            }
+        }
     }
 }

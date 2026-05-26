@@ -12,12 +12,17 @@ declare global {
   interface Window {
     WebTV?: {
       events: typeof eventBus
-      scripts: ScriptManager
+      scriptManager: ScriptManager
+      channel?: {
+        activeId: string | null
+        activeName: string | null
+        close: () => void
+      }
     }
   }
 }
 
-window.WebTV = { events: eventBus, scripts: null as any }
+window.WebTV = { ...window.WebTV, events: eventBus, scriptManager: null as any }
 
 // Listener de scroll global
 window.addEventListener('scroll', () => {

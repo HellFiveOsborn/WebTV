@@ -3,8 +3,37 @@ import { Channel, Category, ChannelsData } from '../types/channel'
 import { Script } from '../types/script'
 import { defaultChannelsData } from '../data/defaultChannels'
 import { ScriptManager } from '../lib/scriptManager'
+import { eventBus } from '../lib/eventBus'
+import { extractDomainGroups } from '../utils/urlUtils'
 
 const JSON_URL = `${import.meta.env.BASE_URL}data/channels.json`
+
+const recalcScriptChannelIds = (scripts: Script[], channels: Channel[]): Script[] => {
+  const allUrls = channels.flatMap(ch => ch.alternativeUrls.map(alt => alt.url))
+  const domainGroups = extractDomainGroups(allUrls)
+
+  return scripts.map(script => {
+    const currentUrls = domainGroups.find(g => g.domain === script.domain)?.urls || []
+
+    const selectedUrls = currentUrls.filter(url => {
+      if (!script.subdomains || script.subdomains.length === 0) return true
+      return script.subdomains.some((sub: string) =>
+        url.includes(`://${sub}.`) || url.includes(`://${sub}/`)
+      )
+    })
+
+    const matchingChannelIds = channels
+      .filter(ch => ch.alternativeUrls.some(alt => selectedUrls.includes(alt.url)))
+      .map(ch => ch.id)
+
+    if (matchingChannelIds.length === 0 && !script.channelIds) return script
+
+    return {
+      ...script,
+      channelIds: matchingChannelIds.length > 0 ? matchingChannelIds : undefined
+    }
+  })
+}
 
 export const useChannelsData = () => {
   const [channels, setChannels] = useState<Channel[]>([])
@@ -43,26 +72,45 @@ export const useChannelsData = () => {
         manager.addScript(script, script.domains || [], script.urls || [])
       })
       
-      if (typeof window !== 'undefined' && window.WebTV) {
-        window.WebTV.scripts = manager
-      }
+if (typeof window !== 'undefined' && window.WebTV) {
+          window.WebTV.scriptManager = manager
+
+          eventBus.emit('scripts:loaded', {
+            scripts: scripts.map(s => ({
+              id: s.id,
+              name: s.name,
+              code: s.code,
+              domains: [...(s.domains || [])],
+              urls: [...(s.urls || [])],
+              channelIds: s.channelIds ? [...s.channelIds] : undefined
+            }))
+          })
+        }
     }
   }, [channels, scripts, loading])
 
   const addChannel = useCallback((channel: Omit<Channel, 'id'>) => {
-    const newChannel: Channel = {
-      ...channel,
-      id: Date.now().toString(),
-    }
-    setChannels(prev => [...prev, newChannel])
+    setChannels(prev => {
+      const newChannels = [...prev, { ...channel, id: Date.now().toString() }]
+      setScripts(prevScripts => recalcScriptChannelIds(prevScripts, newChannels))
+      return newChannels
+    })
   }, [])
 
   const updateChannel = useCallback((id: string, updates: Partial<Channel>) => {
-    setChannels(prev => prev.map(ch => ch.id === id ? { ...ch, ...updates } : ch))
+    setChannels(prev => {
+      const newChannels = prev.map(ch => ch.id === id ? { ...ch, ...updates } : ch)
+      setScripts(prevScripts => recalcScriptChannelIds(prevScripts, newChannels))
+      return newChannels
+    })
   }, [])
 
   const deleteChannel = useCallback((id: string) => {
-    setChannels(prev => prev.filter(ch => ch.id !== id))
+    setChannels(prev => {
+      const newChannels = prev.filter(ch => ch.id !== id)
+      setScripts(prevScripts => recalcScriptChannelIds(prevScripts, newChannels))
+      return newChannels
+    })
   }, [])
 
   const toggleChannelActive = useCallback((id: string) => {
@@ -77,6 +125,15 @@ export const useChannelsData = () => {
       const [movedChannel] = newChannels.splice(fromIndex, 1)
       newChannels.splice(toIndex, 0, movedChannel)
       return newChannels
+    })
+  }, [])
+
+  const reorderCategories = useCallback((fromIndex: number, toIndex: number) => {
+    setCategories(prev => {
+      const newCategories = [...prev]
+      const [movedCategory] = newCategories.splice(fromIndex, 1)
+      newCategories.splice(toIndex, 0, movedCategory)
+      return newCategories
     })
   }, [])
 
@@ -150,6 +207,7 @@ export const useChannelsData = () => {
     deleteChannel,
     toggleChannelActive,
     reorderChannels,
+    reorderCategories,
     addCategory,
     updateCategory,
     deleteCategory,

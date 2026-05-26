@@ -9,6 +9,7 @@ export interface Script {
   updatedAt: number
   domains?: string[]
   urls?: string[]
+  channelIds?: string[]
 }
 
 export interface DomainGroup {

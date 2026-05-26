@@ -4,6 +4,7 @@ import javascript from 'highlight.js/lib/languages/javascript'
 import 'highlight.js/styles/atom-one-dark.css'
 import { Script } from '../../../types/script'
 import { DomainGroup } from '../../../types/script'
+import { Channel } from '../../../types/channel'
 import { DomainSelector } from './DomainSelector'
 import { validateScript, minifyScript } from '../../../utils/scriptMinifier'
 
@@ -12,11 +13,12 @@ hljs.registerLanguage('javascript', javascript)
 interface ScriptEditorProps {
   script?: Script
   domainGroups: DomainGroup[]
+  channels: Channel[]
   onSave: (data: Omit<Script, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
 }
 
-export const ScriptEditor = ({ script, domainGroups, onSave, onCancel }: ScriptEditorProps) => {
+export const ScriptEditor = ({ script, domainGroups, channels, onSave, onCancel }: ScriptEditorProps) => {
   const [name, setName] = useState(script?.name || '')
   const [domain, setDomain] = useState(script?.domain || '')
   const [subdomains, setSubdomains] = useState<string[]>(script?.subdomains || [])
@@ -49,6 +51,17 @@ export const ScriptEditor = ({ script, domainGroups, onSave, onCancel }: ScriptE
     }
   }, [code])
 
+  const currentUrls = domainGroups.find(g => g.domain === domain)?.urls || []
+
+  const selectedUrls = currentUrls.filter(url => {
+    if (subdomains.length === 0) return true
+    return subdomains.some((sub: string) => url.includes(`://${sub}.`) || url.includes(`://${sub}/`))
+  })
+
+  const matchingChannelIds = channels
+    .filter(ch => ch.alternativeUrls.some(alt => selectedUrls.includes(alt.url)))
+    .map(ch => ch.id)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -59,10 +72,6 @@ export const ScriptEditor = ({ script, domainGroups, onSave, onCancel }: ScriptE
     }
 
     const minified = minifyScript(code)
-    const selectedUrls = currentUrls.filter(url => {
-      if (subdomains.length === 0) return true
-      return subdomains.some((sub: string) => url.includes(`://${sub}.`) || url.includes(`://${sub}/`))
-    })
 
     onSave({
       name,
@@ -71,11 +80,10 @@ export const ScriptEditor = ({ script, domainGroups, onSave, onCancel }: ScriptE
       code: minified,
       enabled,
       domains: [domain],
-      urls: selectedUrls
+      urls: selectedUrls,
+      channelIds: matchingChannelIds.length > 0 ? matchingChannelIds : undefined
     })
   }
-
-  const currentUrls = domainGroups.find(g => g.domain === domain)?.urls || []
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -97,6 +105,30 @@ export const ScriptEditor = ({ script, domainGroups, onSave, onCancel }: ScriptE
         onDomainChange={setDomain}
         onSubdomainsChange={setSubdomains}
       />
+
+      {matchingChannelIds.length > 0 && (
+        <div className="bg-green-900/20 border border-green-800 rounded-lg p-3">
+          <label className="block text-green-400 text-xs mb-1 font-medium uppercase tracking-wider">
+            Vinculado a {matchingChannelIds.length} canais
+          </label>
+          <div className="flex flex-wrap gap-1">
+            {matchingChannelIds.map(id => {
+              const ch = channels.find(c => c.id === id)
+              return (
+                <span key={id} className="px-2 py-0.5 bg-green-800/40 text-green-300 text-xs rounded">
+                  {ch?.title || id}
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {domain && matchingChannelIds.length === 0 && (
+        <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-3">
+          <span className="text-yellow-400 text-xs">Nenhum canal com este dominio. O script sera injetado globalmente.</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <label className="text-gray-400 text-sm">Habilitado</label>

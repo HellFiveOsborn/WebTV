@@ -92,6 +92,53 @@ class WebTVBridge(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
+    fun onScriptsLoaded(payload: String) {
+        activity.runOnUiThread {
+            try {
+                val json = JSONObject(payload)
+                val scriptsArray = json.getJSONArray("scripts")
+                val count = scriptsArray.length()
+                WebTVLog.d("Bridge", "Scripts loaded: $count scripts received")
+
+                for (i in 0 until count) {
+                    val scriptObj = scriptsArray.getJSONObject(i)
+                    val scriptId = scriptObj.getString("id")
+                    val name = scriptObj.optString("name", "unnamed")
+                    val code = scriptObj.getString("code")
+                    val channelIds = scriptObj.optJSONArray("channelIds")
+
+                    if (channelIds != null) {
+                        for (j in 0 until channelIds.length()) {
+                            val channelId = channelIds.getString(j)
+                            activity.storeChannelScript(channelId, scriptId, name, code)
+                        }
+                    }
+
+                    val urls = scriptObj.optJSONArray("urls")
+                    if (urls != null) {
+                        for (j in 0 until urls.length()) {
+                            val url = urls.getString(j)
+                            activity.storeUrlScript(url, scriptId, name, code)
+                        }
+                    }
+
+                    val domains = scriptObj.optJSONArray("domains")
+                    if (domains != null) {
+                        for (j in 0 until domains.length()) {
+                            val domain = domains.getString(j)
+                            activity.storeDomainScript(domain, scriptId, name, code)
+                        }
+                    }
+                }
+
+                WebTVLog.d("Bridge", "Scripts loaded: indexed $count scripts by channel/url/domain")
+            } catch (e: Exception) {
+                WebTVLog.e("Bridge", "Error parsing scripts:loaded payload", e)
+            }
+        }
+    }
+
+    @JavascriptInterface
     fun onScriptRetrieved(payload: String) {
         activity.runOnUiThread {
             try {

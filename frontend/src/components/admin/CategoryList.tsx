@@ -8,14 +8,49 @@ interface CategoryListProps {
   onAdd: (name: string) => void
   onUpdate: (id: string, updates: Partial<Category>) => void
   onDelete: (id: string) => void
+  onReorder: (fromIndex: number, toIndex: number) => void
 }
 
-export const CategoryList = ({ categories, channels, onAdd, onUpdate, onDelete }: CategoryListProps) => {
+export const CategoryList = ({ categories, channels, onAdd, onUpdate, onDelete, onReorder }: CategoryListProps) => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   const getChannelCount = (categoryId: string) => {
     return channels.filter(ch => (ch.categoryIds || []).includes(categoryId)).length
+  }
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDragEnter = (index: number) => {
+    setDragOverIndex(index)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== dropIndex) {
+      onReorder(draggedIndex, dropIndex)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
   }
 
   if (showForm) {
@@ -43,10 +78,19 @@ export const CategoryList = ({ categories, channels, onAdd, onUpdate, onDelete }
       </div>
 
       <div className="space-y-3">
-        {categories.map(category => (
+        {categories.map((category, index) => (
           <div
             key={category.id}
-            className="bg-dark-surface border border-dark-border rounded-lg p-4"
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={handleDragOver}
+            onDragEnter={() => handleDragEnter(index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`bg-dark-surface border rounded-lg p-4 transition-all cursor-move ${
+              draggedIndex === index ? 'opacity-50 scale-95' : 'border-dark-border'
+            } ${dragOverIndex === index && draggedIndex !== index ? 'border-blue-500 border-dashed border-2' : ''}`}
           >
             {editingId === category.id ? (
               <CategoryForm

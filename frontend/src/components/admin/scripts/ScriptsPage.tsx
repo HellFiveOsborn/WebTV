@@ -75,6 +75,7 @@ export const ScriptsPage = ({
           <ScriptEditor
             script={editingScript || undefined}
             domainGroups={domainGroups}
+            channels={channels}
             onSave={handleSave}
             onCancel={() => { setEditingScript(null); setIsCreating(false) }}
           />

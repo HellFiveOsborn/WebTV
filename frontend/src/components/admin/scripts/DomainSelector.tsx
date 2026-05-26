@@ -25,11 +25,6 @@ export const DomainSelector = ({
     }
   }
 
-  const filteredUrls = currentGroup?.urls.filter(url => {
-    if (selectedSubdomains.length === 0) return true
-    return selectedSubdomains.some(sub => url.includes(`://${sub}.`))
-  }) || []
-
   return (
     <div className="space-y-4">
       <div>
@@ -73,20 +68,6 @@ export const DomainSelector = ({
         </div>
       )}
 
-      {currentGroup && (
-        <div>
-          <label className="block text-gray-400 text-sm mb-2">
-            URLs ({filteredUrls.length})
-          </label>
-          <div className="max-h-32 overflow-y-auto space-y-1 bg-dark-bg rounded-lg p-2">
-            {filteredUrls.map(url => (
-              <div key={url} className="text-xs text-gray-500 font-mono truncate">
-                {url}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
   )
 }
