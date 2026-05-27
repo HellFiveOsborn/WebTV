@@ -18,6 +18,7 @@ export interface ChannelClickedPayload {
   id: string
   name: string
   type: 'iframe' | 'redirect' | 'mixed'
+  channels?: import('../types/channel').Channel[]
 }
 
 export interface PlayerOpenedPayload {
@@ -95,6 +96,8 @@ export interface ScriptsLoadedPayload {
   }>
 }
 
+export interface ChannelClosingPayload {}
+
 export interface ChannelClosedPayload {
   channelId: string
   channelName: string
@@ -109,6 +112,7 @@ export interface EventHandlers {
   'app:loaded': AppLoadedPayload
   'app:reloaded': AppReloadedPayload
   'channel:clicked': ChannelClickedPayload
+  'channel:closing': ChannelClosingPayload
   'channel:close': ChannelClosedPayload
   'player:opened': PlayerOpenedPayload
   'player:closed': PlayerClosedPayload

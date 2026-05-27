@@ -6,12 +6,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class ScriptInjector(private val webView: WebView) {
-    private val injectedScriptIds = mutableSetOf<String>()
+    val injectedScriptIds = mutableSetOf<String>()
     private val pendingScripts = mutableListOf<Pair<String, String>>()
 
     fun injectScriptRaw(code: String, name: String, callback: ((Boolean) -> Unit)? = null) {
-        injectScriptWithRetry(code, name, "", 0)
-        callback?.invoke(true)
+        injectScriptWithRetry(code, name, "", 0, callback)
     }
 
     fun clearInjectedScripts() {
@@ -153,9 +152,10 @@ class ScriptInjector(private val webView: WebView) {
         })
     }
 
-    private fun injectScriptWithRetry(code: String, scriptName: String, targetUrl: String, attempt: Int) {
+    private fun injectScriptWithRetry(code: String, scriptName: String, targetUrl: String, attempt: Int, callback: ((Boolean) -> Unit)? = null) {
         if (attempt >= 10) {
             WebTVLog.e("Inject", "Failed to inject script '$scriptName' after $attempt attempts")
+            callback?.invoke(false)
             return
         }
 
@@ -233,11 +233,14 @@ class ScriptInjector(private val webView: WebView) {
 
         webView.evaluateJavascript(injectionScript, ValueCallback { result ->
             WebTVLog.d("Inject", "Injection result for $scriptName: $result")
-            val success = result.contains("success") || result.contains("already-injected")
-            if (!success) {
+            val trimmed = result?.trim('"') ?: ""
+            val success = trimmed == "success" || trimmed == "already-injected"
+            if (success) {
+                callback?.invoke(true)
+            } else {
                 WebTVLog.d("Inject", "Injecting '$scriptName' failed ($attempt/10), retrying in 5s...")
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    injectScriptWithRetry(code, scriptName, targetUrl, attempt + 1)
+                    injectScriptWithRetry(code, scriptName, targetUrl, attempt + 1, callback)
                 }, 5000)
             }
         })

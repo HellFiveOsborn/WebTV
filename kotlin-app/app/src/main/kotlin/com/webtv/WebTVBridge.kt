@@ -40,6 +40,9 @@ class WebTVBridge(private val activity: MainActivity) {
                     WebTVLog.d("Bridge", "Redirect/mixed channel detected, will inject scripts when URL loads")
                     activity.setPendingScriptInjection(id, name)
                 }
+                if (json.has("channels")) {
+                    activity.storeWidgetData(payload)
+                }
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing channel:clicked payload", e)
             }
@@ -195,6 +198,21 @@ class WebTVBridge(private val activity: MainActivity) {
                 WebTVLog.d("Bridge", "Focus changed: $json")
             } catch (e: Exception) {
                 WebTVLog.e("Bridge", "Error parsing focus:changed payload", e)
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun onPlayerClosed(payload: String) {
+        activity.runOnUiThread {
+            try {
+                val json = JSONObject(payload)
+                val channelId = json.getString("channelId")
+                val channelName = json.getString("channelName")
+                WebTVLog.d("Bridge", "Player closed: $channelName (ID: $channelId)")
+                activity.handlePlayerClosed(channelId, channelName)
+            } catch (e: Exception) {
+                WebTVLog.e("Bridge", "Error parsing player:closed payload", e)
             }
         }
     }

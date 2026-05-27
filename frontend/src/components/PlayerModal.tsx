@@ -1,15 +1,18 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { Channel } from '../types/channel'
+import { ChannelWidget } from './ChannelWidget'
 import { eventBus } from '../lib/eventBus'
 
 interface PlayerModalProps {
   channel: Channel
   onClose: () => void
+  allChannels: Channel[]
+  onChannelSelect: (ch: Channel) => void
 }
 
 type FocusTarget = 'close' | 'backup' | 'iframe'
 
-export const PlayerModal = ({ channel, onClose }: PlayerModalProps) => {
+export const PlayerModal = ({ channel, onClose, allChannels, onChannelSelect }: PlayerModalProps) => {
   const iframeUrls = channel.alternativeUrls.filter(u => u.type === 'iframe')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [focusedElement, setFocusedElement] = useState<FocusTarget>('close')
@@ -141,7 +144,7 @@ export const PlayerModal = ({ channel, onClose }: PlayerModalProps) => {
       e.preventDefault()
       e.stopPropagation()
       if (focusedElement === 'close') {
-        onClose()
+        handleClose()
       } else if (focusedElement === 'backup') {
         setDropdownOpen(prev => !prev)
       }
@@ -172,8 +175,29 @@ export const PlayerModal = ({ channel, onClose }: PlayerModalProps) => {
 
   if (!activeUrl) return null
 
+  const handleWidgetSwitchUrl = (url: string) => {
+    const idx = iframeUrls.findIndex(u => u.url === url)
+    if (idx !== -1) {
+      setCurrentIndex(idx)
+      setFocusedElement('iframe')
+      eventBus.emit('player:backupSelected', {
+        channelId: channel.id,
+        index: idx,
+        url,
+      })
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black">
+      <ChannelWidget
+        channel={channel}
+        allChannels={allChannels}
+        onChannelSelect={onChannelSelect}
+        embedded
+        onClose={handleClose}
+        onSwitchUrl={handleWidgetSwitchUrl}
+      />
       <div className="absolute top-6 right-6 z-[60] flex items-start gap-3">
         {iframeUrls.length > 1 && (
           <div className="relative">
@@ -230,7 +254,7 @@ export const PlayerModal = ({ channel, onClose }: PlayerModalProps) => {
 
         <button
           ref={closeButtonRef}
-          onClick={onClose}
+          onClick={handleClose}
           className={`w-14 h-14 bg-black/60 backdrop-blur-sm text-white rounded-full transition-all flex items-center justify-center ${
             focusedElement === 'close'
               ? 'scale-110 ring-4 ring-white bg-red-600'

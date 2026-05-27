@@ -14,6 +14,7 @@ import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -25,7 +26,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.webkit.WebViewAssetLoader
+import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
+import android.util.TypedValue
+import android.view.Gravity
+import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
@@ -41,13 +50,21 @@ class MainActivity : AppCompatActivity() {
     private var activeChannelId: String? = null
     private var activeChannelName: String? = null
     private var closedChannelPayload: String? = null
-    private var appBridgeScriptCache: String? = null
+    private var assetLoader: WebViewAssetLoader? = null
     private var pendingMicPermissionRequest: PermissionRequest? = null
-    private val channelScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
-    private val urlScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
-    private val domainScripts = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
-    private val injectedScriptIds = mutableSetOf<String>()
+    private var ramOverlay: TextView? = null
+    private var ramHandler: Handler? = null
+    private var ramUpdateRunnable: Runnable? = null
+    private val channelScripts = createLruMap<String, MutableList<Triple<String, String, String>>>(50)
+    private val urlScripts = createLruMap<String, MutableList<Triple<String, String, String>>>(50)
+    private val domainScripts = createLruMap<String, MutableList<Triple<String, String, String>>>(50)
     private var closeNavigationScheduled = false
+    private var widgetChannelData: String? = null
+
+    fun storeWidgetData(channelsPayload: String) {
+        widgetChannelData = channelsPayload
+        WebTVLog.d("Main", "Widget channel data stored")
+    }
 
     private val requestMicPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -63,7 +80,17 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val FILE_CHOOSER_RESULT_CODE = 1001
-        private const val START_URL = "https://administrative-today-fix-seen.trycloudflare.com"
+        private const val START_URL = "https://variable-novel-elsewhere-electricity.trycloudflare.com"
+        private const val ASSET_DOMAIN = "appassets.androidplatform.net"
+        private const val LRU_CAPACITY = 50
+
+        private fun <K, V> createLruMap(capacity: Int): MutableMap<K, V> {
+            return object : LinkedHashMap<K, V>(capacity, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
+                    return size > capacity
+                }
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -83,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         webView.alpha = 0f
         setupWebView()
+        initRamOverlay()
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
@@ -95,6 +123,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupWebView() {
         bridge = WebTVBridge(this)
         scriptInjector = ScriptInjector(webView)
+
+        assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/scripts/", WebViewAssetLoader.AssetsPathHandler(this))
+            .setDomain(ASSET_DOMAIN)
+            .build()
 
         webView.settings.apply {
             javaScriptEnabled = true
@@ -123,6 +156,13 @@ class MainActivity : AppCompatActivity() {
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean = false
+
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                return assetLoader?.shouldInterceptRequest(request.url)
+            }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
@@ -155,6 +195,16 @@ class MainActivity : AppCompatActivity() {
                 }
                 injectEventListenerGuard()
             }
+
+            override fun onRenderProcessGone(
+                view: WebView?,
+                detail: android.webkit.RenderProcessGoneDetail?
+            ): Boolean {
+                WebTVLog.e("Render", "Renderer killed. Did crash: ${detail?.didCrash() ?: "unknown"}")
+                val currentUrl = view?.url ?: currentPageUrl
+                recreateWebView(currentUrl)
+                return true
+            }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
@@ -175,6 +225,7 @@ class MainActivity : AppCompatActivity() {
                         val url = request?.url?.toString() ?: return false
                         WebTVLog.d("Main", "Popup redirecting to main WebView: $url")
                         webView.loadUrl(url)
+                        view?.post { view.destroy() }
                         return true
                     }
                 }
@@ -300,6 +351,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun recreateWebView(fallbackUrl: String?) {
+        WebTVLog.w("Render", "Recreating WebView after renderer crash")
+        val parent = webView.parent as? ViewGroup ?: run {
+            WebTVLog.e("Render", "No parent ViewGroup, cannot recreate WebView")
+            finishAffinity()
+            return
+        }
+
+        parent.removeView(webView)
+        try { webView.destroy() } catch (_: Exception) {}
+
+        bridge = null
+        scriptInjector = null
+
+        webView = WebView(this)
+        webView.id = R.id.webview
+        webView.alpha = 0f
+        parent.addView(webView, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+
+        setupWebView()
+        listenerGuardInstalled = false
+        scriptInjector?.injectedScriptIds?.clear()
+        channelScripts.clear()
+        urlScripts.clear()
+        domainScripts.clear()
+
+        val loadUrl = fallbackUrl ?: START_URL
+        WebTVLog.d("Render", "Loading $loadUrl after WebView recreation")
+        webView.loadUrl(loadUrl)
+    }
+
     fun buildUserAgent(): String {
         return "WebTV/1.0 (Android)"
     }
@@ -349,17 +434,80 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         webView.onResume()
+        webView.resumeTimers()
         hideSystemBars()
+        startRamMonitor()
     }
 
     override fun onPause() {
         super.onPause()
+        stopRamMonitor()
+        webView.pauseTimers()
         webView.onPause()
     }
 
     override fun onDestroy() {
-        webView.destroy()
+        stopRamMonitor()
+        try {
+            webView.stopLoading()
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            webView.removeAllViews()
+            webView.loadUrl("about:blank")
+            webView.clearHistory()
+            webView.clearCache(true)
+            webView.destroy()
+        } catch (_: Exception) {}
+
+        bridge = null
+        scriptInjector = null
+        customView = null
+        customViewCallback = null
+        uploadMessage = null
+        currentPageUrl = null
+        pendingScriptInjection = null
+        preloadedScriptsPayload = null
+        activeChannelId = null
+        activeChannelName = null
+        closedChannelPayload = null
+        assetLoader = null
+        pendingMicPermissionRequest = null
+        channelScripts.clear()
+        urlScripts.clear()
+        domainScripts.clear()
+        scriptInjector?.injectedScriptIds?.clear()
+
         super.onDestroy()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        when (level) {
+            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW -> {
+                WebTVLog.d("Main", "onTrimMemory: RUNNING_LOW – clearing WebView cache")
+                webView.clearCache(true)
+            }
+            android.content.ComponentCallbacks2.TRIM_MEMORY_MODERATE,
+            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> {
+                WebTVLog.d("Main", "onTrimMemory: MODERATE/CRITICAL – full cache flush")
+                webView.clearCache(true)
+                CookieManager.getInstance().flush()
+                channelScripts.clear()
+                urlScripts.clear()
+                domainScripts.clear()
+            }
+            android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE,
+            android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND -> {
+                WebTVLog.d("Main", "onTrimMemory: COMPLETE/BACKGROUND – aggressive cleanup")
+                webView.clearCache(true)
+                CookieManager.getInstance().flush()
+                channelScripts.clear()
+                urlScripts.clear()
+                domainScripts.clear()
+                scriptInjector?.injectedScriptIds?.clear()
+                assetLoader = null
+                preloadedScriptsPayload = null
+            }
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -387,7 +535,7 @@ class MainActivity : AppCompatActivity() {
                 webView.evaluateJavascript(script, null)
                 activeChannelId = null
                 activeChannelName = null
-                injectedScriptIds.clear()
+                scriptInjector?.injectedScriptIds?.clear()
             } else {
                 playCloseAndNavigate()
             }
@@ -421,7 +569,8 @@ class MainActivity : AppCompatActivity() {
 
                 function tryInstall() {
                     if (typeof window.WebTV === 'undefined' ||
-                        typeof window.WebTV.events === 'undefined') {
+                        typeof window.WebTV.events === 'undefined' ||
+                        !window.__webtvAppBridgeInjected) {
                         setTimeout(tryInstall, 100);
                         return;
                     }
@@ -516,6 +665,7 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
             (function() {
                 window.__webtvActiveChannelId = '$activeChannelId';
                 window.__webtvActiveChannelName = '$activeChannelName';
+                window.__webtvBaseUrl = '$START_URL';
                 console.log('[WebTV] Active channel set:', window.__webtvActiveChannelId, window.__webtvActiveChannelName);
             })()
         """.trimIndent()
@@ -524,27 +674,37 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
         scriptInjector?.injectScriptRaw(script, "ControlScript") { success ->
             if (success) {
                 WebTVLog.d("Main", "Control script injected successfully")
-                verifyChannelIdInjection()
+                injectWidgetData()
+                injectWidgetBundle()
             } else {
                 WebTVLog.e("Main", "Failed to inject control script")
             }
         }
     }
 
-    private fun verifyChannelIdInjection() {
-        val verifyScript = """
-            (function() {
-                return window.__webtvActiveChannelId;
-            })()
-        """.trimIndent()
+    private fun injectWidgetBundle() {
+        if (activeChannelId == null) return
+        try {
+            val code = assets.open("scripts/webtv-widget.js").bufferedReader().use { it.readText() }
+            webView.evaluateJavascript(code, null)
+            WebTVLog.d("Main", "Widget bundle injected")
+        } catch (e: Exception) {
+            WebTVLog.e("Main", "Failed to load widget bundle: ${e.message}")
+        }
+    }
 
-        webView.evaluateJavascript(verifyScript) { result ->
-            val injectedId = result?.trim('"') ?: ""
-            if (injectedId == activeChannelId) {
-                WebTVLog.d("Main", "Verified: __webtvActiveChannelId = $injectedId")
-            } else {
-                WebTVLog.e("Main", "Verification failed: expected $activeChannelId, got $injectedId")
-            }
+    private fun injectWidgetData() {
+        if (widgetChannelData == null) return
+        try {
+            val json = JSONObject(widgetChannelData!!)
+            val channelsJson = json.getJSONArray("channels").toString()
+            webView.evaluateJavascript(
+                "window.__webtvWidgetData = {activeChannelId:'$activeChannelId',activeChannelName:'${activeChannelName?.replace("'", "\\'")}',channels:$channelsJson};",
+                null
+            )
+            WebTVLog.d("Main", "Widget data injected")
+        } catch (e: Exception) {
+            WebTVLog.e("Main", "Failed to inject widget data: ${e.message}")
         }
     }
 
@@ -573,7 +733,7 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
         listenerGuardInstalled = false
         scriptInjector?.clearInjectedScripts()
         preloadedScriptsPayload = null
-        injectedScriptIds.clear()
+        scriptInjector?.injectedScriptIds?.clear()
         closeNavigationScheduled = false
         WebTVLog.d("Main", "Navigated to home, reset injection state")
 
@@ -593,9 +753,9 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
         activeChannelName = channelName
     }
 
-    fun handleChannelClosed(channelId: String, channelName: String) {
-        WebTVLog.d("WebTV", "Canal fechado: $channelName (ID: $channelId)")
-        
+    fun handlePlayerClosed(channelId: String, channelName: String) {
+        WebTVLog.d("WebTV", "Player closed via frontend: $channelName (ID: $channelId)")
+
         val payload = """
             {
                 "channelId": "$channelId",
@@ -603,12 +763,31 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
                 "timestamp": ${System.currentTimeMillis()}
             }
         """.trimIndent()
-        
+
         closedChannelPayload = payload
-        
+
         activeChannelId = null
         activeChannelName = null
-        
+
+        playCloseAndNavigate()
+    }
+
+    fun handleChannelClosed(channelId: String, channelName: String) {
+        WebTVLog.d("WebTV", "Canal fechado: $channelName (ID: $channelId)")
+
+        val payload = """
+            {
+                "channelId": "$channelId",
+                "channelName": "$channelName",
+                "timestamp": ${System.currentTimeMillis()}
+            }
+        """.trimIndent()
+
+        closedChannelPayload = payload
+
+        activeChannelId = null
+        activeChannelName = null
+
         playCloseAndNavigate()
     }
 
@@ -650,19 +829,13 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
     }
 
     private fun injectAppBridgeScript() {
-        if (appBridgeScriptCache == null) {
-            try {
-                appBridgeScriptCache = assets.open("scripts/appBridge.js").bufferedReader().use { it.readText() }
-                WebTVLog.d("WebTV", "AppBridge script carregado dos assets")
-            } catch (e: Exception) {
-                WebTVLog.e("WebTV", "Erro ao carregar AppBridge script: ${e.message}")
-                return
-            }
+        try {
+            val code = assets.open("scripts/appBridge.js").bufferedReader().use { it.readText() }
+            webView.evaluateJavascript(code, null)
+            WebTVLog.d("WebTV", "AppBridge script injected inline")
+        } catch (e: Exception) {
+            WebTVLog.e("WebTV", "Failed to load AppBridge script: ${e.message}")
         }
-
-        val script = "javascript:(function() { $appBridgeScriptCache })();"
-        webView.evaluateJavascript(script, null)
-        WebTVLog.d("WebTV", "AppBridge script injetado")
     }
 
     private fun injectChannelCloseEvent(payload: String) {
@@ -724,11 +897,11 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
 
         WebTVLog.d("Main", "Injecting ${scriptsToInject.size} scripts for channel=$activeChannelId on $url")
         for ((scriptId, name, code) in scriptsToInject) {
-            if (injectedScriptIds.contains(scriptId)) {
+            if (scriptInjector?.injectedScriptIds?.contains(scriptId) == true) {
                 WebTVLog.d("Main", "Script already injected: $name, skipping")
                 continue
             }
-            injectedScriptIds.add(scriptId)
+            scriptInjector?.injectedScriptIds?.add(scriptId)
 
             val escapedCode = code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
             val injectJs = """
@@ -753,5 +926,76 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
                 }
             }
         }
+    }
+
+    private fun initRamOverlay() {
+        val parent = window.decorView.findViewById<ViewGroup>(android.R.id.content)
+        if (parent !is FrameLayout) {
+            WebTVLog.e("Main", "RAM overlay: root content is not FrameLayout, skipping")
+            return
+        }
+
+        ramOverlay = TextView(this).apply {
+            text = ""
+            setTextColor(Color.argb(180, 255, 255, 255))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
+            setBackgroundColor(Color.TRANSPARENT)
+            val pad = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 4f, resources.displayMetrics
+            ).toInt()
+            setPadding(pad, pad, pad, pad)
+            isFocusable = false
+            isClickable = false
+            isLongClickable = false
+        }
+
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.BOTTOM or Gravity.START
+            bottomMargin = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics
+            ).toInt()
+            leftMargin = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics
+            ).toInt()
+        }
+
+        parent.addView(ramOverlay, params)
+        WebTVLog.d("Main", "RAM overlay initialized")
+    }
+
+    private fun startRamMonitor() {
+        if (ramHandler != null) return
+        val rt = Runtime.getRuntime()
+        val handler = Handler(Looper.getMainLooper())
+        val overlay = ramOverlay ?: return
+
+        val runnable = object : Runnable {
+            override fun run() {
+                val used = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024)
+                overlay.text = "${used}MB"
+                handler.postDelayed(this, 500)
+            }
+        }
+
+        ramHandler = handler
+        ramUpdateRunnable = runnable
+        handler.post(runnable)
+        WebTVLog.d("Main", "RAM monitor started")
+    }
+
+    private fun stopRamMonitor() {
+        val r = ramUpdateRunnable
+        if (r != null) {
+            ramHandler?.removeCallbacks(r)
+            ramUpdateRunnable = null
+        }
+        ramHandler = null
+        if (ramOverlay != null) {
+            ramOverlay!!.text = ""
+        }
+        WebTVLog.d("Main", "RAM monitor stopped")
     }
 }

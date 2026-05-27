@@ -83,6 +83,12 @@ function App() {
   }, [clearRecentChannels])
 
   useEffect(() => {
+    if (!loading && !channelIdParam) {
+      eventBus.emit('navigated:home', { timestamp: Date.now() })
+    }
+  }, [loading, channelIdParam])
+
+  useEffect(() => {
     if (channelIdParam && !loading && !activeChannel) {
       const channel = channels.find(ch => ch.id === channelIdParam)
       if (channel) {
@@ -93,7 +99,8 @@ function App() {
         eventBus.emit('channel:clicked', {
           id: channel.id,
           name: channel.title,
-          type: iframeUrls.length > 0 && redirectUrl ? 'mixed' : redirectUrl ? 'redirect' : 'iframe'
+          type: iframeUrls.length > 0 && redirectUrl ? 'mixed' : redirectUrl ? 'redirect' : 'iframe',
+          channels: channels.filter((ch: Channel) => ch.active)
         })
 
         if (redirectUrl) {
@@ -243,7 +250,8 @@ function App() {
     eventBus.emit('channel:clicked', {
       id: channel.id,
       name: channel.title,
-      type: hasIframe && hasRedirect ? 'mixed' : hasIframe ? 'iframe' : 'redirect'
+      type: hasIframe && hasRedirect ? 'mixed' : hasIframe ? 'iframe' : 'redirect',
+      channels: channels.filter((ch: Channel) => ch.active)
     })
 
     if (hasIframe) {
@@ -300,10 +308,22 @@ function App() {
   }
 
   if (activeChannel && activeChannel.alternativeUrls.some(u => u.type === 'iframe')) {
+    const handleWidgetChannelSelect = (ch: Channel) => {
+      addRecentChannel(ch)
+      eventBus.emit('channel:clicked', {
+        id: ch.id,
+        name: ch.title,
+        type: ch.alternativeUrls.some((u: { type: string }) => u.type === 'iframe') ? 'iframe' : 'redirect',
+        channels: channels.filter((c: Channel) => c.active)
+      })
+      setActiveChannel(ch)
+    }
     return (
       <PlayerModal
         channel={activeChannel}
         onClose={handleClose}
+        allChannels={channels}
+        onChannelSelect={handleWidgetChannelSelect}
       />
     )
   }

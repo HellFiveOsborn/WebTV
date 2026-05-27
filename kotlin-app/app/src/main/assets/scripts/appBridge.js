@@ -34,10 +34,7 @@
   window.WebTV.channel.activeName = null;
 
   window.WebTV.channel.close = function() {
-    if (!this.activeId) {
-      console.log('[WebTV] No active channel to close');
-      return;
-    }
+    if (!this.activeId) return;
 
     window.WebTV.events.emit('channel:closing', {});
 
@@ -46,7 +43,6 @@
       channelName: this.activeName,
       timestamp: Date.now()
     };
-    console.log('[WebTV] Channel close requested:', payload);
     if (window.WebTVBridge && window.WebTVBridge.onChannelClosed) {
       window.WebTVBridge.onChannelClosed(JSON.stringify(payload));
     }
@@ -56,7 +52,6 @@
 
   window.WebTV.events.on('channel:clicked', function(payload) {
     if (payload && payload.id) {
-      console.log('[appBridge] Setting active channel:', payload.id);
       window.WebTV.channel.activeId = payload.id;
       window.WebTV.channel.activeName = payload.name;
       window.__webtvActiveChannelId = payload.id;
@@ -77,5 +72,10 @@
     });
   });
 
-  console.log('[WebTV] appBridge.js loaded (created window.WebTV)');
+  if (window.__webtvActiveChannelId) {
+    window.WebTV.channel.activeId = window.__webtvActiveChannelId;
+    window.WebTV.channel.activeName = window.__webtvActiveChannelName || '';
+  }
+
+  console.log('[WebTV] appBridge.js loaded');
 })();
