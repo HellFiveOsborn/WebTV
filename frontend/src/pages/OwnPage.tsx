@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { useChannelsData } from '../hooks/useChannelsData'
+import { hasToken } from '../lib/gistApi'
 import { OwnSidebar } from '../components/admin/OwnSidebar'
 import { ChannelList } from '../components/admin/ChannelList'
 import { CategoryList } from '../components/admin/CategoryList'
 import { ScriptsPage } from '../components/admin/scripts/ScriptsPage'
+import { GistTokenSetup } from '../components/admin/GistTokenSetup'
 
 type Section = 'channels' | 'categories' | 'scripts'
 
 export const OwnPage = () => {
   const [section, setSection] = useState<Section>('channels')
+  const [configured, setConfigured] = useState(false)
+
   const {
     channels,
     categories,
     loading,
+    syncStatus,
     addChannel,
     updateChannel,
     deleteChannel,
@@ -28,7 +33,12 @@ export const OwnPage = () => {
     scripts,
     exportData,
     copyJSON,
+    saveNow,
   } = useChannelsData()
+
+  if (!hasToken() && !configured) {
+    return <GistTokenSetup onConfigured={() => setConfigured(true)} />
+  }
 
   if (loading) {
     return (
@@ -45,6 +55,8 @@ export const OwnPage = () => {
         onSelectSection={setSection}
         onExport={exportData}
         onCopyJSON={copyJSON}
+        syncStatus={syncStatus}
+        onSaveNow={saveNow}
       />
 
       <main className="flex-1 p-8">

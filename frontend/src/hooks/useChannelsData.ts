@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Channel, Category, ChannelsData } from '../types/channel'
 import { Script } from '../types/script'
 import { defaultChannelsData } from '../data/defaultChannels'
 import { ScriptManager } from '../lib/scriptManager'
 import { eventBus } from '../lib/eventBus'
 import { extractDomainGroups } from '../utils/urlUtils'
+import { fetchGistData, saveGistData, hasToken, getToken } from '../lib/gistApi'
 
-const JSON_URL = `${import.meta.env.BASE_URL}data/channels.json`
+const LOCAL_JSON_URL = `${import.meta.env.BASE_URL}data/channels.json`
 
 const recalcScriptChannelIds = (scripts: Script[], channels: Channel[]): Script[] => {
   const allUrls = channels.flatMap(ch => ch.alternativeUrls.map(alt => alt.url))
@@ -35,25 +36,39 @@ const recalcScriptChannelIds = (scripts: Script[], channels: Channel[]): Script[
   })
 }
 
+export type SyncStatus = 'saved' | 'saving' | 'error' | 'idle'
+
 export const useChannelsData = () => {
   const [channels, setChannels] = useState<Channel[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [scripts, setScripts] = useState<Script[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const isInitialLoad = useRef(true)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch(JSON_URL)
-        if (!response.ok) {
-          throw new Error('Falha ao carregar channels.json')
-        }
+        const data = await fetchGistData()
+        setChannels(data.channels)
+        setCategories(data.categories)
+        setScripts(data.scripts || [])
+        setLoading(false)
+        return
+      } catch {
+        console.warn('Gist não disponível, tentando arquivo local')
+      }
+
+      try {
+        const response = await fetch(LOCAL_JSON_URL)
+        if (!response.ok) throw new Error('Falha ao carregar channels.json')
         const data: ChannelsData = await response.json()
         setChannels(data.channels)
         setCategories(data.categories)
         setScripts(data.scripts || [])
-      } catch (err) {
-        console.warn('channels.json não encontrado, usando dados padrão')
+      } catch {
+        console.warn('Arquivo local não encontrado, usando dados padrão')
         setChannels(defaultChannelsData.channels)
         setCategories(defaultChannelsData.categories)
         setScripts([])
@@ -63,6 +78,37 @@ export const useChannelsData = () => {
     }
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (loading) return
+
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false
+      return
+    }
+
+    if (!hasToken()) return
+
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+
+    setSyncStatus('saving')
+
+    saveTimer.current = setTimeout(async () => {
+      const data: ChannelsData = { channels, categories, scripts }
+      const result = await saveGistData(data, getToken()!)
+
+      if (result.ok) {
+        setSyncStatus('saved')
+      } else {
+        console.warn('Falha ao salvar no Gist:', result.error)
+        setSyncStatus('error')
+      }
+    }, 1000)
+
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [channels, categories, scripts, loading])
 
   useEffect(() => {
     if (!loading && channels.length > 0) {
@@ -197,11 +243,20 @@ if (typeof window !== 'undefined' && window.WebTV) {
     setScripts(prev => prev.filter(s => s.id !== id))
   }, [])
 
+  const saveNow = useCallback(async () => {
+    if (!hasToken()) return
+    setSyncStatus('saving')
+    const data: ChannelsData = { channels, categories, scripts }
+    const result = await saveGistData(data, getToken()!)
+    setSyncStatus(result.ok ? 'saved' : 'error')
+  }, [channels, categories, scripts])
+
   return {
     channels,
     categories,
     scripts,
     loading,
+    syncStatus,
     addChannel,
     updateChannel,
     deleteChannel,
@@ -216,5 +271,6 @@ if (typeof window !== 'undefined' && window.WebTV) {
     deleteScript,
     exportData,
     copyJSON,
+    saveNow,
   }
 }

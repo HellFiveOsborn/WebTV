@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Code2 } from 'lucide-react'
+import { Code2, CheckCircle, Loader2, AlertCircle, CloudOff } from 'lucide-react'
+import { SyncStatus } from '../../hooks/useChannelsData'
 
 type AdminSection = 'channels' | 'categories' | 'scripts'
 
@@ -8,9 +9,11 @@ interface OwnSidebarProps {
   onSelectSection: (section: AdminSection) => void
   onExport: () => void
   onCopyJSON: () => void
+  syncStatus?: SyncStatus
+  onSaveNow?: () => void
 }
 
-export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSON }: OwnSidebarProps) => {
+export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSON, syncStatus, onSaveNow }: OwnSidebarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -74,6 +77,44 @@ export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSO
           Scripts
         </button>
       </nav>
+
+      {syncStatus && (
+        <div className="mb-4 p-3 bg-dark-bg border border-dark-border rounded-lg">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-500">Gist Sync</span>
+            {syncStatus === 'saving' && (
+              <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+            )}
+            {syncStatus === 'saved' && (
+              <CheckCircle className="w-4 h-4 text-green-400" />
+            )}
+            {syncStatus === 'error' && (
+              <AlertCircle className="w-4 h-4 text-red-400" />
+            )}
+            {syncStatus === 'idle' && (
+              <CloudOff className="w-4 h-4 text-gray-500" />
+            )}
+          </div>
+          <div className="text-sm">
+            {syncStatus === 'saving' && <span className="text-yellow-400">Salvando...</span>}
+            {syncStatus === 'saved' && <span className="text-green-400">Sincronizado</span>}
+            {syncStatus === 'error' && (
+              <div>
+                <span className="text-red-400">Erro</span>
+                {onSaveNow && (
+                  <button
+                    onClick={onSaveNow}
+                    className="ml-2 text-blue-400 hover:text-blue-300 underline text-xs"
+                  >
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
+            )}
+            {syncStatus === 'idle' && <span className="text-gray-500">Não configurado</span>}
+          </div>
+        </div>
+      )}
 
       <div className="relative" ref={dropdownRef}>
         <div className="flex">
