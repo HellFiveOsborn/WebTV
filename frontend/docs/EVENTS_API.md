@@ -180,6 +180,35 @@ Emitido quando o player modal fecha.
 
 ---
 
+### `player:quality:changed`
+Emitido quando a qualidade/resolução do vídeo muda.
+
+**Payload:**
+```typescript
+{
+  quality: number      // Índice da qualidade atual (0 = Auto)
+  levels: Array<{
+    index: number
+    label: string      // Ex: "Auto", "720p", "540p"
+    height: number
+    width: number
+    bitrate: number
+  }>
+}
+```
+
+**Exemplo Kotlin:**
+```kotlin
+webView.evaluateJavascript("""
+  window.WebTV.events.on('player:quality:changed', (event) => {
+    const { quality, levels } = event.payload;
+    console.log(`Qualidade: ${levels[quality]?.label || 'Auto'}`);
+  });
+""", null)
+```
+
+---
+
 ### `player:backupSelected`
 Emitido quando o usuário seleciona uma URL alternativa.
 
@@ -279,6 +308,122 @@ Emitido quando a página faz scroll.
   x: number
   y: number
   element: 'window' | string
+}
+```
+
+---
+
+## API de Qualidade de Vídeo
+
+`window.WebTV.player.quality` expõe controle de qualidade/resolução. Funciona
+tanto com JWPlayer (`getQualityLevels`/`setCurrentQuality`) quanto com Clappr
+(`hls.js.levels`/`currentLevel`).
+
+### `window.WebTV.player.getStatus().quality`
+
+`getStatus()` retorna um campo `quality` incluso:
+
+```typescript
+{
+  current: number      // Índice atual (0 = Auto)
+  levels: [            // Array de níveis disponíveis
+    { index: 0, label: 'Auto', height: 0, width: 0, bitrate: 0 },
+    { index: 1, label: '720p', height: 720, width: 1280, bitrate: 3860587 },
+    { index: 2, label: '540p', height: 540, width: 960, bitrate: 2071916 },
+    // ...
+  ]
+}
+```
+
+### `window.WebTV.player.quality.getLevels()`
+
+Retorna o array de níveis disponíveis (ou `null` se indisponível).
+
+```typescript
+const levels = window.WebTV.player.quality.getLevels()
+// [
+//   { index: 0, label: 'Auto', height: 0, width: 0, bitrate: 0 },
+//   { index: 1, label: '720p', height: 720, ... },
+//   { index: 2, label: '540p', height: 540, ... },
+// ]
+```
+
+### `window.WebTV.player.quality.getCurrent()`
+
+Retorna o índice da qualidade atual (`0` = Auto).
+
+```typescript
+const current = window.WebTV.player.quality.getCurrent()
+```
+
+### `window.WebTV.player.quality.set(index)`
+
+Seleciona uma qualidade pelo índice. `0` = Auto. Retorna `true` se funcionou.
+
+```typescript
+// Mudar para 720p (índice 1)
+window.WebTV.player.quality.set(1)
+
+// Voltar para Auto
+window.WebTV.player.quality.set(0)
+```
+
+### `window.WebTV.player.quality.setAuto()`
+
+Atalho para `quality.set(0)`.
+
+### Evento: `player:quality:changed`
+
+Emitido quando a qualidade muda (automaticamente ou via `quality.set()`).
+
+**Payload:**
+```typescript
+{
+  quality: number      // Índice da qualidade atual
+  levels: [            // Array completo de níveis
+    { index: number, label: string, height: number, width: number, bitrate: number }
+  ]
+}
+```
+
+### Mapeamento por Player
+
+| Ação | JWPlayer | Clappr (hls.js via DOM) |
+|------|----------|------------------------|
+| Listar níveis | `jwplayer().getQualityLevels()` | Percorre `hls.levels` do playback interno |
+| Obter atual | `jwplayer().getCurrentQuality()` | `hls.currentLevel` (-1 = Auto, n = índice - 1) |
+| Selecionar | `jwplayer().setCurrentQuality(idx)` | `hls.currentLevel = idx === 0 ? -1 : idx - 1` |
+
+### Exemplo Kotlin
+
+```kotlin
+// Obter qualidades disponíveis
+webView.evaluateJavascript("""
+  window.WebTV.player.quality.getLevels()
+""") { result ->
+    val jsonArray = JSONArray(result)
+    for (i in 0 until jsonArray.length()) {
+        val level = jsonArray.getJSONObject(i)
+        Log.d("WebTV", "Qualidade: ${level.getString("label")}")
+    }
+}
+
+// Selecionar qualidade
+webView.evaluateJavascript("window.WebTV.player.quality.set(1)", null)
+
+// Escutar mudança de qualidade
+webView.evaluateJavascript("""
+  window.WebTV.events.on('player:quality:changed', (event) => {
+    WebTVBridge.onQualityChanged(JSON.stringify(event.payload));
+  });
+""", null)
+
+@JavascriptInterface
+fun onQualityChanged(payload: String) {
+    val json = JSONObject(payload)
+    val quality = json.getInt("quality")
+    val levels = json.getJSONArray("levels")
+    Log.d("WebTV", "Qualidade mudou para índice: $quality")
 }
 ```
 
@@ -506,6 +651,141 @@ fun onScriptRetrieved(payload: String) {
 
 ---
 
+---
+
+## Contrato Padrão para Scripts de Injeção
+
+Todo script de injeção de player **deve** seguir este contrato para garantir
+interoperabilidade com o sistema WebTV (DPAD, Android TV, Kotlin bridge).
+
+### `window.WebTV.player` — API Obrigatória
+
+| Método | Retorno | Descrição |
+|--------|---------|-----------|
+| `play()` | `Promise<{ok, reason?}>` | Iniciar reprodução |
+| `pause()` | `{ok}` | Pausar reprodução |
+| `stop()` | `{ok}` | Parar e resetar `currentTime` para 0 |
+| `seek(t)` | `{ok, time}` | Ir para `t` segundos |
+| `rewind(s?)` | `{ok, time}` | Voltar `s` segundos (padrão 10) |
+| `forward(s?)` | `{ok, time}` | Avançar `s` segundos (padrão 10) |
+| `volumeUp(s?)` | `{ok, volume}` | Aumentar volume em `s` (0–1) |
+| `volumeDown(s?)` | `{ok, volume}` | Diminuir volume em `s` (0–1) |
+| `mute()` | `{ok}` | Mutar áudio |
+| `unmute()` | `{ok, volume}` | Desmutar áudio |
+| `getStatus()` | `PlayerStatus` | Estado completo do player |
+| `quality.getLevels()` | `QualityLevel[] \| null` | Níveis de qualidade disponíveis |
+| `quality.getCurrent()` | `number` | Índice da qualidade atual (0 = Auto) |
+| `quality.set(index)` | `boolean` | Selecionar qualidade pelo índice |
+| `quality.setAuto()` | `boolean` | Voltar para qualidade Auto |
+| `toggleAudioMute()` | `void` | Alternar mute (com hook `_webtvRemoteMute`) |
+| `unmuteAudio()` | `void` | Forçar unmute + persistir `sessionStorage` |
+
+```typescript
+interface PlayerStatus {
+  found: boolean
+  paused: boolean
+  muted: boolean
+  volume: number           // 0.0 a 1.0
+  currentTime: number
+  duration: number
+  src?: string             // apenas se found via <video>
+  state?: string           // apenas JWPlayer: "playing", "paused", "idle"...
+  quality: {
+    current: number
+    levels: QualityLevel[]
+  }
+}
+
+interface QualityLevel {
+  index: number
+  label: string            // "Auto", "720p", "540p"...
+  height: number
+  width: number
+  bitrate: number
+}
+```
+
+### `window.WebTV.toggleAudioMute()` e `window.WebTV.unmuteAudio()`
+
+Métodos utilitários expostos diretamente em `window.WebTV` para acesso rápido
+do Kotlin sem precisar navegar pela hierarquia `player.*`.
+
+### Estado de Áudio — `window._webtvAudioUnlocked`
+
+- Controlado por `sessionStorage.getItem('webtv_audio_unlocked')` na inicialização
+- Quando `true`, o hook `HTMLMediaElement.prototype.muted` **bloqueia** novas
+  chamadas `muted = true` (impede que o player re-mute após desbloqueio do usuário)
+- `window._webtvRemoteMute` permite que `toggleAudioMute()` bypass o hook
+
+### Eventos que o Script Deve Emitir
+
+| Evento | Payload | Quando |
+|--------|---------|--------|
+| `player:play` | `{currentTime, duration, isLive?, url?, source?}` | Reprodução inicia |
+| `player:pause` | `{currentTime, duration}` | Reprodução pausa |
+| `player:ended` | `{time: 0}` | Stream termina |
+| `player:timeupdate` | `{currentTime, duration}` | `currentTime` muda |
+| `player:seeked` | `{time, duration, direction?}` | Seek executado |
+| `player:volume:changed` | `{volume, direction?}` | Volume alterado |
+| `player:muted` | `{}` | Player mutado |
+| `player:unmuted` | `{volume}` | Player desmutado |
+| `player:error` | `{message, code?}` | Erro de reprodução |
+| `player:loaded` | `{duration, isLive, quality?}` | Player pronto |
+| `player:quality:changed` | `{quality, levels}` | Qualidade mudou |
+| `player:audio:unlocked` | `{volume: 1.0}` | Usuário desbloqueou áudio |
+
+### Padrão de `postEvent()`
+
+```javascript
+function postEvent(type, data) {
+  var event = { source: 'webtv', name: type, payload: data || {}, timestamp: Date.now() };
+  if (window.parent && window.parent !== window) window.parent.postMessage(event, '*');
+  window.dispatchEvent(new CustomEvent(type, { detail: event }));
+  window.dispatchEvent(new CustomEvent('webtv:event', { detail: event }));
+  if (window.WebViewBridge && window.WebViewBridge.postMessage) window.WebViewBridge.postMessage(JSON.stringify(event));
+}
+```
+
+### Estrutura do Script (Template)
+
+```javascript
+(function() {
+  'use strict';
+
+  // 1. Persistência de áudio (sempre)
+  if (sessionStorage.getItem('webtv_audio_unlocked')) window._webtvAudioUnlocked = true;
+
+  // 2. Guarda de injeção única
+  var SCRIPT_ID = 'meu-script-id';
+  if (window['__webtv_' + SCRIPT_ID]) return;
+  window['__webtv_' + SCRIPT_ID] = true;
+
+  // 3. Hook muted (sempre) — protege contra re-mute
+  try {
+    var _md = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');
+    if (_md && _md.set) {
+      var _oms = _md.set;
+      Object.defineProperty(HTMLMediaElement.prototype, 'muted', {
+        get: _md.get,
+        set: function(v) {
+          if (window._webtvAudioUnlocked && v === true && !window._webtvRemoteMute) return;
+          _oms.call(this, v);
+        }
+      });
+    }
+  } catch(e) {}
+
+  // 4. Remoção de overlays (se aplicável)
+  // 5. Detecção do player (JWPlayer / Clappr / nativo)
+  // 6. Autoplay com fallback muted → unmuted
+  // 7. Setup de eventos do player
+  // 8. Exposição da API (window.WebTV.player)
+  // 9. Listener de comandos (webtv:command)
+})();
+```
+
+---
+
 ## TypeScript Types
 
 Todos os tipos estão definidos em `frontend/src/lib/eventTypes.ts`:
@@ -523,6 +803,7 @@ export interface EventHandlers {
   'channel:clicked': ChannelClickedPayload
   'player:opened': PlayerOpenedPayload
   'player:closed': PlayerClosedPayload
+  'player:quality:changed': PlayerQualityChangedPayload
   'player:backupSelected': PlayerBackupSelectedPayload
   'search:changed': SearchChangedPayload
   'sort:changed': SortChangedPayload
@@ -530,6 +811,17 @@ export interface EventHandlers {
   'focus:changed': FocusChangedPayload
   'scroll:moved': ScrollMovedPayload
   'script:retrieved': ScriptRetrievedPayload
+}
+
+export interface PlayerQualityChangedPayload {
+  quality: number
+  levels: Array<{
+    index: number
+    label: string
+    height: number
+    width: number
+    bitrate: number
+  }>
 }
 
 export interface ScriptRetrievedPayload {

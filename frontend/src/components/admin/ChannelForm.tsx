@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronUp, ChevronDown, X } from 'lucide-react'
 import { Channel, Category, AlternativeUrl, ChannelType } from '../../types/channel'
 
 interface ChannelFormProps {
@@ -46,6 +47,16 @@ export const ChannelForm = ({ channel, categories, onSave, onCancel }: ChannelFo
 
   const removeAlternativeUrl = (index: number) => {
     setAlternativeUrls(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const moveAlternativeUrl = (index: number, direction: 'up' | 'down') => {
+    setAlternativeUrls(prev => {
+      const newUrls = [...prev]
+      const targetIndex = direction === 'up' ? index - 1 : index + 1
+      if (targetIndex < 0 || targetIndex >= newUrls.length) return prev
+      ;[newUrls[index], newUrls[targetIndex]] = [newUrls[targetIndex], newUrls[index]]
+      return newUrls
+    })
   }
 
   return (
@@ -106,13 +117,36 @@ export const ChannelForm = ({ channel, categories, onSave, onCancel }: ChannelFo
                   <option value="iframe">Iframe</option>
                   <option value="redirect">Nova Aba</option>
                 </select>
-                <button
-                  type="button"
-                  onClick={() => removeAlternativeUrl(index)}
-                  className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                >
-                  ✕
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => removeAlternativeUrl(index)}
+                    className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                    title="Remover"
+                  >
+                    <X size={14} />
+                  </button>
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => moveAlternativeUrl(index, 'up')}
+                      className="px-3 py-2 bg-dark-border hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                      title="Mover para cima"
+                    >
+                      <ChevronUp size={14} />
+                    </button>
+                  )}
+                  {index < alternativeUrls.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => moveAlternativeUrl(index, 'down')}
+                      className="px-3 py-2 bg-dark-border hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                      title="Mover para baixo"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
