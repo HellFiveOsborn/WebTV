@@ -83,7 +83,7 @@ function renderWidget(
         removeWidget();
       },
       onSwitchUrl: (url: string) => {
-        postWidget({ type: "switchUrl", url });
+        window.location.href = url;
       },
     }),
   );

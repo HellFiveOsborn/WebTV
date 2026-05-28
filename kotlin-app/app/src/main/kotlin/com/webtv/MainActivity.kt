@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val FILE_CHOOSER_RESULT_CODE = 1001
-        private const val START_URL = "https://variable-novel-elsewhere-electricity.trycloudflare.com"
+        private const val START_URL = "https://hellfiveosborn.github.io/WebTV"
         private const val ASSET_DOMAIN = "appassets.androidplatform.net"
         private const val LRU_CAPACITY = 50
 
