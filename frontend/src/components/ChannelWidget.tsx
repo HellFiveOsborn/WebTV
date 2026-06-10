@@ -37,8 +37,23 @@ export const ChannelWidget = ({
 
   const visible = channel.alternativeUrls.slice(0, 5);
   const channels = allChannels
-    .filter((ch) => ch.id !== channel.id)
-    .slice(0, 20);
+    .filter((ch) => ch.id !== channel.id);
+  // Bug1 fix: sem slice(0,20) — scroll vertical mostra todos via CSS (overflow-y-auto)
+
+  const activeUrlIndex = (() => {
+    const stored = (window as any).__webtvActiveUrlByChannel?.[channel.id]?.url;
+    if (stored) {
+      const idx = channel.alternativeUrls.findIndex((u) => u.url === stored);
+      if (idx >= 0) return idx;
+    }
+    // Fallback: comparar window.location.href
+    if (typeof window !== "undefined" && window.location) {
+      const here = window.location.href;
+      const idx = channel.alternativeUrls.findIndex((u) => u.url === here);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  })();
 
   const panelItems = [
     "toggle",
@@ -405,30 +420,47 @@ export const ChannelWidget = ({
             </div>
             {visible.length > 0 ? (
               <div className="py-0.5">
-                {visible.map((alt: AlternativeUrl, i: number) => (
-                  <button
-                    key={i}
-                    ref={(el) => {
-                      if (el) refs.current.set(`url-${i}`, el);
-                    }}
-                    tabIndex={0}
-                    onClick={() => handleSwitchUrl(alt.url, i)}
-                    className={`w-full px-3 py-2.5 text-left outline-none flex items-center gap-2 ${
-                      focused === `url-${i}`
-                        ? "bg-primary/40 text-white"
-                        : "text-gray-300"
-                    }`}
-                  >
-                    <span className="w-4 h-4 bg-gray-700 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="truncate">
-                      {alt.url.length > 30
-                        ? alt.url.substring(0, 30) + "..."
-                        : alt.url}
-                    </span>
-                  </button>
-                ))}
+                {visible.map((alt: AlternativeUrl, i: number) => {
+                  const isActive = i === activeUrlIndex;
+                  const isFocused = focused === `url-${i}`;
+                  return (
+                    <button
+                      key={i}
+                      ref={(el) => {
+                        if (el) refs.current.set(`url-${i}`, el);
+                      }}
+                      tabIndex={0}
+                      onClick={() => handleSwitchUrl(alt.url, i)}
+                      className={`w-full px-3 py-2.5 text-left outline-none flex items-center gap-2 ${
+                        isActive
+                          ? "border-l-2 border-primary text-white"
+                          : isFocused
+                            ? "bg-primary/40 text-white"
+                            : "text-gray-300"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                          isActive
+                            ? "bg-primary text-white"
+                            : "bg-gray-700 text-gray-200"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="truncate flex-1">
+                        {alt.url.length > 30
+                          ? alt.url.substring(0, 30) + "..."
+                          : alt.url}
+                      </span>
+                      {isActive && (
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-semibold flex-shrink-0">
+                          ativo
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <div className="px-3 py-3 text-center text-gray-500">

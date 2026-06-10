@@ -29,6 +29,18 @@
     }
   });
 
+  // Bug2 fix: rastrear qual URL alternativa está ativa por canal.
+  // Quando o user clica numa URL alternativa no widget, o React emite
+  // 'player:backupSelected' com {channelId, index, url}. Persistimos
+  // para o widget standalone saber qual source destacar.
+  window.__webtvActiveUrlByChannel = window.__webtvActiveUrlByChannel || {};
+  window.addEventListener('webtv:event', function(e) {
+    var p = e.detail && e.detail.payload;
+    if (!p || e.detail.type !== 'player:backupSelected') return;
+    if (!p.channelId || !p.url) return;
+    window.__webtvActiveUrlByChannel[p.channelId] = { url: p.url, index: p.index };
+  });
+
   window.WebTV.channel = window.WebTV.channel || {};
   window.WebTV.channel.activeId = null;
   window.WebTV.channel.activeName = null;

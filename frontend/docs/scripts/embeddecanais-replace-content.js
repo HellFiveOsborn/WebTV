@@ -622,6 +622,35 @@
     try { if (window.__webtv_hls) { window.__webtv_hls.destroy(); window.__webtv_hls = null; } } catch (e) {}
   });
 
+  // ─── CDN do webtv-widget.js (bundle React standalone) ─────────
+  // Quando o appBridge/widget não sobrevive ao replaceDOM (e.g. injeção
+  // tardia via ScriptInjector após a página já ter sido limpa), o script
+  // re-baixou o bundle do CDN e o re-executa para restaurar o widget.
+  var WIDGET_CDN = 'https://hellfiveosborn.github.io/WebTV/webtv-widget.js';
+  var WIDGET_CDN_FALLBACK = 'https://cdn.jsdelivr.net/gh/HellFiveOsborn/WebTV@main/frontend/dist/webtv-widget.js';
+
+  function reinjectWidget() {
+    if (document.getElementById('webtv-widget-container')) return;
+    if (!window.__webtvWidgetData) return;
+    function load(url, onok, onerr) {
+      var s = document.createElement('script');
+      s.src = url;
+      s.async = false;
+      s.onload = function() { onok(); };
+      s.onerror = function() { onerr(); };
+      (document.head || document.documentElement).appendChild(s);
+    }
+    load(WIDGET_CDN, function() {
+      postEvent('widget:reinjected', { source: WIDGET_CDN });
+    }, function() {
+      load(WIDGET_CDN_FALLBACK, function() {
+        postEvent('widget:reinjected', { source: WIDGET_CDN_FALLBACK });
+      }, function() {
+        postEvent('widget:reinject:failed', { tried: [WIDGET_CDN, WIDGET_CDN_FALLBACK] });
+      });
+    });
+  }
+
   // ─── 13. Bootstrap ────────────────────────────────────────────
   // IMPORTANTE: discovery primeiro, replace depois.
   // A Camada 2 do discovery (regex em scripts inline) só funciona
@@ -638,10 +667,12 @@
       // Só substitui o DOM depois de encontrar a URL — preserva scripts
       // originais para as Camadas 2/3 do discovery e reaproveita o contexto.
       replaceDOM();
+      reinjectWidget();
       initPlayer();
     }, function(err) {
       // Mesmo em falha, tenta mostrar o player limpo com erro
       replaceDOM();
+      reinjectWidget();
       showError('Stream não encontrado: ' + (err && err.message || err));
       postEvent('player:error', { message: 'discovery failed', reason: String(err) });
     });
