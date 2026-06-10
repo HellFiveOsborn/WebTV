@@ -36,3 +36,6 @@ lerna-debug.log*
 # Build
 *.tsbuildinfo
 .tsbuildinfo.cache
+
+# Test build artifacts
+src/utils/__compiled__/

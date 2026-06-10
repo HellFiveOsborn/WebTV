@@ -9,7 +9,9 @@
     "build:widget:css": "node scripts/generate-embed-css.mjs",
     "build:widget": "node scripts/generate-embed-css.mjs && vite build --config vite.widget.config.ts",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test:scripts": "tsc src/utils/scriptMinifier.ts --target es2022 --module nodenext --moduleResolution nodenext --outDir src/utils/__compiled__ && node --test tests/lint-scripts.test.mjs tests/scriptMinifier.test.mjs",
+    "lint:scripts": "node tests/lint-scripts.mjs"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",

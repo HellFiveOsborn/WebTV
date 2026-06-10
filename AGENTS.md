@@ -14,10 +14,11 @@ WebTV é um sistema de streaming de TV que integra um frontend React (WebView) c
 
 ```
 /
-├── frontend/        # Aplicação React (Vite + TypeScript + Tailwind)
-├── kotlin-app/      # App Android nativo em Kotlin
-├── frontend/docs/   # Documentação (Events API)
-└── AGENTS.md        # Este arquivo
+├── frontend/                       # Aplicação React (Vite + TypeScript + Tailwind)
+│   └── docs/scripts/               # Scripts de injeção para WebView (dev + .min.js)
+├── kotlin-app/                     # App Android nativo em Kotlin
+├── frontend/docs/                  # Documentação (Events API)
+└── AGENTS.md                       # Este arquivo
 ```
 
 ## Diretrizes Globais
@@ -175,3 +176,218 @@ adb shell screencap -p /sdcard/screen.png && adb pull /sdcard/screen.png .
 
 - **Frontend**: TypeScript strict, ESLint + Prettier configurados, componentes funcionais com hooks, Tailwind CSS para estilos
 - **Kotlin**: Kotlin idiomático, operações na WebView sempre em `runOnUiThread`, logs via `WebTVLog` (não `android.util.Log` diretamente)
+
+## Scripts de Injeção (WebTV)
+
+Scripts em `frontend/docs/scripts/` são minificados e enviados via `ScriptInjector.kt` para a WebView Android. **Cada script passa por um validador automático no admin (`/WebTV/own:scripts`) que rejeita**:
+
+1. **Colchetes não balanceados** — sintaxe inválida (use `node --check file.js` antes de commitar)
+2. **Uso de `eval()`** — vetado por segurança
+3. **Uso de `new Function()`** — vetado pelo validador (substitua por parser manual)
+
+### Padrão de nomenclatura e estrutura
+
+Cada canal/servidor de stream tem um script dev + min:
+
+```
+frontend/docs/scripts/
+├── embeddecanais-replace-content.js         # versão dev (legível, comentada)
+├── embeddecanais-replace-content.min.js     # versão prod (terser, 1 linha)
+├── rdcanais-replace-content.js              # versão dev
+└── rdcanais-replace-content.min.js          # versão prod
+```
+
+**Convenção**: `<canal>-replace-content.js` para dev, `.min.js` para prod.
+
+### Padrão de código (template)
+
+```js
+/**
+ * WebTV — Injeção para <servidor>
+ *
+ * Substitui o player pesado por Hls.js puro, preserva window.WebTV.*
+ * (appBridge intacto) e descobre a URL do stream em runtime.
+ *
+ * Funciona em qualquer página do domínio sem hardcodar URL.
+ */
+(function() {
+  'use strict';
+
+  // 1. Idempotência — nunca rodar duas vezes
+  if (window['__webtv_<canal>_replace']) return;
+  window['__webtv_<canal>_replace'] = true;
+
+  // 2. Hooks de áudio (padronizados em EVENTS_API.md)
+  // ... Object.defineProperty(HTMLMediaElement.prototype, 'muted', ...)
+
+  // 3. Constantes — NUNCA hardcode domínios/CDNs rotativos
+  // var HLSJS_CDN = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
+  // var IFRAME_HOST_PATTERN = /^https?:\/\/(?:[a-z0-9-]+\.)+[a-z]{2,}\//i;
+
+  // 4. Discovery — múltiplas estratégias (NEQ decode, query redirect, inline, Turnstile POST)
+  // function discoverStreamUrl() { ... }
+
+  // 5. Player — Hls.js com config otimizada para Android TV 1.5GB RAM
+  // var cfg = { enableWorker: true, maxBufferLength: 20, ... };
+
+  // 6. postEvent — emite via WebTV.events (contrato EVENTS_API.md)
+  // function postEvent(type, data) { ... }
+
+  // 7. DOM replacement — <video> fullscreen, controls=false
+  // function replaceDOM() { ... }
+
+  // 8. Player API — window.WebTV.player.{play,pause,stop,reload,getStatus}
+  // var playerAPI = { ... };
+
+  // 9. Cleanup — beforeunload, pagehide, destroy
+  // window.addEventListener('beforeunload', function() { ... });
+
+  // 10. Bootstrap — espera iframe, FAZ DISCOVERY ANTES de remover
+  // function bootstrap() { waitForIframe(); }
+  // if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrap);
+  // else bootstrap();
+})();
+```
+
+### Padrões de discovery de URL
+
+Sites rotativos usam padrões diferentes. **Não hardcode nomes de variáveis ou offsets** — descubra via regex:
+
+| Padrão | iframe path | Source discovery | Exemplo |
+|--------|-------------|------------------|---------|
+| NEQ decode | `rdcplayer.online/hls/<slug>.html` | `neq-decode` | Array obfuscado base64 |
+| Multi redirect | `rdcplayer.online/multi/<slug>.html?m3u8=...` | `multi-redirect` | Segue redirect até m3u8 |
+| Inline streamUrl | `pescaplay.store/multtv/player.php?id=...` | `inline-stream-url` | `const streamUrl = "..."` |
+| Turnstile POST | `streamrdc.xyz/embed/player.php?id=...` | `turnstile-post` | POST com cf_token |
+
+### ⚠️ Armadilhas comuns
+
+**1. Parser manual em vez de `new Function()`**
+O validador bloqueia `new Function()`. Para parsear o array NEQ obfuscado:
+```js
+// ❌ ERRADO — bloqueado pelo validador
+var arr = (new Function('return ' + m[1] + ';'))();
+
+// ✅ CERTO — regex + loop manual
+var arr = [];
+var strRe = /['"]([A-Za-z0-9+\/=]+)['"]/g;
+var mm;
+while ((mm = strRe.exec(m[1])) !== null) arr.push(mm[1]);
+```
+
+**2. Site rotaciona nomes de variáveis E offsets**
+O site rdcplayer.online rotaciona a cada request: nome do acumulador (`zgg`, `iew`, `XgC`), nome do array (`NEQ`, `nyz`, `hOo`), e o offset numérico (`17009184`, `99317169`, outros). Descubra dinamicamente:
+```js
+// Aceitar maiúsculas/minúsculas
+var accMatch = html.match(/var\s+([a-zA-Z]{2,4})\s*=\s*["']["']\s*;/);
+var arrMatch = html.match(/var\s+([a-zA-Z]{2,4})\s*=\s*(\[[^\]]+\])/s);
+// Extrair offset do forEach
+var offsetMatch = html.match(/-\s*(\d{6,12})\s*\)\s*;/);
+```
+
+**3. Iframe removido antes do discovery**
+O bootstrap chama `replaceDOM()` que **remove o iframe** do DOM. Salve o `iframe.src` ANTES:
+```js
+window.__webtv_iframe_src = iframe.src; // ANTES de replaceDOM()
+discoverStreamUrl().then(function(url) {
+  replaceDOM(); // remove iframe
+  initPlayer();
+});
+```
+E dentro de `discoverStreamUrl`, **use o `__webtv_iframe_src` salvo**, não `document.querySelector('iframe')` (que vai retornar null).
+
+**4. CORS não se aplica no Android WebView**
+- Testes em browser (Playwright/Edge) podem falhar por CORS — isso é esperado, não é bug
+- Em produção (Android WebView), CORS não se aplica, então o script funciona sem proxy
+- **Nunca adicione proxy HTTP ao script** — não existirá em produção
+
+**5. Referer do iframe, não do parent**
+CDNs Cloudflare-gated (ex: `agropesca.live`) rejeitam requests com `Referer: https://rdcanais.com/` (parent). Exigem o `Referer: https://rdcplayer.online/...` (iframe):
+```js
+// Setar Referer do iframe no Hls.js
+var iframeOrigin = new URL(window.__webtv_iframe_src).origin;
+hls.config.xhrSetup = function(xhr, url) {
+  try { xhr.setRequestHeader('Referer', iframeOrigin + '/'); } catch (e) {}
+};
+hls.config.fetchSetup = function(input, init) {
+  init = init || {};
+  init.referrer = iframeOrigin + '/';
+  return origFs ? origFs(input, init) : init;
+};
+```
+
+**6. TDD com Edge CDP + Node Playwright**
+```bash
+# 1. Iniciar Edge com remote debugging (em background)
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9333 about:blank
+
+# 2. Rodar teste
+$env:CDP_URL = "http://127.0.0.1:9333"
+node frontend/tests/rdcanais.test.mjs
+
+# 3. Validar dois critérios separados:
+#    - Discovery OK (testável em browser)
+#    - Playback OK (só testável em Android — CORS bloqueia em browser)
+```
+
+### Workflow completo ao criar um script novo
+
+1. **Investigar o site** com Playwright MCP:
+   - Capturar `iframe.src` (URL do player)
+   - Capturar HTML do iframe (curl com Referer correto)
+   - Identificar padrão de obfuscation
+2. **Escrever dev script** em `frontend/docs/scripts/<canal>-replace-content.js`:
+   - Comentários descritivos
+   - Padrão IIFE + idempotência
+   - Discovery chain (múltiplas estratégias)
+   - Hls.js config Android TV 1.5GB
+3. **Validar sintaxe**: `node --check file.js`
+4. **Validar sem padrões bloqueados**: `grep -E 'eval|new Function|Function\(' file.js`
+5. **Criar teste Playwright** em `frontend/tests/<canal>.test.mjs`
+6. **Rodar teste** — RED (não existe) → implementar → GREEN
+7. **Minificar**:
+   ```bash
+   .\node_modules\.bin\terser.cmd src.js --compress --mangle --output src.min.js --comments false
+   ```
+8. **Validar minificado**: rodar o mesmo teste contra o `.min.js`
+9. **Commit** ambos os arquivos (dev + min)
+
+### Config Hls.js otimizada para Android TV 1.5GB RAM
+
+```js
+var cfg = {
+  enableWorker: true,           // off-load do parser/demuxer
+  lowLatencyMode: false,        // LL-HLS usa mais memória
+  backBufferLength: 30,         // limpa segmentos antigos rápido
+  maxBufferLength: 20,          // buffer reduzido (default 30)
+  maxMaxBufferLength: 60,       // hard cap
+  maxBufferSize: 30 * 1000 * 1000, // 30MB hard limit
+  liveSyncDurationCount: 3,
+  liveMaxLatencyDurationCount: 6,
+  capLevelToPlayerSize: true,   // evita upscaling
+  startLevel: -1,               // ABR automático
+  fragLoadingMaxRetry: 3,
+  levelLoadingMaxRetry: 3,
+  manifestLoadingMaxRetry: 3,
+  abrEwmaDefaultEstimate: 5000000,  // 5Mbps default
+  abrBandwidthFactor: 0.7,
+  enableSoftwareAES: false
+};
+```
+
+### Validador `frontend/AGENTS.md`
+
+Em desenvolvimento, antes de commitar scripts:
+```bash
+# Verificar sintaxe
+node --check "frontend/docs/scripts/<canal>-replace-content.js"
+
+# Verificar padrões bloqueados
+Select-String -Path "frontend/docs/scripts/<canal>-replace-content.js" -Pattern "eval|new Function|Function\("
+
+# Verificar balanço de chaves
+(Get-Content "frontend/docs/scripts/<canal>-replace-content.js" | Select-String "{" | Measure-Object).Count
+(Get-Content "frontend/docs/scripts/<canal>-replace-content.js" | Select-String "}" | Measure-Object).Count
+```
+
+Se algum desses falhar, **NÃO commite** — o admin vai rejeitar o upload.

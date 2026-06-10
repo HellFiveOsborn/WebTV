@@ -212,6 +212,175 @@ export function minifyScript(code: string): string {
   return result
 }
 
+interface DelimiterCounts {
+  brace: number
+  paren: number
+  bracket: number
+}
+
+type ParseMode = 'code' | 'string' | 'template' | 'line_comment' | 'block_comment' | 'regex'
+
+/**
+ * Conta delimitadores balanceados em código JavaScript respeitando contexto.
+ *
+ * Itera caractere a caractere e rastreia o estado do parser:
+ *   - string normal "..." / '...'
+ *   - template literal `...` com expressões ${...} recursivas
+ *   - comentário de linha // ...
+ *   - comentário de bloco /* ... *\/
+ *   - regex literal /.../[gimsuy] (apenas em contexto de expressão, não divisão)
+ *
+ * Apenas fora desses contextos os delimitadores { } ( ) [ ] são contados.
+ * Escape sequences \\( \\) \\{ \\} dentro de strings/regex são puladas.
+ */
+function countDelimiters(code: string): DelimiterCounts {
+  let brace = 0
+  let paren = 0
+  let bracket = 0
+
+  let i = 0
+  const n = code.length
+
+  let mode: ParseMode = 'code'
+  const stack: ParseMode[] = []
+  let stringQuote = ''
+
+  function isRegexContext(): boolean {
+    let j = i - 1
+    while (j >= 0 && /\s/.test(code[j])) j--
+    if (j < 0) return true
+    const c = code[j]
+    // Se o char anterior é identificador/numérico ou ], ), }, "', `, / é divisão
+    return !/[A-Za-z0-9_$\])\}"']/.test(c)
+  }
+
+  function pushMode(newMode: ParseMode): void {
+    stack.push(mode)
+    mode = newMode
+  }
+
+  function popMode(): void {
+    mode = stack.pop() ?? 'code'
+  }
+
+  while (i < n) {
+    const ch = code[i]
+    const next = code[i + 1]
+
+    // Escape: pula próximo char dentro de string/template/regex
+    if ((mode === 'string' || mode === 'template' || mode === 'regex') && ch === '\\') {
+      i += 2
+      continue
+    }
+
+    if (mode === 'line_comment') {
+      if (ch === '\n') mode = stack.pop() ?? 'code'
+      i++
+      continue
+    }
+
+    if (mode === 'block_comment') {
+      if (ch === '*' && next === '/') {
+        i += 2
+        mode = stack.pop() ?? 'code'
+        continue
+      }
+      i++
+      continue
+    }
+
+    if (mode === 'string') {
+      if (ch === stringQuote) {
+        i++
+        stringQuote = ''
+        popMode()
+        continue
+      }
+      i++
+      continue
+    }
+
+    if (mode === 'template') {
+      if (ch === '`') {
+        i++
+        popMode()
+        continue
+      }
+      if (ch === '$' && next === '{') {
+        i += 2
+        pushMode('code')
+        brace++
+        continue
+      }
+      i++
+      continue
+    }
+
+    if (mode === 'regex') {
+      if (ch === '/') {
+        i++
+        while (i < n && /[gimsuy]/.test(code[i])) i++
+        popMode()
+        continue
+      }
+      if (ch === '[') {
+        i++
+        while (i < n && code[i] !== ']') {
+          if (code[i] === '\\') i += 2
+          else i++
+        }
+        if (i < n) i++
+        continue
+      }
+      i++
+      continue
+    }
+
+    // mode === 'code'
+    if (ch === '/' && next === '/') {
+      pushMode('line_comment')
+      i += 2
+      continue
+    }
+
+    if (ch === '/' && next === '*') {
+      pushMode('block_comment')
+      i += 2
+      continue
+    }
+
+    if (ch === '/' && isRegexContext()) {
+      pushMode('regex')
+      i++
+      continue
+    }
+
+    if (ch === '"' || ch === "'") {
+      pushMode('string')
+      stringQuote = ch
+      i++
+      continue
+    }
+
+    if (ch === '`') {
+      pushMode('template')
+      i++
+      continue
+    }
+
+    if (ch === '{') brace++
+    else if (ch === '}') brace--
+    else if (ch === '(') paren++
+    else if (ch === ')') paren--
+    else if (ch === '[') bracket++
+    else if (ch === ']') bracket--
+
+    i++
+  }
+
+  return { brace, paren, bracket }
+}
+
 export function validateScript(code: string): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
@@ -240,22 +409,11 @@ export function validateScript(code: string): ValidationResult {
     }
   }
 
-  let braceCount = 0
-  let parenCount = 0
-  let bracketCount = 0
+  const counts = countDelimiters(code)
 
-  for (const ch of code) {
-    if (ch === '{') braceCount++
-    if (ch === '}') braceCount--
-    if (ch === '(') parenCount++
-    if (ch === ')') parenCount--
-    if (ch === '[') bracketCount++
-    if (ch === ']') bracketCount--
-  }
-
-  if (braceCount !== 0) errors.push('Chaves não balanceadas')
-  if (parenCount !== 0) errors.push('Parênteses não balanceados')
-  if (bracketCount !== 0) errors.push('Colchetes não balanceados')
+  if (counts.brace !== 0) errors.push(`Chaves não balanceadas (${counts.brace})`)
+  if (counts.paren !== 0) errors.push(`Parênteses não balanceados (${counts.paren})`)
+  if (counts.bracket !== 0) errors.push(`Colchetes não balanceados (${counts.bracket})`)
 
   return {
     valid: errors.length === 0,
