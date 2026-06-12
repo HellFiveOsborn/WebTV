@@ -13,6 +13,7 @@ import { Channel } from './types/channel'
 import { ChannelTransition } from './components/ChannelTransition'
 import { useNavigate, useParams } from 'react-router-dom'
 import { eventBus } from './lib/eventBus'
+import { shouldOpenRedirectOnRoute } from './lib/shouldOpenRedirectOnRoute'
 
 type SortOption = 'alphabetical' | 'category'
 
@@ -95,17 +96,19 @@ function App() {
         addRecentChannel(channel)
         const redirectUrl = channel.alternativeUrls.find(u => u.type === 'redirect')
         const iframeUrls = channel.alternativeUrls.filter(u => u.type === 'iframe')
+        const hasIframe = iframeUrls.length > 0
+        const hasRedirect = !!redirectUrl
 
         eventBus.emit('channel:clicked', {
           id: channel.id,
           name: channel.title,
-          type: iframeUrls.length > 0 && redirectUrl ? 'mixed' : redirectUrl ? 'redirect' : 'iframe',
+          type: hasIframe && hasRedirect ? 'mixed' : hasIframe ? 'iframe' : 'redirect',
           channels: channels.filter((ch: Channel) => ch.active)
         })
 
-        if (redirectUrl) {
+        if (shouldOpenRedirectOnRoute({ hasIframe, hasRedirect })) {
           setChannelTransition(channel)
-          window.open(redirectUrl.url, '_blank')
+          window.open(redirectUrl!.url, '_blank')
         }
         setActiveChannel(channel)
       }
@@ -226,6 +229,21 @@ function App() {
       navigate('/')
     }
   }, [channelIdParam, navigate])
+
+  useEffect(() => {
+    const onPlayerClosed = (event: { payload?: { channelId?: string; channelName?: string } }) => {
+      if (!activeChannel) return
+      const payload = event.payload
+      if (payload?.channelId && payload.channelId !== activeChannel.id) return
+      setActiveChannel(null)
+      setChannelTransition(null)
+      if (channelIdParam) {
+        navigate('/', { replace: true })
+      }
+    }
+    eventBus.on('player:closed', onPlayerClosed)
+    return () => eventBus.off('player:closed', onPlayerClosed)
+  }, [activeChannel, channelIdParam, navigate])
 
   const handleChannelClick = useCallback((channel: Channel) => {
     addRecentChannel(channel)
