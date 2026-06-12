@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react'
 import { Channel } from '../types/channel'
 import { ChannelWidget } from './ChannelWidget'
 import { eventBus } from '../lib/eventBus'
+import { shouldCloseOnKeyDown } from '../lib/shouldCloseOnKeyDown'
 
 interface PlayerModalProps {
   channel: Channel
@@ -35,10 +36,18 @@ export const PlayerModal = ({ channel, onClose, allChannels, onChannelSelect }: 
   }, [channel.id, channel.title, activeUrl])
 
   const handleClose = useCallback(() => {
+    eventBus.emit('channel:closing', {})
     eventBus.emit('player:closed', {
       channelId: channel.id,
       channelName: channel.title
     })
+    if ((window as any).WebTVBridge && (window as any).WebTVBridge.onPlayerClosed) {
+      ;(window as any).WebTVBridge.onPlayerClosed(JSON.stringify({
+        channelId: channel.id,
+        channelName: channel.title,
+        timestamp: Date.now(),
+      }))
+    }
     onClose()
   }, [channel.id, channel.title, onClose])
 
@@ -54,7 +63,7 @@ export const PlayerModal = ({ channel, onClose, allChannels, onChannelSelect }: 
   }, [channel.id, iframeUrls])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' || e.key === 'Backspace') {
+    if (shouldCloseOnKeyDown(e.key)) {
       e.preventDefault()
       e.stopPropagation()
       handleClose()
@@ -255,13 +264,13 @@ export const PlayerModal = ({ channel, onClose, allChannels, onChannelSelect }: 
         <button
           ref={closeButtonRef}
           onClick={handleClose}
-          className={`w-14 h-14 bg-black/60 backdrop-blur-sm text-white rounded-full transition-all flex items-center justify-center ${
+          className={`w-10 h-10 bg-black/60 backdrop-blur-sm text-white rounded-full transition-all flex items-center justify-center ${
             focusedElement === 'close'
               ? 'scale-110 ring-4 ring-white bg-red-600'
               : 'hover:bg-red-600 focus:outline-none'
           }`}
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>

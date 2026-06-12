@@ -512,33 +512,51 @@ class MainActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        if (activeChannelId != null) {
+            val closingChannelId = activeChannelId ?: "unknown"
+            val closingChannelName = activeChannelName ?: "Unknown"
+            val isOnGrid = currentPageUrl != null && currentPageUrl!!.startsWith(START_URL)
+
+            WebTVLog.d("WebTV", "BACK: active channel=$closingChannelId, onGrid=$isOnGrid, url=$currentPageUrl")
+
+            val script = """
+                javascript:(function() {
+                    if (window.WebTVBridge && window.WebTVBridge.onPlayerClosed) {
+                        var payload = JSON.stringify({
+                            channelId: '$closingChannelId',
+                            channelName: '${closingChannelName.replace("'", "\\'")}',
+                            timestamp: Date.now()
+                        });
+                        window.WebTVBridge.onPlayerClosed(payload);
+                    } else if (window.WebTV && window.WebTV.channel && window.WebTV.channel.close) {
+                        window.WebTV.channel.close();
+                    } else if (window.WebTVBridge && window.WebTVBridge.onChannelClosed) {
+                        var payload = JSON.stringify({
+                            channelId: '$closingChannelId',
+                            channelName: '${closingChannelName.replace("'", "\\'")}',
+                            timestamp: Date.now()
+                        });
+                        window.WebTVBridge.onChannelClosed(payload);
+                    }
+                })();
+            """.trimIndent()
+            webView.evaluateJavascript(script, null)
+            activeChannelId = null
+            activeChannelName = null
+            scriptInjector?.injectedScriptIds?.clear()
+
+            if (!isOnGrid) {
+                playCloseAndNavigateWith(closingChannelId, closingChannelName)
+            }
+            return
+        }
+
         val onGrid = currentPageUrl != null && currentPageUrl!!.startsWith(START_URL) &&
             !currentPageUrl!!.contains("/channel/")
 
         if (!onGrid) {
             WebTVLog.d("WebTV", "BACK: not on grid (url=$currentPageUrl), returning to $START_URL")
-            if (activeChannelId != null) {
-                val script = """
-                    javascript:(function() {
-                        if (window.WebTV && window.WebTV.channel && window.WebTV.channel.close) {
-                            window.WebTV.channel.close();
-                        } else if (window.WebTVBridge && window.WebTVBridge.onChannelClosed) {
-                            var payload = JSON.stringify({
-                                channelId: window.__webtvActiveChannelId || 'unknown',
-                                channelName: window.__webtvActiveChannelName || 'Unknown',
-                                timestamp: Date.now()
-                            });
-                            window.WebTVBridge.onChannelClosed(payload);
-                        }
-                    })();
-                """.trimIndent()
-                webView.evaluateJavascript(script, null)
-                activeChannelId = null
-                activeChannelName = null
-                scriptInjector?.injectedScriptIds?.clear()
-            } else {
-                playCloseAndNavigate()
-            }
+            playCloseAndNavigate()
         } else {
             showExitDialog()
         }
@@ -792,18 +810,29 @@ window.WebTV.events.on('scripts:preloaded', (event) => {
     }
 
     private fun playCloseAndNavigate() {
+        playCloseAndNavigateWith(null, null)
+    }
+
+    private fun playCloseAndNavigateWith(channelId: String?, channelName: String?) {
         if (closeNavigationScheduled) {
             WebTVLog.d("Main", "Close navigation already scheduled, ignoring duplicate")
             return
         }
         closeNavigationScheduled = true
+        val idJson = if (channelId != null) "'${channelId.replace("'", "\\'")}'" else "null"
+        val nameJson = if (channelName != null) "'${channelName.replace("'", "\\'")}'" else "null"
         val script = """
             (function(){
                 if(window.WebTV&&window.WebTV.events&&typeof window.WebTV.events.emit==='function'){
                     window.WebTV.events.emit('channel:closing',{});
-                    console.log('[WebTV] channel:closing emitted');
+                    window.WebTV.events.emit('player:closed', {
+                        channelId: $idJson,
+                        channelName: $nameJson,
+                        timestamp: Date.now()
+                    });
+                    console.log('[WebTV] channel:closing + player:closed emitted');
                 } else {
-                    console.log('[WebTV] WebTV not ready, cannot emit channel:closing');
+                    console.log('[WebTV] WebTV not ready, cannot emit close events');
                 }
             })();
         """.trimIndent()
