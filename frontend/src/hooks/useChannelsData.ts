@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Channel, Category, ChannelsData } from '../types/channel'
 import { Script } from '../types/script'
 import { defaultChannelsData } from '../data/defaultChannels'
@@ -6,6 +6,8 @@ import { ScriptManager } from '../lib/scriptManager'
 import { eventBus } from '../lib/eventBus'
 import { extractDomainGroups } from '../utils/urlUtils'
 import { fetchGistData, saveGistData, hasToken, getToken } from '../lib/gistApi'
+import { saveDraft, clearDraft, hasDraft, loadDraft } from '../lib/draftStorage'
+import { isDirty, countPendingChanges } from '../lib/dirtyState'
 
 const LOCAL_JSON_URL = `${import.meta.env.BASE_URL}data/channels.json`
 
@@ -36,7 +38,7 @@ const recalcScriptChannelIds = (scripts: Script[], channels: Channel[]): Script[
   })
 }
 
-export type SyncStatus = 'saved' | 'saving' | 'error' | 'idle'
+export type SyncStatus = 'saved' | 'saving' | 'pending' | 'error' | 'idle'
 
 export const useChannelsData = () => {
   const [channels, setChannels] = useState<Channel[]>([])
@@ -44,8 +46,8 @@ export const useChannelsData = () => {
   const [scripts, setScripts] = useState<Script[]>([])
   const [loading, setLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const [baseline, setBaseline] = useState<ChannelsData | null>(null)
   const isInitialLoad = useRef(true)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -54,6 +56,7 @@ export const useChannelsData = () => {
         setChannels(data.channels)
         setCategories(data.categories)
         setScripts(data.scripts || [])
+        setBaseline(data)
         setLoading(false)
         return
       } catch {
@@ -67,6 +70,7 @@ export const useChannelsData = () => {
         setChannels(data.channels)
         setCategories(data.categories)
         setScripts(data.scripts || [])
+        setBaseline(data)
       } catch {
         console.warn('Arquivo local não encontrado, usando dados padrão')
         setChannels(defaultChannelsData.channels)
@@ -80,34 +84,11 @@ export const useChannelsData = () => {
   }, [])
 
   useEffect(() => {
-    if (loading) return
-
-    if (isInitialLoad.current) {
+    if (loading || isInitialLoad.current) {
       isInitialLoad.current = false
       return
     }
-
-    if (!hasToken()) return
-
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-
-    setSyncStatus('saving')
-
-    saveTimer.current = setTimeout(async () => {
-      const data: ChannelsData = { channels, categories, scripts }
-      const result = await saveGistData(data, getToken()!)
-
-      if (result.ok) {
-        setSyncStatus('saved')
-      } else {
-        console.warn('Falha ao salvar no Gist:', result.error)
-        setSyncStatus('error')
-      }
-    }, 1000)
-
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
+    saveDraft({ channels, categories, scripts })
   }, [channels, categories, scripts, loading])
 
   useEffect(() => {
@@ -248,8 +229,48 @@ if (typeof window !== 'undefined' && window.WebTV) {
     setSyncStatus('saving')
     const data: ChannelsData = { channels, categories, scripts }
     const result = await saveGistData(data, getToken()!)
-    setSyncStatus(result.ok ? 'saved' : 'error')
+    if (result.ok) {
+      setBaseline(data)
+      clearDraft()
+      setSyncStatus('saved')
+    } else {
+      console.warn('Falha ao salvar no Gist:', result.error)
+      setSyncStatus('error')
+    }
   }, [channels, categories, scripts])
+
+  const discardChanges = useCallback(() => {
+    if (!baseline) return
+    setChannels(baseline.channels)
+    setCategories(baseline.categories)
+    setScripts(baseline.scripts || [])
+    clearDraft()
+    setSyncStatus('saved')
+  }, [baseline])
+
+  const restoreDraft = useCallback(() => {
+    const draft = loadDraft()
+    if (!draft) return false
+    if (Array.isArray(draft.channels)) setChannels(draft.channels as Channel[])
+    if (Array.isArray(draft.categories)) setCategories(draft.categories as Category[])
+    if (Array.isArray(draft.scripts)) setScripts(draft.scripts as Script[])
+    return true
+  }, [])
+
+  const clearLocalDraft = useCallback(() => {
+    clearDraft()
+  }, [])
+
+  const pendingCount = useMemo(() => {
+    if (!baseline) return 0
+    return countPendingChanges(baseline, { channels, categories, scripts })
+  }, [baseline, channels, categories, scripts])
+
+  useEffect(() => {
+    if (loading || !baseline) return
+    if (syncStatus === 'saving' || syncStatus === 'error') return
+    setSyncStatus(isDirty(baseline, { channels, categories, scripts }) ? 'pending' : 'saved')
+  }, [baseline, channels, categories, scripts, loading, syncStatus])
 
   return {
     channels,
@@ -257,6 +278,9 @@ if (typeof window !== 'undefined' && window.WebTV) {
     scripts,
     loading,
     syncStatus,
+    pendingCount,
+    baseline,
+    hasPendingDraft: hasDraft,
     addChannel,
     updateChannel,
     deleteChannel,
@@ -272,5 +296,8 @@ if (typeof window !== 'undefined' && window.WebTV) {
     exportData,
     copyJSON,
     saveNow,
+    discardChanges,
+    restoreDraft,
+    clearLocalDraft,
   }
 }

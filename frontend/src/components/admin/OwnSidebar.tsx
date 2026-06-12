@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Code2, CheckCircle, Loader2, AlertCircle, CloudOff } from 'lucide-react'
+import { Code2, CheckCircle, Loader2, AlertCircle, CloudOff, Save } from 'lucide-react'
 import { SyncStatus } from '../../hooks/useChannelsData'
 
 type AdminSection = 'channels' | 'categories' | 'scripts'
@@ -10,10 +10,21 @@ interface OwnSidebarProps {
   onExport: () => void
   onCopyJSON: () => void
   syncStatus?: SyncStatus
+  pendingCount?: number
   onSaveNow?: () => void
+  onDiscardChanges?: () => void
 }
 
-export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSON, syncStatus, onSaveNow }: OwnSidebarProps) => {
+export const OwnSidebar = ({
+  activeSection,
+  onSelectSection,
+  onExport,
+  onCopyJSON,
+  syncStatus,
+  pendingCount = 0,
+  onSaveNow,
+  onDiscardChanges,
+}: OwnSidebarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -33,10 +44,24 @@ export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSO
     }
   }, [dropdownOpen])
 
+  const closeDropdown = () => setDropdownOpen(false)
+
   const handleCopyAndClose = () => {
     onCopyJSON()
-    setDropdownOpen(false)
+    closeDropdown()
   }
+
+  const handleSaveAndClose = () => {
+    onSaveNow?.()
+    closeDropdown()
+  }
+
+  const handleDiscardAndClose = () => {
+    onDiscardChanges?.()
+    closeDropdown()
+  }
+
+  const hasPending = pendingCount > 0
 
   return (
     <div className="w-64 bg-dark-surface border-r border-dark-border p-4 flex flex-col">
@@ -88,6 +113,9 @@ export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSO
             {syncStatus === 'saved' && (
               <CheckCircle className="w-4 h-4 text-green-400" />
             )}
+            {syncStatus === 'pending' && (
+              <Save className="w-4 h-4 text-orange-400" />
+            )}
             {syncStatus === 'error' && (
               <AlertCircle className="w-4 h-4 text-red-400" />
             )}
@@ -98,6 +126,11 @@ export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSO
           <div className="text-sm">
             {syncStatus === 'saving' && <span className="text-yellow-400">Salvando...</span>}
             {syncStatus === 'saved' && <span className="text-green-400">Sincronizado</span>}
+            {syncStatus === 'pending' && (
+              <span className="text-orange-400">
+                {pendingCount} {pendingCount === 1 ? 'alteração pendente' : 'alterações pendentes'}
+              </span>
+            )}
             {syncStatus === 'error' && (
               <div>
                 <span className="text-red-400">Erro</span>
@@ -136,6 +169,25 @@ export const OwnSidebar = ({ activeSection, onSelectSection, onExport, onCopyJSO
 
         {dropdownOpen && (
           <div className="absolute bottom-full mb-2 w-full bg-dark-surface border border-dark-border rounded-lg shadow-lg overflow-hidden">
+            <button
+              onClick={handleSaveAndClose}
+              disabled={!hasPending}
+              className="w-full px-4 py-3 text-left text-white hover:bg-dark-border transition-all whitespace-nowrap disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:bg-transparent flex items-center justify-between"
+            >
+              <span>Salvar GIT-JSON</span>
+              {hasPending && (
+                <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={handleDiscardAndClose}
+              disabled={!hasPending}
+              className="w-full px-4 py-3 text-left text-white hover:bg-dark-border transition-all whitespace-nowrap disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            >
+              Descartar alterações
+            </button>
             <button
               onClick={handleCopyAndClose}
               className="w-full px-4 py-3 text-left text-white hover:bg-dark-border transition-all whitespace-nowrap"

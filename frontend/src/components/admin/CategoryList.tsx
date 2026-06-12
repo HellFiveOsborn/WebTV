@@ -77,7 +77,7 @@ export const CategoryList = ({ categories, channels, onAdd, onUpdate, onDelete, 
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[calc(100vh-4rem)] overflow-y-auto pr-2 discrete-scroll">
         {categories.map((category, index) => (
           <div
             key={category.id}

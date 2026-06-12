@@ -102,7 +102,7 @@ export const ChannelList = ({ channels, categories, onToggle, onUpdate, onDelete
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[calc(100vh-4rem)] overflow-y-auto pr-2 discrete-scroll">
         {channels.map((channel, index) => (
           <div
             key={channel.id}

@@ -13,7 +13,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779525104846"],
+      "categoryIds": [
+        "1779525104846"
+      ],
       "active": true,
       "id": "1779525189328"
     },
@@ -26,7 +28,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779525104846"],
+      "categoryIds": [
+        "1779525104846"
+      ],
       "active": true,
       "id": "1779744490522"
     },
@@ -39,7 +43,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779525104846"],
+      "categoryIds": [
+        "1779525104846"
+      ],
       "active": true,
       "id": "1779788157811"
     },
@@ -52,14 +58,18 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779525104846"],
+      "categoryIds": [
+        "1779525104846"
+      ],
       "active": true,
       "id": "1779788237577"
     },
     {
       "title": "Casa do Patrão 1",
       "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779514821057",
       "alternativeUrls": [
@@ -76,7 +86,9 @@
     {
       "title": "Casa do Patrão 2",
       "logoUrl": "https://embedcanaisdetv.com/images/casadopatrao.jpg",
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779518073295",
       "alternativeUrls": [
@@ -99,7 +111,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761755792"
     },
@@ -112,7 +126,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761772746"
     },
@@ -125,7 +141,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761785389"
     },
@@ -138,7 +156,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761796320"
     },
@@ -151,7 +171,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761808844"
     },
@@ -164,7 +186,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779514560138"],
+      "categoryIds": [
+        "1779514560138"
+      ],
       "active": true,
       "id": "1779761818788"
     },
@@ -177,7 +201,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791685935"
     },
@@ -190,7 +216,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791662505"
     },
@@ -203,7 +231,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791652731"
     },
@@ -216,7 +246,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791641196"
     },
@@ -229,7 +261,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791631956"
     },
@@ -242,7 +276,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791617535"
     },
@@ -255,7 +291,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791575878"
     },
@@ -268,7 +306,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779791536657"
     },
@@ -281,7 +321,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792987293"
     },
@@ -294,7 +336,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779793015173"
     },
@@ -307,7 +351,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779793025784"
     },
@@ -320,7 +366,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792120900"
     },
@@ -333,7 +381,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792305234"
     },
@@ -346,7 +396,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792399187"
     },
@@ -359,7 +411,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792437376"
     },
@@ -372,7 +426,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792449020"
     },
@@ -385,7 +441,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792460208"
     },
@@ -398,7 +456,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792471035"
     },
@@ -411,7 +471,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792539269"
     },
@@ -424,7 +486,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792567878"
     },
@@ -437,7 +501,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792705486"
     },
@@ -450,7 +516,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792731899"
     },
@@ -463,7 +531,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792783378"
     },
@@ -476,7 +546,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792794432"
     },
@@ -489,7 +561,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779791490943"],
+      "categoryIds": [
+        "1779791490943"
+      ],
       "active": true,
       "id": "1779792900363"
     },
@@ -502,7 +576,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779834373797"],
+      "categoryIds": [
+        "1779834373797"
+      ],
       "active": true,
       "id": "1779834551709"
     },
@@ -515,7 +591,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779834373797"],
+      "categoryIds": [
+        "1779834373797"
+      ],
       "active": true,
       "id": "1779834577918"
     },
@@ -528,7 +606,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779834626138"],
+      "categoryIds": [
+        "1779834626138"
+      ],
       "active": true,
       "id": "1779834673143"
     },
@@ -541,7 +621,9 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779834626138"],
+      "categoryIds": [
+        "1779834626138"
+      ],
       "active": true,
       "id": "1779835103863"
     },
@@ -554,9 +636,26 @@
           "type": "redirect"
         }
       ],
-      "categoryIds": ["1779834626138"],
+      "categoryIds": [
+        "1779834626138"
+      ],
       "active": true,
       "id": "1779835145011"
+    },
+    {
+      "title": "TV Tribuna (Globo Litoral)",
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/pt/5/58/TV_Tribuna_Santos_logo.png",
+      "id": "globo-tv-tribuna-1781125405440",
+      "categoryIds": [
+        "1779525104846"
+      ],
+      "alternativeUrls": [
+        {
+          "type": "redirect",
+          "url": "https://globoplay.globo.com/tv-globo/ao-vivo/6120663/"
+        }
+      ],
+      "active": true
     }
   ],
   "categories": [
@@ -586,7 +685,9 @@
       "name": "EmbedCanais: Player Control, Remove Promo Banner",
       "domain": "embedcanaisdetv.xyz",
       "subdomains": [],
-      "domains": ["embedcanaisdetv.xyz"],
+      "domains": [
+        "embedcanaisdetv.xyz"
+      ],
       "channelIds": [
         "1779525189328",
         "1779744490522",
@@ -649,12 +750,37 @@
       "subdomains": [],
       "code": "(function(){'use strict';if(sessionStorage.getItem('webtv_audio_unlocked'))window._webtvAudioUnlocked=true;var SCRIPT_ID='rdcplayer-unified';if(window['__webtv_' + SCRIPT_ID])return;window['__webtv_' + SCRIPT_ID]=true;var currentTime=0,duration=0,playerReady=false;var qualityLevels=[],currentQualityIdx=-1;var _AD_DOMAINS=['adexchangerapid.com','dtscout.com','dtscdn.com','usrpubtrk.com','mrktmtrcs.net','onaudience.com','histats.com','tynt.com','llvpn.com','crwdcntrl.net','waust.at','whos.amung.us'];var _AD_IDS=['dontfoid','vipModal','banner-container','cookie-alert'];try{if(typeof aclib!=='undefined'){aclib.runPop=function(){};aclib.isShowingPop=false;}}catch(e){}try{if(typeof sbChecker==='function')sbChecker=function(){return false;};}catch(e){}try{if(typeof _Hasync!=='undefined')_Hasync=[];}catch(e){}try{if(typeof _wau!=='undefined')_wau=[];}catch(e){}try{delete window['ZpQw9XkLmN8c3vR3'];}catch(e){}try{if(window.ConsoleBan){if(ConsoleBan.clear)ConsoleBan.clear();ConsoleBan.init=function(){};ConsoleBan.clear=function(){};}}catch(e){}(function(){var _op=window.open;window.open=function(){return null;};window._originalOpen=_op;})();(function(){try{var _ce=document.createElement.bind(document);var _tagSet=Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype,'src');document.createElement=function(tagName){var el=_ce(tagName);if(tagName.toLowerCase()==='script'&&_tagSet&&_tagSet.set){var _val='';Object.defineProperty(el,'src',{set:function(url){for(var i=0;i<_AD_DOMAINS.length;i++){if(url.indexOf(_AD_DOMAINS[i])!==-1)return;}_tagSet.set.call(this,url);_val=url;},get:function(){return _val;},configurable:true});}return el;};}catch(e){}})();function removeKnownAds(){for(var i=0;i<_AD_IDS.length;i++){var el=document.getElementById(_AD_IDS[i]);if(el)el.remove();}var vj=document.getElementsByClassName('vjeyln');while(vj.length)vj[0].remove();try{var ifs=document.querySelectorAll('iframe[width=\"0\"],iframe[height=\"0\"],iframe[style*=\"display: none\"],iframe[style*=\"display:none\"]');for(var j=0;j<ifs.length;j++){if(ifs[j].src&&_AD_DOMAINS.some(function(d){return ifs[j].src.indexOf(d)!==-1;})){ifs[j].remove();}}}catch(e){}}removeKnownAds();function postEvent(type,data){var event={source:'webtv',name:type,payload:data||{},timestamp:Date.now()};if(window.parent&&window.parent!==window)window.parent.postMessage(event,'*');window.dispatchEvent(new CustomEvent(type,{detail:event}));window.dispatchEvent(new CustomEvent('webtv:event',{detail:event}));if(window.WebViewBridge&&window.WebViewBridge.postMessage)window.WebViewBridge.postMessage(JSON.stringify(event));}try{var _md=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'muted')||Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype,'muted');if(_md&&_md.set){var _oms=_md.set;Object.defineProperty(HTMLMediaElement.prototype,'muted',{get:_md.get,set:function(v){if(window._webtvAudioUnlocked&&v===true&&!window._webtvRemoteMute)return;_oms.call(this,v);},configurable:true,enumerable:_md.enumerable});}}catch(e){}function requestFs(el){if(!el)return;var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;if(fn&&!(document.fullscreenElement||document.webkitFullscreenElement))fn.call(el).catch(function(){});}function exitFs(){var fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;if(fn&&(document.fullscreenElement||document.webkitFullscreenElement))fn.call(document).catch(function(){});}var AD_SELECTORS=['#dontfoid','#vipModal','#banner-container','.vjeyln','[class*=\"ad-\"]','[id*=\"ad-\"]','[class*=\"overlay\"]','[class*=\"popup\"]','[class*=\"modal\"]:not(#webtv-audio-overlay)','iframe[src*=\"ad\"]','iframe[src*=\"banner\"]','[onclick*=\"window.open\"]','iframe[width=\"0\"]','iframe[height=\"0\"]','iframe[style*=\"display: none\"]','iframe[style*=\"display:none\"]'];function suppressOverlays(){var observer=new MutationObserver(function(mutations){for(var mi=0;mi<mutations.length;mi++){var added=mutations[mi].addedNodes;for(var ai=0;ai<added.length;ai++){var node=added[ai];if(node.nodeType!==1)continue;for(var si=0;si<AD_SELECTORS.length;si++){try{if(node.matches&&node.matches(AD_SELECTORS[si])&&node.id!=='webtv-audio-overlay'){var doRemove=true;if((AD_SELECTORS[si]==='iframe[width=\"0\"]'||AD_SELECTORS[si]==='iframe[height=\"0\"]'||AD_SELECTORS[si]==='iframe[style*=\"display: none\"]'||AD_SELECTORS[si]==='iframe[style*=\"display:none\"]')&&node.tagName==='IFRAME'){if(!node.src||!_AD_DOMAINS.some(function(d){return node.src.indexOf(d)!==-1;})){doRemove=false;}}if(doRemove)node.remove();}}catch(e){}}}}});observer.observe(document.body||document.documentElement,{childList:true,subtree:true});setInterval(function(){for(var si=0;si<AD_SELECTORS.length;si++){try{document.querySelectorAll(AD_SELECTORS[si]).forEach(function(el){if(el.id!=='webtv-audio-overlay'){el.style.pointerEvents='none';el.style.zIndex='-1';}});}catch(e){}}removeKnownAds();},1000);}function createAudioUnlockOverlay(){if(document.getElementById('webtv-audio-overlay')||sessionStorage.getItem('webtv_audio_unlocked'))return;window._webtvAudioUnlocked=false;var overlay=document.createElement('div');overlay.id='webtv-audio-overlay';overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:pointer;';overlay.innerHTML='<svg width=\"120\" height=\"120\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.17v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z\" fill=\"white\"/></svg>';document.body.appendChild(overlay);var unlock=function(){document.querySelectorAll('video').forEach(function(v){v.muted=false;v.play().catch(function(){});});overlay.remove();window._webtvAudioUnlocked=true;sessionStorage.setItem('webtv_audio_unlocked','1');var _audioWatch=setInterval(function(){var vs=document.querySelectorAll('video');if(vs.length>0){vs.forEach(function(av){av.muted=false;});}else{clearInterval(_audioWatch);}},200);};overlay.addEventListener('click',unlock,{once:true});overlay.addEventListener('touchstart',unlock,{once:true});}var __player=null;function detectPlayer(){try{if(typeof jwplayer==='function'){var j=jwplayer();if(j&&typeof j.getState==='function'&&j.getContainer&&j.getContainer()){__player='jwplayer';return 'jwplayer';}}}catch(e){}if(document.querySelector('video[data-html5-video]')){__player='clappr';return 'clappr';}if(typeof Clappr!=='undefined'){__player='clappr';return 'clappr';}if(document.querySelector('video')){__player='native';return 'native';}return null;}function tryAutoplay(video){if(!video)return;if(__player==='jwplayer'){try{jwplayer().play();return;}catch(e){}video.muted=true;video.play().catch(function(){});return;}if(__player==='clappr'){var poster=document.querySelector('.player-poster.clickable');if(poster&&poster.offsetParent!==null){poster.click();}}if(!window._webtvAudioUnlocked){video.muted=true;}video.playsInline=true;var p=video.play();if(p&&typeof p.then==='function'){p.then(function(){postEvent('player:play',{time:video.currentTime,isLive:!video.duration||!isFinite(video.duration),source:'auto'});}).catch(function(){video.muted=false;video.play().then(function(){postEvent('player:play',{time:video.currentTime,isLive:!video.duration||!isFinite(video.duration),source:'auto'});}).catch(function(){postEvent('player:error',{message:'Autoplay blocked',requiresUserInteraction:true});createAudioUnlockOverlay();});});}}function findVideo(){return document.querySelector('video[data-html5-video]')||document.querySelector('video.jw-video')||document.querySelector('video');}function waitVideo(){return new Promise(function(resolve){var v=findVideo();if(v){resolve(v);return;}var iv=setInterval(function(){var vv=findVideo();if(vv){clearInterval(iv);resolve(vv);}},300);});}function setupVideoEvents(video){video.addEventListener('play',function(){requestFs(document.getElementById('player')||video.parentElement);postEvent('player:play',{currentTime:video.currentTime,duration:video.duration||0,isLive:!video.duration||!isFinite(video.duration),url:video.src});});video.addEventListener('pause',function(){postEvent('player:pause',{currentTime:video.currentTime,duration:video.duration||0});});video.addEventListener('ended',function(){postEvent('player:ended',{time:0});});video.addEventListener('timeupdate',function(){currentTime=video.currentTime;duration=video.duration||0;postEvent('player:timeupdate',{currentTime:currentTime,duration:duration});});video.addEventListener('seeked',function(){postEvent('player:seeked',{time:video.currentTime,duration:video.duration||0});});var lastVolume=video.volume;video.addEventListener('volumechange',function(){var vol=video.volume,muted=video.muted;if(vol!==lastVolume){postEvent('player:volume:changed',{volume:vol,direction:vol>lastVolume ? 'up':'down'});lastVolume=vol;}if(muted)postEvent('player:muted',{});else if(!muted)postEvent('player:unmuted',{volume:vol});});video.addEventListener('error',function(){postEvent('player:error',{message:video.error ? video.error.message:'unknown'});});}function getJWQualityLevels(){try{var jwp=jwplayer();if(typeof jwp.getQualityLevels!=='function')return null;return jwp.getQualityLevels().map(function(l,i){return{index:i,label:l.label||(l.height ? l.height + 'p':'Auto'),height:l.height||0,width:l.width||0,bitrate:l.bitrate||0};});}catch(e){return null;}}function findClapprHls(){try{var video=document.querySelector('video[data-html5-video]');if(!video)return null;var cur=video.parentElement;for(var d=0;d<12&&cur;d++){var own=Object.getOwnPropertyNames(cur);for(var i=0;i<own.length;i++){if(own[i].indexOf('__container')!==-1||own[i].indexOf('_container')!==-1){var c=cur[own[i]];if(c&&c.core&&c.core.getCurrentPlayback){var pb=c.core.getCurrentPlayback();var hls=pb&&(pb._hls||pb.hls);if(hls&&hls.levels)return hls;}}}cur=cur.parentElement;}if(typeof p2pml!=='undefined'&&p2pml.core&&p2pml.core._engine&&p2pml.core._engine._hls)return p2pml.core._engine._hls;return null;}catch(e){return null;}}function getClapprQualityLevels(){var hls=findClapprHls();if(!hls||!hls.levels)return null;var lvls=[{index:0,label:'Auto',height:0,width:0,bitrate:0}];for(var i=0;i<hls.levels.length;i++){var l=hls.levels[i];lvls.push({index:i + 1,label:(l.height ? l.height + 'p':'Level ' +(i + 1)),height:l.height||0,width:l.width||0,bitrate:l.bitrate||0});}return lvls;}function refreshQualityLevels(){var lvls=__player==='jwplayer' ? getJWQualityLevels():null;if(!lvls)lvls=getClapprQualityLevels();if(lvls){qualityLevels=lvls;var cur=-1;if(__player==='jwplayer')try{cur=jwplayer().getCurrentQuality();}catch(e){}currentQualityIdx=cur;}}function setJWQuality(idx){try{jwplayer().setCurrentQuality(idx);return true;}catch(e){return false;}}function setClapprQuality(idx){var hls=findClapprHls();if(!hls)return false;try{hls.currentLevel=idx===0 ? -1:idx - 1;return true;}catch(e){return false;}}var qualityAPI={getLevels:function(){refreshQualityLevels();return qualityLevels.length>0 ? qualityLevels.slice():null;},getCurrent:function(){refreshQualityLevels();return currentQualityIdx;},set:function(idx){var ok=__player==='jwplayer' ? setJWQuality(idx):setClapprQuality(idx);if(ok){currentQualityIdx=idx;postEvent('player:quality:changed',{quality:idx,levels:qualityLevels});}return ok;},setAuto:function(){return qualityAPI.set(0);}};function setupJWPlayerEvents(){if(__player!=='jwplayer')return false;try{var jwp=jwplayer();if(!jwp||typeof jwp.on!=='function')return false;jwp.on('play',function(){jwp.setFullscreen(true);postEvent('player:play',{currentTime:jwp.getPosition(),duration:jwp.getDuration()||0,isLive:!jwp.getDuration()});});jwp.on('pause',function(){postEvent('player:pause',{currentTime:jwp.getPosition(),duration:jwp.getDuration()||0});});jwp.on('complete',function(){postEvent('player:ended',{time:0});});jwp.on('time',function(d){currentTime=d.position;duration=d.duration||0;postEvent('player:timeupdate',{currentTime:currentTime,duration:duration});});jwp.on('volume',function(d){postEvent('player:volume:changed',{volume:d.volume / 100,direction:'change'});if(d.muted)postEvent('player:muted',{});else postEvent('player:unmuted',{volume:d.volume / 100});});jwp.on('error',function(e){postEvent('player:error',{message:(e&&e.message)||'unknown'});});jwp.on('levelsChanged',function(){refreshQualityLevels();postEvent('player:quality:changed',{quality:currentQualityIdx,levels:qualityLevels});});jwp.on('ready',function(){playerReady=true;refreshQualityLevels();postEvent('player:loaded',{duration:jwp.getDuration()||0,isLive:!jwp.getDuration(),quality:{levels:qualityLevels,current:currentQualityIdx}});});return true;}catch(e){return false;}}function setupClapprQualityEvents(){var hls=findClapprHls();if(!hls)return;try{hls.onLevelSwitched=function(){refreshQualityLevels();postEvent('player:quality:changed',{quality:currentQualityIdx,levels:qualityLevels});};}catch(e){}}var playerAPI={play:function(){if(__player==='jwplayer')try{jwplayer().play();postEvent('player:play',{source:'api'});return Promise.resolve({ok:true});}catch(e){}var v=findVideo();if(!v)return Promise.resolve({ok:false,reason:'no video'});return v.play().then(function(){postEvent('player:play',{source:'api',time:v.currentTime});return{ok:true,time:v.currentTime,muted:v.muted,volume:v.volume};}).catch(function(e){return{ok:false,reason:String(e)};});},pause:function(){if(__player==='jwplayer')try{jwplayer().pause();return{ok:true};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.pause();postEvent('player:pause',{time:v.currentTime});return{ok:true,time:v.currentTime};},stop:function(){if(__player==='jwplayer')try{jwplayer().stop();postEvent('player:ended',{});return{ok:true};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.pause();v.currentTime=0;postEvent('player:ended',{});return{ok:true};},rewind:function(s){s=s||10;var v=findVideo();if(!v)return{ok:false};v.currentTime=Math.max(0,v.currentTime - s);postEvent('player:seeked',{time:v.currentTime,direction:'backward'});return{ok:true,time:v.currentTime};},forward:function(s){s=s||10;var v=findVideo();if(!v)return{ok:false};v.currentTime=Math.min(v.duration||Infinity,v.currentTime + s);postEvent('player:seeked',{time:v.currentTime,direction:'forward'});return{ok:true,time:v.currentTime};},seek:function(t){if(__player==='jwplayer')try{jwplayer().seek(t);return{ok:true};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.currentTime=Math.max(0,Math.min(v.duration||Infinity,t));postEvent('player:seeked',{time:v.currentTime});return{ok:true,time:v.currentTime};},volumeUp:function(s){s=s||0.1;if(__player==='jwplayer')try{var vol=Math.min(100,jwplayer().getVolume()+(s*100));jwplayer().setVolume(vol);return{ok:true,volume:vol/100};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.volume=Math.min(1,v.volume + s);v.muted=false;postEvent('player:volume:changed',{volume:v.volume,direction:'up'});return{ok:true,volume:v.volume,muted:false};},volumeDown:function(s){s=s||0.1;if(__player==='jwplayer')try{var vol=Math.max(0,jwplayer().getVolume()-(s*100));jwplayer().setVolume(vol);return{ok:true,volume:vol/100};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.volume=Math.max(0,v.volume - s);postEvent('player:volume:changed',{volume:v.volume,direction:'down'});return{ok:true,volume:v.volume,muted:v.muted};},mute:function(){if(__player==='jwplayer')try{jwplayer().setMute();postEvent('player:muted',{});return{ok:true};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.muted=true;postEvent('player:muted',{});return{ok:true,muted:true};},unmute:function(){if(__player==='jwplayer')try{jwplayer().setMute(false);if(jwplayer().getVolume()===0)jwplayer().setVolume(100);postEvent('player:unmuted',{volume:1});return{ok:true};}catch(e){}var v=findVideo();if(!v)return{ok:false};v.muted=false;if(v.volume===0)v.volume=1;postEvent('player:unmuted',{volume:v.volume});return{ok:true,muted:false,volume:v.volume};},getStatus:function(){if(__player==='jwplayer')try{var j=jwplayer();return{found:true,paused:j.getState()!=='playing',muted:j.getMute(),volume:j.getVolume()/100,currentTime:j.getPosition()||0,duration:j.getDuration()||0,state:j.getState(),quality:{current:currentQualityIdx,levels:qualityLevels}};}catch(e){}var v=findVideo();if(!v)return{found:false};return{found:true,paused:v.paused,muted:v.muted,volume:v.volume,currentTime:v.currentTime,duration:v.duration||0,src:v.src,quality:{current:currentQualityIdx,levels:qualityLevels}};},quality:qualityAPI,toggleAudioMute:function(){var vs=findVideo();if(!vs)return;var m=vs.muted;window._webtvRemoteMute=true;vs.muted=!m;window._webtvRemoteMute=false;},unmuteAudio:function(){var vs=findVideo();if(!vs)return;vs.muted=false;window._webtvAudioUnlocked=true;sessionStorage.setItem('webtv_audio_unlocked','1');}};window.WebTV=window.WebTV||{};window.WebTV.player=playerAPI;window.WebTVPlayer=playerAPI;window.WebTV.toggleAudioMute=playerAPI.toggleAudioMute;window.WebTV.unmuteAudio=playerAPI.unmuteAudio;window.addEventListener('message',function(e){var d=e.data;if(!d||d.source!=='webtv:command')return;var method=d.method,args=d.args||[],id=d.id;if(typeof playerAPI[method]!=='function')return;Promise.resolve(playerAPI[method].apply(playerAPI,args)).then(function(result){var response={source:'webtv:response',method:method,id:id,result:result};if(e.source)e.source.postMessage(response,'*');window.dispatchEvent(new CustomEvent('webtv:event',{detail:{type:'api:response',data:response}}));if(window.WebViewBridge&&window.WebViewBridge.postMessage)window.WebViewBridge.postMessage(JSON.stringify(response));});});function init(){suppressOverlays();detectPlayer();refreshQualityLevels();var jwHooked=setupJWPlayerEvents();waitVideo().then(function(video){if(!jwHooked){setupVideoEvents(video);setupClapprQualityEvents();}tryAutoplay(video);if(!playerReady)postEvent('player:loaded',{duration:video.duration||0,isLive:!video.duration||!isFinite(video.duration),quality:{levels:qualityLevels,current:currentQualityIdx}});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();",
       "enabled": true,
-      "domains": ["rdcanais.com"],
-      "urls": ["https://rdcanais.com/globosp"],
-      "channelIds": ["1779525189328"],
+      "domains": [
+        "rdcanais.com"
+      ],
+      "urls": [
+        "https://rdcanais.com/globosp"
+      ],
+      "channelIds": [
+        "1779525189328"
+      ],
       "id": "1779944393848",
       "createdAt": 1779944393848,
       "updatedAt": 1779949364475
+    },
+    {
+      "domains": [
+        "globoplay.globo.com"
+      ],
+      "id": "webtv-globotv-1781125405453",
+      "channelIds": [
+        "globo-tv-tribuna-1781125405440"
+      ],
+      "enabled": true,
+      "code": "!function(){\"use strict\";if(!window.__webtv_globoplay_replace){window.__webtv_globoplay_replace=!0;var e=\"eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg5NWIwYmIwLTI4ODMtNDE3MC1hMDY2LTZkMDIwZjkzNGRlMyIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZ2xvYm9wbGF5LXdlYkBnbG9ib2lkLWNvbm5lY3QiLCJ2b3RhY2FvLXByb2RAYXBwcy5nbG9ib2lkIl0sImV4cCI6MTc5NjY4Mjk4MywiaWF0IjoxNzgxMTMwOTgxLCJpc3MiOiJodHRwczovL2dvaWRjLmdsb2JvLmNvbS9hdXRoL3JlYWxtcy9nbG9iby5jb20iLCJqdGkiOiIxNGNhZjY1Ny05NTc0LTQyMjMtYjk1Yi03NmY5MmI2MTJhODAiLCJub25jZSI6ImVlMTc3YzEwLTg4Y2ItNDYwZi04NTNjLTM1OTgyYjk3OTAwYiIsInNjcCI6WyJvcGVuaWQiLCJwcm9maWxlLWdsb2JvcGxheSJdLCJzZXNzaW9uX3N0YXRlIjoiNGY5MzY3MTgtNTg5Ni00MWJhLWI0NWYtMjE3ZTViY2JmZjY0Iiwic3ViIjoiMDhhNTYyYmMtMjIxOC00OTI4LThjOTktZjc4MGMyZWRmNDZiIiwidHlwIjoiUmVmcmVzaCJ9.V_EitBuSUG0nEXne-c6F3R-gnc9IO5HC-W-g_59ZvSQjYm0A8bhRSW4R6isuC6VsF0KKAj10yU7iZQxaRwvW28-pWM1__v2CoGi1VodXV3Rhej38C8R5Z8EL-j5DGiQk8tKAAGh1rG1V4EJtj7Kn6AywUB5NmyPjMu83-wcsnSWlbo8g0MLUiIOcKGx4MUdL2QmYf-I1BMiJLgxQV0E7y7glQziW-1fwKRL4Ao0r72e90X85SJ8t8uJD96u-wnYihjuIgOPUHjQ2MDJ3dGoLsKmuuWsK_ytyiJrl37zV5oeTIyIiuQQ0x_WCX04yqN2CKUILMOZAOEKjdM_psoF0JA\",t=\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJnbG9ib0lkIjoiMDhhNTYyYmMtMjIxOC00OTI4LThjOTktZjc4MGMyZWRmNDZiIiwgInVzZXJOYW1lIjoiSm9yZ2UgQWx2ZXMiLCAicGhvdG9VcmwiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMUFQxU3lLUWJRU2J4dm5xNGhEc3N1OVZBNFo3d3BSRXBTV0J3ZmRTV2wwaUduUkw4PXM5Ni1jIn0.iGfnoCKIsZC1eMTtejh1ElSNadxIcN5aHCGhD4BHwvOuI7rBUSdR5um193Wt0v2qZy0LGBFuD4IGhD12GH9kN8yr-QzSn4e2dww3p9aiLp4lBPe7LTntgkA0tl7zGJ1uU_VoNiti5dC_kULVbG8Tjj6R5enjodXoNJbWa8k3ap2JSfDrpWUt_47Jz5hyto05mQjzRjQmGtQD0Sb5_FgFwl78evNtJPQgPWeCrKCXlFFO4NyiLDwKmpUjIPsDCgCf9G7g0ZGLmwzJApsWyUOWHjK0Pqo6Y24wPBC5Yzt6s_MScR0ESbMKuLR0q9bcl02bwxE86GwKX0GhJGw3UMAKng\",n=\"1acbd484bd02f09cff8051b156da3fd5958386a677a3649614d5066307a6f61515231756e63616c395835524c4a70644d4c50334f4d4e744d41614d674f75534647645172646935476a44774764387271716f6c77623674784e364163674c6f4e35694c6455513d3d3a303a756e3068763772637935626c3270677a37676c6a\",o=\"6a9cc953-1e63-47ab-8b7d-4eb7ce72e024\",a=\"08a562bc-2218-4928-8c99-f780c2edf46b\",r=\"TV TRIBUNA\",i=\"4452349\",l=\"https://goidc.globo.com/auth/realms/globo.com/protocol/openid-connect/token\",c=\"https://playback.video.globo.com/v5/video-session\",s=\"globoplay-web@globoid-connect\",d=['header, nav, [role=\"banner\"], [class*=\"header\"], [class*=\"nav\"],','[class*=\"menu\"], [class*=\"sidebar\"], [class*=\"banner\"],','[class*=\"footer\"], footer, [role=\"contentinfo\"],','[class*=\"channel\"], [class*=\"catalog\"], [class*=\"tab\"],','[class*=\"program\"], [class*=\"grade\"], [class*=\"epg\"],','[class*=\"recommend\"], [class*=\"carousel\"], [class*=\"swiper\"],','[class*=\"discover\"], [class*=\"explore\"], [class*=\"grid\"],','[class*=\"listing\"], [class*=\"feed\"], [class*=\"row\"],','.prog-box, .search-box, .cookie-banner, [class*=\"cookie\"],','[class*=\"modal\"]:not(#webtv-fullscreen-container),','[class*=\"overlay\"]:not(#webtv-fullscreen-container),','[class*=\"ad-\"], [class*=\"banner-ad\"], [id*=\"ad-\"],','iframe:not([title*=\"video\"]), [class*=\"vpaid\"],','[class*=\"stitched\"], [class*=\"branding\"],','main, [role=\"main\"], section, aside'].join(\" \"),u=[13,23,32,179,415];document.addEventListener(\"keydown\",function(e){if(-1!==u.indexOf(e.keyCode)){var t=(document.activeElement&&document.activeElement.tagName||\"\").toLowerCase();if(!(\"input\"===t||\"textarea\"===t||\"select\"===t||document.activeElement&&document.activeElement.isContentEditable)){e.preventDefault();var n=w();n.paused?n.play().catch(function(){}):n.pause()}}},!0);var m=!1;document.addEventListener(\"click\",function e(){document.removeEventListener(\"click\",e,!0),_()},!0),window.WebTV=window.WebTV||{},window.WebTV.player={play:function(){return w().play().then(function(){return{ok:!0}}).catch(function(e){return{ok:!1,reason:e.message}})},pause:function(){return w().pause(),{ok:!0}},stop:function(){var e=w();return e.pause(),e.currentTime=0,{ok:!0}},seek:function(e){var t=w();return!isFinite(t.duration)||t.duration>=86400?{ok:!1,reason:\"live cannot seek\"}:(t.currentTime=Math.max(0,Math.min(e,t.duration||0)),{ok:!0,time:t.currentTime})},rewind:function(e){var t=w();return t.currentTime=Math.max(0,t.currentTime-(e||10)),{ok:!0,time:t.currentTime}},forward:function(e){var t=w();return isFinite(t.duration)?(t.currentTime=Math.min(t.duration,t.currentTime+(e||10)),{ok:!0,time:t.currentTime}):{ok:!0,time:t.currentTime}},volumeUp:function(e){var t=w();return t.volume=Math.min(1,t.volume+(e||.05)),{ok:!0,volume:t.volume}},volumeDown:function(e){var t=w();return t.volume=Math.max(0,t.volume-(e||.05)),{ok:!0,volume:t.volume}},mute:function(){return w().muted=!0,{ok:!0}},unmute:function(){return w().muted=!1,{ok:!0}},getStatus:function(){var e=w();return{ok:!0,playing:!e.paused,currentTime:e.currentTime,duration:e.duration||0,volume:e.volume,muted:e.muted,isLive:!isFinite(e.duration)||e.duration>=86400,readyState:e.readyState}},reload:function(){return L(),{ok:!0}},quality:{getLevels:function(){var e=window.__webtv_hls;return e?e.levels.map(function(e,t){return{index:t,height:e.height,bitrate:e.bitrate,width:e.width,frameRate:e.frameRate}}):[]},getCurrent:function(){var e=window.__webtv_hls;return e?e.currentLevel:-1},set:function(e){var t=window.__webtv_hls;return!!t&&(t.currentLevel=e,!0)},setAuto:function(){var e=window.__webtv_hls;return!!e&&(e.currentLevel=-1,!0)}}},window.WebTV.toggleAudioMute=function(){var e=w();return e.muted=!e.muted,e.muted},window.WebTV.unmuteAudio=function(){var e=w();e.muted=!1,e.play().catch(function(){})},\"loading\"===document.readyState?document.addEventListener(\"DOMContentLoaded\",I):I()}function p(e,t){var n={source:\"webtv\",name:e,payload:t||{},timestamp:Date.now()};try{window.dispatchEvent(new CustomEvent(e,{detail:n}))}catch(e){}try{window.dispatchEvent(new CustomEvent(\"webtv:event\",{detail:n}))}catch(e){}try{window.parent&&window.parent!==window&&window.parent.postMessage(n,\"*\")}catch(e){}try{window.WebViewBridge&&window.WebViewBridge.postMessage&&window.WebViewBridge.postMessage(JSON.stringify(n))}catch(e){}try{window.WebTV&&window.WebTV.events&&window.WebTV.events.emit&&window.WebTV.events.emit(e,t)}catch(e){}}function v(){var t=\"globoid-tokens-globoplay-web@globoid-connect\",n=null;try{n=JSON.parse(localStorage.getItem(t))}catch(e){}var o=n&&n.refresh_token?n.refresh_token:e;return fetch(l,{method:\"POST\",headers:{\"Content-Type\":\"application/x-www-form-urlencoded\"},body:\"grant_type=refresh_token&refresh_token=\"+encodeURIComponent(o)+\"&client_id=\"+encodeURIComponent(s)}).then(function(e){return e.json()}).then(function(e){if(e.access_token){var n={access_token:e.access_token,id_token:e.id_token||\"\",refresh_token:e.refresh_token||o};try{localStorage.setItem(t,JSON.stringify(n))}catch(e){}console.log(\"[WebTV Globoplay] Token refreshed (expires_in: \"+(e.expires_in||\"?\")+\"s)\")}return e.access_token})}function b(e){return fetch(c,{method:\"POST\",headers:{\"Content-Type\":\"application/json\",Authorization:\"Bearer \"+e},body:JSON.stringify({player_type:\"desktop\",video_id:i,quality:\"max\",content_protection:\"none\",vsid:\"webtv-\"+Date.now(),tz:\"-03:00\",capabilities:{low_latency:!0,smart_mosaic:!1,max_frame_rate:\"60\",dvr:!1},consumption:\"streaming\",metadata:{name:\"web\",device:{type:\"desktop\",os:{}}},version:2,ts:Date.now()})}).then(function(e){return e.json()}).then(function(e){var t=[];if(e.sources&&e.sources.hls&&t.push(e.sources.hls),e.resources)for(var n=0;n<e.resources.length;n++){var o=e.resources[n];o.players&&o.players.hls&&t.push(o.players.hls),o.url&&o.url.indexOf(\".m3u8\")>-1&&t.push(o.url)}for(var a=0;a<t.length;a++)if(\"string\"==typeof t[a]&&t[a].indexOf(\".m3u8\")>-1)return console.log(\"[WebTV Globoplay] Stream URL obtained via API\"),t[a];throw new Error(\"No HLS stream in video-session response\")})}function y(){for(var e=document.querySelectorAll(\"script\"),t=0;t<e.length;t++){var n=(e[t].textContent||\"\").match(/https:\\/\\/live-[a-z0-9-]+\\.video\\.globo\\.com\\/j\\/[A-Za-z0-9_.-]+\\/live\\/[^\"'\\s]+\\.m3u8[^\"'\\s]*/);if(n)return n[0]}for(var o=performance.getEntriesByType(\"resource\"),a=0;a<o.length;a++)if(o[a].name.indexOf(\".m3u8\")>-1&&o[a].name.indexOf(\"live-\")>-1)return o[a].name;return null}function f(){var e=\"webtv-clean-ui\";if(!document.getElementById(e)){var t=document.createElement(\"style\");t.id=e,t.textContent=[d+\" { display: none !important; visibility: hidden !important; }\",\"html, body { background: #000 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }\"].join(\"\\n\"),document.head.appendChild(t)}}function h(){var e=\"webtv-full-clean\";if(!document.getElementById(e)){var t=document.createElement(\"style\");t.id=e,t.textContent=['[class*=\"clappr\"], [data-player], .player-container,','#player, [id*=\"player-\"]:not(#webtv-player),','button:not([id*=\"webtv\"])',\" { display: none !important; visibility: hidden !important; pointer-events: none !important; }\",\"#webtv-fullscreen-container { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; background: #000 !important; display: block !important; visibility: visible !important; }\",\"#webtv-player { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; visibility: visible !important; }\"].join(\"\\n\"),document.head.appendChild(t)}}function w(){var e=document.querySelector(\"video[src]\")||document.querySelector(\"video\");if(e)return e.id=\"webtv-player\",e.muted=!0,e.setAttribute(\"playsinline\",\"\"),e.setAttribute(\"autoplay\",\"\"),e.setAttribute(\"muted\",\"\"),e.controls=!1,e;var t=document.createElement(\"video\");return t.id=\"webtv-player\",t.muted=!0,t.setAttribute(\"playsinline\",\"\"),t.setAttribute(\"autoplay\",\"\"),t.setAttribute(\"muted\",\"\"),t.controls=!1,t.style.cssText=\"width:100%;height:100%;object-fit:contain;display:block\",t}function g(e){if(window.Hls)return e(window.Hls);var t=document.createElement(\"script\");t.src=\"https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js\",t.onload=function(){e(window.Hls)},t.onerror=function(){console.error(\"[WebTV Globoplay] Hls.js CDN load failed\"),p(\"player:error\",{reason:\"hlsjs-cdn-failed\"})},document.head.appendChild(t)}function T(e){var t=w();if(function(e){e.muted=!0,e.setAttribute(\"muted\",\"\"),e.setAttribute(\"playsinline\",\"\"),e.controls=!1;var t=document.getElementById(\"webtv-fullscreen-container\");t||((t=document.createElement(\"div\")).id=\"webtv-fullscreen-container\"),e.parentNode!==t&&t.appendChild(e);var n=document.body;n.style.cssText=\"margin:0;padding:0;overflow:hidden;background:#000\";for(var o=Array.prototype.slice.call(n.children),a=0;a<o.length;a++){var r=o[a];if(r!==t&&\"webtv-clean-ui\"!==r.id&&\"SCRIPT\"!==r.tagName)try{n.removeChild(r)}catch(e){try{r.style.display=\"none\"}catch(e){}}}t.parentNode!==n&&n.appendChild(t)}(t),h(),!window.Hls||!Hls.isSupported())return t.canPlayType(\"application/vnd.apple.mpegurl\")?(t.src=e,t.play().catch(function(){}),k(t),void p(\"player:loaded\",{stream:\"native-hls\",isLive:!0})):void p(\"player:error\",{reason:\"hls-not-supported\"});var n=new Hls({enableWorker:!0,lowLatencyMode:!1,backBufferLength:30,maxBufferLength:20,maxMaxBufferLength:60,maxBufferSize:3e7,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,capLevelToPlayerSize:!0,startLevel:-1,fragLoadingMaxRetry:3,levelLoadingMaxRetry:3,manifestLoadingMaxRetry:3,abrEwmaDefaultEstimate:5e6,abrBandwidthFactor:.7,enableSoftwareAES:!1,xhrSetup:function(e){try{e.setRequestHeader(\"Referer\",\"https://globoplay.globo.com/\")}catch(e){}}});n.loadSource(e),n.attachMedia(t),n.on(Hls.Events.MANIFEST_PARSED,function(){t.play().catch(function(){}),k(t),p(\"player:loaded\",{stream:\"hls.js\",isLive:!0,levels:n.levels.length,autoLevel:n.autoLevelEnabled}),console.log(\"[WebTV Globoplay] Playing TV Tribuna — \"+r)}),n.on(Hls.Events.ERROR,function(e,t){t.fatal&&(console.error(\"[WebTV Globoplay] HLS fatal:\",t.type,t.details),p(\"player:error\",{type:t.type,details:t.details}),L())}),window.__webtv_hls=n}function L(){console.log(\"[WebTV Globoplay] Renewing stream...\"),v().then(function(e){return b(e)}).then(function(e){var t=window.__webtv_hls;t?(t.loadSource(e),t.attachMedia(w())):T(e)}).catch(function(){var e=y();e&&T(e)})}function k(e){if(!e._webtv_hooked){e._webtv_hooked=!0,e.addEventListener(\"play\",function(){p(\"player:play\",{currentTime:e.currentTime,duration:e.duration||0,isLive:!isFinite(e.duration)||e.duration>=86400})}),e.addEventListener(\"pause\",function(){e.ended||p(\"player:pause\",{currentTime:e.currentTime,duration:e.duration||0})}),e.addEventListener(\"ended\",function(){p(\"player:ended\",{time:0})});var t=0;e.addEventListener(\"seeking\",function(){t=e.currentTime}),e.addEventListener(\"seeked\",function(){var n=e.currentTime>t?\"forward\":\"backward\";p(\"player:seeked\",{time:e.currentTime,duration:e.duration||0,from:t,direction:n})});var n=0;e.addEventListener(\"timeupdate\",function(){var t=Date.now();t-n<1e3||(n=t,p(\"player:timeupdate\",{currentTime:e.currentTime,duration:e.duration||0}))}),e.addEventListener(\"volumechange\",function(){p(e.muted?\"player:muted\":\"player:unmuted\",{volume:e.volume})}),e.addEventListener(\"error\",function(){p(\"player:error\",{code:e.error?e.error.code:-1,message:e.error?e.error.message:\"\"})})}}function _(){if(!m){m=!0;try{!function(){var e=document.documentElement;try{if(e.requestFullscreen)return void e.requestFullscreen().catch(function(){});if(e.webkitRequestFullscreen)return void e.webkitRequestFullscreen();if(e.mozRequestFullScreen)return void e.mozRequestFullScreen();if(e.msRequestFullscreen)return void e.msRequestFullscreen();if(e.webkitEnterFullscreen)return void e.webkitEnterFullscreen();e.enterFullscreen&&e.enterFullscreen()}catch(e){}}()}catch(e){}}}function I(){console.log(\"[WebTV Globoplay] Bootstrap — \"+r+\" (Santos/SP)\"),f();var i=document.cookie.indexOf(\"GLOBO_ID=\")>-1&&document.cookie.indexOf(\"GLBID=\")>-1;if(function(){var r=\".globo.com\",i=\";max-age=31536000\";document.cookie=\"GLOBO_ID=\"+t+\";domain=\"+r+\";path=/\"+i,document.cookie=\"GLBID=\"+n+\";domain=\"+r+\";path=/\"+i,document.cookie=\"hsid=\"+o+\";domain=\"+r+\";path=/\"+i;var l=\"globoid-tokens-globoplay-web@globoid-connect\",c=null;try{c=localStorage.getItem(l)}catch(e){}if(!c){var s={access_token:\"\",id_token:\"\",refresh_token:e};try{localStorage.setItem(l,JSON.stringify(s))}catch(e){}}var d=\"globoid-authorization-aeid-globoplay-web@globoid-connect\";try{localStorage.getItem(d)||localStorage.setItem(d,JSON.stringify({authorizations:{\"media-rights\":{aeids:[{actions:[{name:\"action_service_4728\",contents:null},{name:\"action_service_6870\",contents:null}],aeid:\"portal-globocom\",status:\"authorized\",type:\"media-rights\"},{actions:[{name:\"action_service_4654\",contents:null}],aeid:\"globoplay-gratuito\",status:\"authorized\",type:\"media-rights\"}],globoId:a}}}))}catch(e){}var u=\"glb_ppid_data\";try{localStorage.getItem(u)||localStorage.setItem(u,JSON.stringify({glbId:a,ppid:\"2a283d101cc998e7a17ae89a73e9af9e637b1cbf58a9d081d033b2ceb638b7e8\"}))}catch(e){}console.log(\"[WebTV Globoplay] Session injected\")}(),console.log(\"[WebTV Globoplay] Session: \"+(i?\"WebView cookies\":\"injected (needs reload)\")),!i){var l=\"__webtv_reload_ts\",c=Date.now(),s=0;try{s=parseInt(sessionStorage.getItem(l)||\"0\",10)}catch(e){s=window[l]||0}if(c-s>15e3){try{sessionStorage.setItem(l,String(c))}catch(e){try{window[l]=c}catch(e){}}console.log(\"[WebTV Globoplay] Reloading to activate cookies...\");try{location.reload()}catch(e){}return}return console.error(\"[WebTV Globoplay] Still anonymous after reload. Cookies may be invalid.\"),void p(\"player:error\",{reason:\"anonymous-after-reload\"})}var d=0,u=setInterval(function(){d+=50;var e=y();if(e)return clearInterval(u),console.log(\"[WebTV Globoplay] m3u8 found after \"+d+\"ms — replacing player\"),void S(e);d>=5e3&&(clearInterval(u),console.log(\"[WebTV Globoplay] No m3u8 in 5s. Trying API...\"),g(function(){v().then(function(e){return b(e)}).then(function(e){console.log(\"[WebTV Globoplay] Stream URL obtained via API\"),S(e)}).catch(function(e){console.warn(\"[WebTV Globoplay] API failed:\",e&&e.message);var t=0,n=setInterval(function(){t++;var e=y();e?(clearInterval(n),console.log(\"[WebTV Globoplay] m3u8 found during poll at \"+500*t+\"ms\"),S(e)):t>60&&(clearInterval(n),console.error(\"[WebTV Globoplay] No m3u8 found after 30s. Tokens may be invalid.\"),p(\"player:error\",{reason:\"no-m3u8-found\"}))},500)})}))},50)}function S(e){var t=function(){var e=document.querySelector(\".player-with-broadcasts-navigation video:not(.broadcast-thumb__video)\");if(e)return e;for(var t=document.querySelectorAll(\"video\"),n=0;n<t.length;n++)if(!(t[n].className&&t[n].className.indexOf(\"broadcast-thumb\")>-1))return t[n];return null}();t||(console.error(\"[WebTV Globoplay] No <video> found, creating new one\"),t=w(),document.body.appendChild(t));try{t.pause()}catch(e){}try{t.removeAttribute(\"src\"),t.load()}catch(e){}h();var n=document.getElementById(\"webtv-fullscreen-container\");n||((n=document.createElement(\"div\")).id=\"webtv-fullscreen-container\"),t.parentNode!==n&&n.appendChild(t);var o=document.querySelector(\".live-navigation__player-area\")||document.body;n.parentNode!==o&&o.appendChild(n),t.id=\"webtv-player\",t.muted=!0,t.controls=!1,t.setAttribute(\"playsinline\",\"\"),console.log(\"[WebTV Globoplay] Loading Hls.js...\"),g(function(){if(!window.Hls||!Hls.isSupported())return t.canPlayType(\"application/vnd.apple.mpegurl\")?(t.src=e,t.play().catch(function(){}),k(t),p(\"player:loaded\",{stream:\"native-hls\",isLive:!0}),void _()):void p(\"player:error\",{reason:\"hls-not-supported\"});var n=new Hls({enableWorker:!0,lowLatencyMode:!1,backBufferLength:30,maxBufferLength:20,maxMaxBufferLength:60,maxBufferSize:3e7,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,capLevelToPlayerSize:!0,startLevel:-1,fragLoadingMaxRetry:3,levelLoadingMaxRetry:3,manifestLoadingMaxRetry:3,abrEwmaDefaultEstimate:5e6,abrBandwidthFactor:.7,enableSoftwareAES:!1,xhrSetup:function(e){try{e.setRequestHeader(\"Referer\",\"https://globoplay.globo.com/\")}catch(e){}}});n.loadSource(e),n.attachMedia(t),n.on(Hls.Events.MANIFEST_PARSED,function(){t.play().catch(function(){}),k(t),p(\"player:loaded\",{stream:\"hls.js\",isLive:!0,levels:n.levels.length}),console.log(\"[WebTV Globoplay] Playing TV Tribuna — \"+r),_()}),n.on(Hls.Events.ERROR,function(e,t){t.fatal&&(console.error(\"[WebTV Globoplay] HLS fatal:\",t.type,t.details),p(\"player:error\",{type:t.type,details:t.details}),L())}),window.__webtv_hls=n})}}();",
+      "domain": "globoplay.globo.com",
+      "createdAt": 1781125405453,
+      "subdomains": [],
+      "updatedAt": 1781215912946,
+      "name": "Globoplay: TV Tribuna — Player Hls.js + Sessão",
+      "urls": [
+        "https://globoplay.globo.com/tv-globo/ao-vivo/6120663/"
+      ]
     }
   ]
 }
