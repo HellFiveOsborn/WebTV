@@ -27,6 +27,16 @@ export interface PlayerOpenedPayload {
   url: string
 }
 
+export interface StandalonePlayerOpenedPayload {
+  streamUrl: string
+  timestamp: number
+}
+
+export interface StandalonePlayerClosedPayload {
+  streamUrl: string
+  timestamp: number
+}
+
 export interface PlayerClosedPayload {
   channelId: string
   channelName: string
@@ -117,6 +127,8 @@ export interface EventHandlers {
   'player:opened': PlayerOpenedPayload
   'player:closed': PlayerClosedPayload
   'player:backupSelected': PlayerBackupSelectedPayload
+  'standalone:player:opened': StandalonePlayerOpenedPayload
+  'standalone:player:closed': StandalonePlayerClosedPayload
   'search:changed': SearchChangedPayload
   'sort:changed': SortChangedPayload
   'category:changed': CategoryChangedPayload
