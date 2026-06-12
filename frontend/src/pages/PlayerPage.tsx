@@ -3,8 +3,10 @@ import { loadHls } from '../lib/hlsLoader'
 import { HLS_CONFIG_ANDROID_TV } from '../lib/hlsConfig'
 import { eventBus } from '../lib/eventBus'
 import { parseStreamQuery } from './parseStreamQuery'
+import { classifyPlayError } from './classifyPlayError'
+import { shouldStartMutedAfterAutoplayBlock } from './shouldStartMutedAfterAutoplayBlock'
 
-type Status = 'loading' | 'playing' | 'paused' | 'error'
+type Status = 'loading' | 'playing' | 'paused' | 'error' | 'autoplay-blocked'
 
 export const PlayerPage = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -13,6 +15,23 @@ export const PlayerPage = () => {
   const [errorMsg, setErrorMsg] = useState<string>('')
 
   const streamUrl = parseStreamQuery(window.location.search)
+
+  const unmuteAndPlay = useCallback(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.muted = false
+    v.play().then(() => {
+      setStatus('playing')
+    }).catch(() => {
+      v.muted = true
+    })
+  }, [])
+
+  const handleUserInteraction = useCallback(() => {
+    if (status === 'autoplay-blocked') {
+      unmuteAndPlay()
+    }
+  }, [status, unmuteAndPlay])
 
   const attach = useCallback(async () => {
     if (!streamUrl || !videoRef.current) return
@@ -57,11 +76,25 @@ export const PlayerPage = () => {
       }
 
       const video = videoRef.current
+      video.muted = false
       try {
         await video.play()
+        setStatus('playing')
       } catch (e) {
-        setStatus('error')
-        setErrorMsg('Autoplay bloqueado pelo navegador')
+        const kind = classifyPlayError(e)
+        if (shouldStartMutedAfterAutoplayBlock(kind, video.muted)) {
+          video.muted = true
+          try {
+            await video.play()
+            setStatus('autoplay-blocked')
+          } catch {
+            setStatus('error')
+            setErrorMsg('Falha ao iniciar o video')
+          }
+        } else {
+          setStatus('error')
+          setErrorMsg((e as Error).message || 'Erro ao reproduzir')
+        }
       }
     } catch (e) {
       setStatus('error')
@@ -108,56 +141,14 @@ export const PlayerPage = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const v = videoRef.current
-      if (!v) return
-
-      if (e.key === 'Enter' || e.key === 'OK' || e.key === 'MediaPlayPause') {
+      if (status === 'autoplay-blocked') {
         e.preventDefault()
-        if (v.paused) {
-          v.play()
-        } else {
-          v.pause()
-        }
-        return
-      }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault()
-        v.currentTime = Math.max(0, v.currentTime - 10)
-        return
-      }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 10)
-        return
-      }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        v.volume = Math.min(1, v.volume + 0.1)
-        return
-      }
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        v.volume = Math.max(0, v.volume - 0.1)
-        return
-      }
-      if (e.key === 'Escape' || e.key === 'Backspace') {
-        e.preventDefault()
-        handleClose()
-        return
+        unmuteAndPlay()
       }
     }
-
-    const handleClose = () => {
-      if (window.history.length > 1) {
-        window.history.back()
-      } else {
-        window.close()
-      }
-    }
-
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [status, unmuteAndPlay])
 
   const handleRetry = () => {
     setStatus('loading')
@@ -166,7 +157,11 @@ export const PlayerPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div
+      className="fixed inset-0 bg-black overflow-hidden select-none"
+      onClick={handleUserInteraction}
+      onTouchStart={handleUserInteraction}
+    >
       <video
         ref={videoRef}
         className="w-full h-full object-contain bg-black"
@@ -176,9 +171,25 @@ export const PlayerPage = () => {
       />
 
       {status === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70 pointer-events-none">
           <div className="text-white text-lg">Carregando stream...</div>
         </div>
+      )}
+
+      {status === 'autoplay-blocked' && (
+        <button
+          onClick={unmuteAndPlay}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 cursor-pointer focus:outline-none"
+          aria-label="Toque para ativar o som"
+        >
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="white" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+          <div className="mt-6 text-white text-xl font-semibold">Toque para ativar o som</div>
+          <div className="mt-2 text-white/70 text-sm">Pressione qualquer tecla ou clique na tela</div>
+        </button>
       )}
 
       {status === 'error' && (
