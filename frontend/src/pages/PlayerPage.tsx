@@ -57,7 +57,6 @@ export const PlayerPage = () => {
       }
 
       const video = videoRef.current
-      video.muted = true
       try {
         await video.play()
       } catch (e) {
@@ -173,7 +172,6 @@ export const PlayerPage = () => {
         className="w-full h-full object-contain bg-black"
         playsInline
         autoPlay
-        controls={false}
         tabIndex={-1}
       />
 
