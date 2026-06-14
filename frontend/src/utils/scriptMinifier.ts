@@ -243,6 +243,10 @@ function countDelimiters(code: string): DelimiterCounts {
 
   let mode: ParseMode = 'code'
   const stack: ParseMode[] = []
+  // Profundidade de chaves JS dentro da expressão ${...} de um template literal.
+  // Quando > 0, o próximo '}' que fechar uma chave JS não é o '}' do ${...}.
+  // Apenas quando o contador volta a 0 é que o '}' fecha o ${...} e volta para 'template'.
+  let templateBraceDepth = 0
   let stringQuote = ''
 
   function isRegexContext(): boolean {
@@ -309,7 +313,9 @@ function countDelimiters(code: string): DelimiterCounts {
       if (ch === '$' && next === '{') {
         i += 2
         pushMode('code')
-        brace++
+        // Entramos no ${...}. O próprio ${ abre uma "chave" lógica.
+        // A chave JS real só existe quando { é encontrado dentro do code.
+        templateBraceDepth = 1
         continue
       }
       i++
@@ -368,9 +374,23 @@ function countDelimiters(code: string): DelimiterCounts {
       continue
     }
 
-    if (ch === '{') brace++
-    else if (ch === '}') brace--
-    else if (ch === '(') paren++
+    if (ch === '{') {
+      brace++
+      if (templateBraceDepth > 0) templateBraceDepth++
+    } else if (ch === '}') {
+      if (templateBraceDepth > 0) {
+        templateBraceDepth--
+        if (templateBraceDepth === 0) {
+          // Esse '}' fecha o ${...}, não conta como chave JS e volta para 'template'
+          popMode()
+        } else {
+          // É um '}' interno ao ${...} (ex: fecha um objeto literal)
+          brace--
+        }
+      } else {
+        brace--
+      }
+    } else if (ch === '(') paren++
     else if (ch === ')') paren--
     else if (ch === '[') bracket++
     else if (ch === ']') bracket--

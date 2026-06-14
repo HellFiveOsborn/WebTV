@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { validateScript } = require('../src/utils/__compiled__/scriptMinifier.js')
+const { validateScript } = require('../src/utils/__compiled__/scriptMinifier.cjs')
 
 const RD_PATH = 'E:/Dev Workspace/WebTV/frontend/docs/scripts/rdcanais-replace-content.min.js'
 const EMBED_PATH = 'E:/Dev Workspace/WebTV/frontend/docs/scripts/embeddecanais-replace-content.min.js'
@@ -36,6 +36,24 @@ test('divisão vs regex — contexto importa', () => {
 test('template literal com ${} aninhado', () => {
   const r = validateScript('var s = `texto ${a + b} mais`;')
   assert.equal(r.valid, true, `erros: ${r.errors.join(', ')}`)
+})
+
+test('template literal com ${} contendo objeto literal e HTML/CSS com chaves', () => {
+  const r = validateScript('var s = `<div>${({a:1, b:2})}</div>`;')
+  assert.equal(r.valid, true, `erros: ${r.errors.join(', ')}`)
+})
+
+test('template literal com ${} e CSS dentro (bug do usuário)', () => {
+  const r = validateScript(`
+    const s = \`<style>html,body{width:100%;height:100%}</style><div id="\${id}">\${overlayHTML}</div>\`;
+  `)
+  assert.equal(r.valid, true, `erros: ${r.errors.join(', ')}`)
+})
+
+test('bug usuário: script real com template + ${} + CSS com chaves + innerHTML', () => {
+  const code = readFileSync('C:/Users/canal/AppData/Local/Temp/opencode/sample-script.js', 'utf8')
+  const r = validateScript(code)
+  assert.equal(r.valid, true, `erros: ${r.errors.join(' | ')}`)
 })
 
 test('comentários de linha ignorados', () => {
