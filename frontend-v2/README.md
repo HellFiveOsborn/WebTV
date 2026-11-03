@@ -95,8 +95,11 @@ frontend-v2/
 
 - **Frontend:** `.github/workflows/deploy-frontend-v2.yml` - build no GitHub
   Actions (Node roda no CI, nunca no runtime), publica o `dist/` no GitHub Pages.
-- **Backend:** container na Suga (ver `../backend/README.md`). Apos o deploy,
-  defina `VITE_API_URL` no build do frontend com a URL publica da API.
+  URL: <https://hellfiveosborn.github.io/WebTV/>
+- **Backend:** Deno Function na Suga (ver `../backend/README.md`). A URL publica
+  entra no build via a var de repositorio **`VITE_API_URL`** (definida como
+  `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run/channels`).
+  Sem essa var, o frontend cai para o snapshot do build.
 
 ## Pendencias conhecidas
 

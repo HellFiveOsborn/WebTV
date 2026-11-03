@@ -90,7 +90,28 @@ upstream invalido.
 
 ## Deploy na Suga
 
-### Pelo dashboard
+> **Status: implantado.** Deno Function `backend` no ambiente `production` do
+> projeto `international-warbler` (org `quaint-aardvark`, tier hobby).
+> URL publica: `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run`
+
+### Por que Deno Function (e nao container)
+
+O plano **hobby** (gratis) tem duas travas para build from source:
+- **GitHub App**: precisa ser instalado pelo usuario na UI (o MCP nao pode
+  iniciar esse fluxo).
+- **Imagem de registry**: exige plano pago.
+
+A Suga aceita **Deno Functions com codigo inline**, o que dispensa as duas.
+O codigo e gerado por `scripts/build-suga-function.mjs`, que embute
+`shared/parseEmbedcanais.mjs` - assim existe **uma unica implementacao** do
+parser (frontend, backend container, function e script de build).
+
+O container em `backend/` (com Dockerfile) continua valido e e a opcao
+preferida se voce subir de plano (ou instalar o GitHub App): tem hot-rebuild via
+push, enquanto o codigo inline da function precisa ser reenviado a cada
+mudanca.
+
+### Pelo dashboard (caminho geral)
 
 1. **Install the Suga GitHub App** (dashboard -> Connect GitHub). Obrigatorio
    para build from source - o agente nao pode iniciar esse fluxo sozinho.
@@ -121,16 +142,28 @@ na mesma porta.
 O agente devolve um **deeplink** para o ambiente. Voce abre, revisa o diff e
 clica em **Apply**.
 
-### Limites do plano (Free)
+> O MCP **nao tem tool de deploy** - por design, o agente nunca aplica. Ele
+> prepara o draft e devolve o deeplink.
 
-- 0.1 CPU / 256 MiB por servico - suficiente para este proxy (so fetch + parse).
+### Variar o codigo da function
+
+```powershell
+# 1. edite shared/parseEmbedcanais.mjs
+# 2. regenere o codigo da function
+node scripts/build-suga-function.mjs
+# 3. valide localmente (stub de Deno, sem precisar do runtime)
+node scripts/test-suga-function.mjs
+# 4. reenvie ao draft (replace_draft com type: "function")
+```
+
+### Limites do plano (hobby) — atendidos
+
+- 0.1 CPU / 128 MiB por servico. Consumo medido: **~0.02 vCPU, ~12 MiB**.
 - Ratio de memoria:CPU de 1 GiB a 6.5 GiB por core. Com 0.1 CPU, a memoria
-  valida e entre 102 MiB e 665 MiB. Use **128 MiB**.
+  valida e entre 102 MiB e 665 MiB → 128 MiB esta correto.
 - 1 projeto, 1 ambiente, 1 replica.
 - Bandwidth de saida: 5 Mbit/s. O catalogo tem ~74 KB - irrelevante.
 - Log retention: 1 dia.
-- **Imagens arbitrarias de registry exigem plano pago**, mas build a partir do
-  GitHub funciona no Free.
 
 ## Notas
 
