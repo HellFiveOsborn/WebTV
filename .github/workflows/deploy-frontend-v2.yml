@@ -43,8 +43,12 @@ jobs:
       - name: Fetch channels snapshot
         run: npm run fetch:channels
 
+      # URL da API do backend (Deno Function na Suga).
+      # Vem do secret/variable do repo; sem ele, o frontend usa o snapshot.
       - name: Build
         run: npm run build:offline
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - name: Create .nojekyll
         run: touch dist/.nojekyll
