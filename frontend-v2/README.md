@@ -24,13 +24,14 @@ um scanner que respeita strings e escapes.
 
 | Via | Quando | Como |
 |---|---|---|
+| `cache` | Padrao (localStorage) | Ultimo catalogo salvo no navegador. Dentro do TTL **nao ha requisicao nenhuma**. |
 | `api` | Producao (principal) | Backend Node na **Suga**. Busca o site no servidor (sem restricao de CORS) e devolve JSON limpo com `Access-Control-Allow-Origin: *`. **Resolve o CORS de vez.** |
 | `live` | Dev local | `fetch` direto ao site, via proxy do Vite (mesma origem => sem CORS). Tambem funciona se o site liberar CORS no futuro. |
 | `snapshot` | Build (fallback) | `npm run fetch:channels` baixa o site no build e gera `public/data/embedcanais.json`, servido como arquivo estatico. |
 
-O app **renderiza o snapshot imediatamente** e **consulta as vias online em
-paralelo**. Se a API (ou o site direto) responder, os dados frescos substituem
-o snapshot. A UI sempre mostra qual via forneceu os dados + o log de tentativas.
+O app le o **cache local** e o **snapshot do build** primeiro (instantaneo, sem
+rede) e so entao consulta as vias online. A UI sempre mostra qual via forneceu
+os dados + o log de tentativas.
 
 > **Por que o backend na Suga:** `embedcanais.online` **nao envia headers CORS**.
 > Testado em browser real, o `fetch` direto e bloqueado pela Same-Origin Policy.
@@ -41,6 +42,39 @@ o snapshot. A UI sempre mostra qual via forneceu os dados + o log de tentativas.
 > producao estatica.
 >
 > Detalhes do backend em [`../backend/README.md`](../backend/README.md).
+
+## Cache local (localStorage)
+
+O catalogo muda com pouca frequencia, entao a v2 guarda o ultimo resultado em
+`localStorage` (chave `webtv:v2:catalog`) e **nao consulta a API a cada
+abertura**. O padrao e *stale-while-revalidate*:
+
+| Situacao | Comportamento |
+|---|---|
+| Cache dentro do TTL (30 min) | Renderiza do cache. **Zero requisicoes de rede.** |
+| Cache expirado | Renderiza o dado velho e revalida em background. |
+| Sem cache | Usa o snapshot do build e revalida em background. |
+| Cache + rede fora | Mantem o dado velho em tela e avisa que nao conseguiu atualizar. |
+
+Detalhes:
+
+- **TTL:** 30 minutos, configuravel por `VITE_CACHE_TTL_MS` (ms). Ver
+  `.env.example`.
+- **Idade maxima de uso:** 7 dias. Passado isso, o cache e descartado (dado
+  velho demais nao e confiavel).
+- **O snapshot do build nao sobrescreve o cache.** Ele e um artefato antigo: a
+  idade do dado e o `generatedAt` do arquivo, nao o momento da leitura.
+- **Botoes na UI:** "Atualizar (ignora cache)" e "Limpar cache".
+- O storage pode nao existir (modo privado) ou falhar (quota). Nesse caso o app
+  funciona normalmente, so sem cache.
+
+Modulos envolvidos:
+
+| Arquivo | Papel |
+|---|---|
+| `src/lib/catalogCache.ts` | Leitura/escrita do localStorage, TTL, validacao do formato. |
+| `src/lib/catalogLoader.ts` | Decide QUANDO tocar a rede (cache -> snapshot -> rede). |
+| `src/lib/catalogSource.ts` | Decide COMO buscar (api -> live -> cors -> snapshot). |
 
 ## Scripts
 
@@ -60,6 +94,13 @@ npm run build:offline
 # Testes (unitarios + live contra o site real)
 npm test
 
+# Testes do cache local (11 casos)
+npm run test:cache
+
+# E2E do cache no browser real (exige Edge com CDP + dev server no ar)
+$env:CDP_URL = "http://127.0.0.1:9333"
+npm run test:cache:e2e
+
 # Lint
 npm run lint
 ```
@@ -69,6 +110,11 @@ npm run lint
 - `tests/parseEmbedcanais.test.mjs` - unitarios do parser (11 casos).
 - `tests/fetchChannels.test.mjs` - baixa o site real e valida a extracao.
   Se a rede falhar, o teste e *skipped* (nao reprova) para nao quebrar o build.
+- `tests/catalogCache.test.mjs` - 11 casos do cache local (TTL, JSON corrompido,
+  storage que lanca, versao do formato, etc.).
+- `tests/cache.e2e.test.mjs` - E2E no browser real via CDP do Edge: 1a carga
+  consulta a API, 2a carga usa o cache com **zero** requisicoes, cache expirado
+  revalida. Precisa do dev server e do backend local no ar.
 - `../backend/tests/server.test.mjs` - 4 casos do backend (CORS, preflight,
   404, 502 com upstream invalido).
 
@@ -82,7 +128,9 @@ frontend-v2/
 │   ├── App.tsx                  # UI minimalista de validacao
 │   ├── lib/
 │   │   ├── parseEmbedcanais.ts  # re-export tipado do parser compartilhado
-│   │   └── catalogSource.ts     # fontes: api / live / cors / snapshot
+│   │   ├── catalogSource.ts     # COMO buscar: api / live / cors / snapshot
+│   │   ├── catalogLoader.ts     # QUANDO buscar: cache -> snapshot -> rede
+│   │   └── catalogCache.ts      # cache local (localStorage) + TTL
 │   ├── main.tsx
 │   └── styles.css
 ├── scripts/
@@ -93,13 +141,19 @@ frontend-v2/
 
 ## Deploy
 
-- **Frontend:** `.github/workflows/deploy-frontend-v2.yml` - build no GitHub
-  Actions (Node roda no CI, nunca no runtime), publica o `dist/` no GitHub Pages.
-  URL: <https://hellfiveosborn.github.io/WebTV/>
+- **Frontend:** `.github/workflows/deploy-frontend.yml` - build no GitHub
+  Actions (Node roda no CI, nunca no runtime), publica v1 na raiz e v2 em
+  `/v2/` do **mesmo** Pages.
+  URL: <https://hellfiveosborn.github.io/WebTV/v2/>
 - **Backend:** Deno Function na Suga (ver `../backend/README.md`). A URL publica
   entra no build via a var de repositorio **`VITE_API_URL`** (definida como
   `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run/channels`).
   Sem essa var, o frontend cai para o snapshot do build.
+
+> **Um workflow so.** `actions/upload-pages-artifact` envia o site inteiro, entao
+> dois workflows publicando no mesmo Pages sobrescrevem um ao outro (o ultimo a
+> terminar vence). A v1 e a v2 sao montadas em subpastas dentro de um unico
+> artifact. Nao recrie um workflow separado para a v2.
 
 ## Pendencias conhecidas
 

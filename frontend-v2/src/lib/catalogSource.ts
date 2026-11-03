@@ -7,18 +7,20 @@
  * A v2 roda 100% client-side (GitHub Pages = estatico, sem Node no runtime),
  * entao o catalogo vem por tres vias, em ordem de confianca:
  *
- *  1. API     - backend na Suga (container Node). Busca o site no servidor
+ *  1. CACHE   - localStorage. Resultado da ultima consulta valida. Dentro do
+ *               TTL nao ha NENHUMA requisicao de rede (ver catalogCache.ts).
+ *  2. API     - backend na Suga (Deno Function). Busca o site no servidor
  *               (sem restricao de CORS) e devolve JSON limpo com
  *               `Access-Control-Allow-Origin: *`. E a via principal em
  *               producao e resolve o problema de CORS de vez.
- *  2. LIVE    - fetch direto ao site. Funciona em dev local (proxy do Vite
+ *  3. LIVE    - fetch direto ao site. Funciona em dev local (proxy do Vite
  *               = mesma origem) ou se o site liberar CORS no futuro.
- *  3. SNAPSHOT- JSON gerado no BUILD (GitHub Actions roda Node e baixa o site).
+ *  4. SNAPSHOT- JSON gerado no BUILD (GitHub Actions roda Node e baixa o site).
  *               Arquivo estatico, sempre disponivel, fallback ultimo.
  *
- * O app requisita ao entrar: a API e o site sao consultados em paralelo e o
- * primeiro que responder preenche a tela. A UI sempre informa qual via
- * forneceu os dados, para deixar a origem transparente.
+ * O app requisita ao entrar: o cache e o snapshot do build sao lidos primeiro
+ * (instantaneo, sem rede) e so depois a rede e consultada. A UI sempre
+ * informa qual via forneceu os dados, para deixar a origem transparente.
  */
 
 import {
@@ -26,13 +28,20 @@ import {
   EmbedcanaisCatalog,
   parseEmbedcanaisHtml,
 } from './parseEmbedcanais'
+import {
+  CacheStatus,
+  clearCache,
+  getCacheStatus,
+  readCache,
+  writeCache,
+} from './catalogCache'
 
-export type LoadStrategy = 'api' | 'live' | 'cors' | 'snapshot'
+export type LoadStrategy = 'cache' | 'api' | 'live' | 'cors' | 'snapshot'
 
 export interface CatalogResult {
   catalog: EmbedcanaisCatalog
   strategy: LoadStrategy
-  /** URL efetiva usada (snapshot = caminho local) */
+  /** URL efetiva usada (snapshot = caminho local, cache = origem guardada) */
   source: string
   fetchedAt: number
 }
@@ -45,6 +54,7 @@ export interface Attempt {
 }
 
 export const STRATEGY_LABEL: Record<LoadStrategy, string> = {
+  cache: 'cache local',
   api: 'API (Suga)',
   live: 'live (direto)',
   cors: 'proxy CORS',
@@ -173,55 +183,115 @@ export async function loadSnapshot(): Promise<
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Cache local (localStorage)
+ * ------------------------------------------------------------------ */
+
+/** Status do cache local (idade, freshness). */
+export function getLocalCacheStatus(): CacheStatus<EmbedcanaisCatalog> {
+  return getCacheStatus<EmbedcanaisCatalog>()
+}
+
 /**
- * Tenta a API do backend e, em seguida, o site direto.
- * @param options.apiUrl URL da API (vazio desativa a via API)
+ * Le o catalogo guardado no cache local.
+ * Devolve null se nao houver cache utilizavel.
  */
-export async function loadCatalog(options?: {
+export function loadCachedCatalog(): CatalogResult | null {
+  const status = getCacheStatus<EmbedcanaisCatalog>()
+  if (!status.entry || !status.usable) return null
+
+  return {
+    catalog: status.entry.catalog,
+    strategy: 'cache',
+    source: status.entry.origin,
+    fetchedAt: status.entry.savedAt,
+  }
+}
+
+/**
+ * Grava o catalogo no cache local.
+ *
+ * @param savedAt quando o dado foi obtido (default: agora). Para o snapshot
+ *   do build, informe o `generatedAt` real - senao o TTL passaria a mentir
+ *   sobre a idade do dado.
+ *
+ * Nao sobrescreve uma entrada mais nova: o snapshot do build (antigo) nunca
+ * deve derrubar um resultado de API recem-baixado.
+ */
+export function saveCatalogCache(
+  catalog: EmbedcanaisCatalog,
+  origin: string,
+  savedAt?: number,
+): boolean {
+  const current = readCache<EmbedcanaisCatalog>()
+  const stamp = savedAt ?? Date.now()
+  if (current && current.savedAt > stamp) return false
+
+  return writeCache<EmbedcanaisCatalog>(catalog, origin, undefined, stamp)
+}
+
+/** Limpa o cache local (usado pelo botao "limpar cache"). */
+export function clearLocalCache(): void {
+  clearCache()
+}
+
+/* ------------------------------------------------------------------ *
+ * Carga do catalogo
+ * ------------------------------------------------------------------ */
+
+export interface LoadCatalogOptions {
   apiUrl?: string
   signal?: AbortSignal
-}): Promise<{
+  /** Grava o resultado no cache local (default: true). */
+  cache?: boolean
+  /** Ignora o cache local e sempre consulta a rede (default: false). */
+  forceRefresh?: boolean
+  /**
+   * Permite que o snapshot do build seja o resultado final quando todas as
+   * vias de rede falham (default: true).
+   *
+   * Na REVALIDACAO isso deve ser false: o snapshot e um artefato antigo e
+   * nao pode substituir um cache mais novo que ja esta em tela.
+   */
+  allowSnapshot?: boolean
+}
+
+/**
+ * Tenta a API do backend e, em seguida, o site direto.
+ *
+ * Quando uma via funciona, o resultado e gravado no cache local (com o
+ * timestamp do momento), para que a proxima abertura nao precise de rede.
+ */
+export async function loadCatalog(options?: LoadCatalogOptions): Promise<{
   ok: boolean
   result?: CatalogResult
   attempts: Attempt[]
 }> {
   const attempts: Attempt[] = []
   const apiUrl = options?.apiUrl ?? API_URL
+  const useCache = options?.cache !== false
+
+  const finish = (catalog: EmbedcanaisCatalog, strategy: LoadStrategy, source: string) => {
+    if (useCache) saveCatalogCache(catalog, source)
+    return {
+      ok: true,
+      result: { catalog, strategy, source, fetchedAt: Date.now() },
+      attempts,
+    }
+  }
 
   // 1) API do backend (resolve CORS).
   if (apiUrl) {
     const outcome = await tryApi(apiUrl)
     attempts.push({ strategy: 'api', url: apiUrl, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
-    if (outcome.ok) {
-      return {
-        ok: true,
-        result: {
-          catalog: outcome.catalog,
-          strategy: 'api',
-          source: apiUrl,
-          fetchedAt: Date.now(),
-        },
-        attempts,
-      }
-    }
+    if (outcome.ok) return finish(outcome.catalog, 'api', apiUrl)
   }
 
   // 2) Site direto (dev local via proxy do Vite; producao se houver CORS).
   {
     const outcome = await tryUrl(LIVE_URL)
     attempts.push({ strategy: 'live', url: LIVE_URL, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
-    if (outcome.ok) {
-      return {
-        ok: true,
-        result: {
-          catalog: outcome.catalog,
-          strategy: 'live',
-          source: LIVE_URL,
-          fetchedAt: Date.now(),
-        },
-        attempts,
-      }
-    }
+    if (outcome.ok) return finish(outcome.catalog, 'live', LIVE_URL)
   }
 
   // 3) Proxies publicos de CORS.
@@ -229,22 +299,11 @@ export async function loadCatalog(options?: {
     const url = proxy.build(EMBEDCANAIS_SOURCE_URL)
     const outcome = await tryUrl(url)
     attempts.push({ strategy: 'cors', url, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
-    if (outcome.ok) {
-      return {
-        ok: true,
-        result: {
-          catalog: outcome.catalog,
-          strategy: 'cors',
-          source: url,
-          fetchedAt: Date.now(),
-        },
-        attempts,
-      }
-    }
+    if (outcome.ok) return finish(outcome.catalog, 'cors', url)
   }
 
   // 4) Snapshot do build (ultimo recurso, sempre local).
-  {
+  if (options?.allowSnapshot !== false) {
     const outcome = await loadSnapshot()
     attempts.push({
       strategy: 'snapshot',
@@ -253,6 +312,18 @@ export async function loadCatalog(options?: {
       error: outcome.ok ? undefined : outcome.error,
     })
     if (outcome.ok && outcome.result) {
+      // O snapshot e um artefato de build: a "idade" do dado e o
+      // `generatedAt` dele, nao o momento em que o arquivo foi lido.
+      const generatedAt = Date.parse(
+        (outcome.result.catalog as unknown as { generatedAt?: string }).generatedAt ?? '',
+      )
+      if (useCache) {
+        saveCatalogCache(
+          outcome.result.catalog,
+          SNAPSHOT_URL,
+          Number.isFinite(generatedAt) ? generatedAt : undefined,
+        )
+      }
       return { ok: true, result: outcome.result, attempts }
     }
   }

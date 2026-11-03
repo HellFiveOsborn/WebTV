@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Attempt,
-  loadCatalog,
-  loadSnapshot,
   STRATEGY_LABEL,
+  clearLocalCache,
+  getLocalCacheStatus,
 } from './lib/catalogSource'
+import { loadInitialCatalog, revalidateCatalog } from './lib/catalogLoader'
+import { formatAge } from './lib/catalogCache'
 import { EmbedcanaisCatalog, EmbedcanaisChannel } from './lib/parseEmbedcanais'
 
 interface CatalogState {
@@ -48,42 +50,64 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [showDetails, setShowDetails] = useState(false)
+  /** Idade do cache local em ms (null se nao veio do cache). */
+  const [cacheAgeMs, setCacheAgeMs] = useState<number | null>(null)
+  /** true quando os dados veio do cache e nao houve requisicao a rede. */
+  const [fromCacheOnly, setFromCacheOnly] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
+  /**
+   * Carrega o catalogo.
+   *
+   * @param forceRefresh true = limpa o cache e ignora o TTL (botao "Atualizar")
+   */
+  const run = useCallback(async (forceRefresh = false) => {
+    setLoading(true)
+    setLivePending(true)
+    setLiveError(null)
 
-    const run = async () => {
-      // Snapshot do build: renderiza imediatamente, sem esperar a rede.
-      const snapshot = await loadSnapshot()
-      if (cancelled) return
+    // 1) Cache local / snapshot do build: instantaneo, sem rede.
+    const initial = await loadInitialCatalog({ forceRefresh })
 
-      if (snapshot.ok) {
-        setState(snapshot.result)
-        setLoading(false)
-      }
+    if (initial.result) {
+      setState(initial.result)
+      setCacheAgeMs(initial.cacheAgeMs)
+      setLoading(false)
+    }
 
-      // Requisicao real (API do backend / site direto / proxy CORS).
-      const res = await loadCatalog()
-      if (cancelled) return
-
-      setAttempts(res.attempts)
+    // 2) Cache fresco: nada a fazer, nenhuma requisicao de rede.
+    if (!initial.needsRevalidation) {
       setLivePending(false)
       setLiveDone(true)
-
-      if (res.ok && res.result) {
-        // Dados frescos: substituem o snapshot.
-        setState(res.result)
-      } else {
-        setLiveError('Nao foi possivel consultar o catalogo online.')
-      }
+      setFromCacheOnly(true)
+      return
     }
 
-    setLivePending(true)
-    run()
-    return () => {
-      cancelled = true
+    setFromCacheOnly(false)
+
+    // 3) Revalidacao em background (stale-while-revalidate).
+    const res = await revalidateCatalog()
+
+    setAttempts(res.attempts)
+    setLivePending(false)
+    setLiveDone(true)
+
+    if (res.result) {
+      // Dados frescos: substituem o cache/snapshot.
+      setState(res.result)
+      setCacheAgeMs(null)
+    } else if (initial.result) {
+      // Rede falhou: mantem o que ja esta em tela (cache/snapshot) e avisa.
+      setLiveError(
+        'Nao foi possivel atualizar o catalogo online - mostrando a ultima versao salva.',
+      )
+    } else {
+      setLiveError('Nao foi possivel consultar o catalogo online.')
     }
   }, [])
+
+  useEffect(() => {
+    void run()
+  }, [run])
 
   const catalog = state?.catalog ?? null
 
@@ -106,6 +130,8 @@ export default function App() {
     return map
   }, [catalog])
 
+  const cacheInfo = getLocalCacheStatus()
+
   return (
     <div className="app">
       <header>
@@ -117,6 +143,12 @@ export default function App() {
           <p className="status ok">
             {state.catalog.channels.length} canais | dados via:{' '}
             {STRATEGY_LABEL[state.strategy]} | fonte: {state.source}
+          </p>
+        )}
+
+        {fromCacheOnly && (
+          <p className="status ok">
+            Cache local valido ({formatAge(cacheAgeMs)}) - nenhuma requisicao a rede foi feita.
           </p>
         )}
 
@@ -133,6 +165,27 @@ export default function App() {
         {liveError && <p className="status error">{liveError}</p>}
 
         {!loading && !state && <p className="status error">Nao foi possivel carregar os canais.</p>}
+
+        <div className="controls">
+          <button type="button" onClick={() => void run(true)}>
+            Atualizar (ignora cache)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              // Limpa o cache e recarrega a pagina: a proxima carga parte
+              // do zero (vai consultar a rede de novo).
+              clearLocalCache()
+              window.location.reload()
+            }}
+          >
+            Limpar cache
+          </button>
+          <span className="count">
+            cache: {cacheInfo.entry ? formatAge(cacheInfo.ageMs) : 'vazio'}
+            {cacheInfo.entry ? (cacheInfo.fresh ? ' (fresco)' : ' (expirado)') : ''}
+          </span>
+        </div>
       </header>
 
       {attempts.length > 0 && (

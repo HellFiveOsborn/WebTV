@@ -10,9 +10,11 @@
     "preview": "vite preview",
     "fetch:channels": "node scripts/fetch-channels.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "test": "npm run test:parser && npm run test:parser:live && npm run test:backend",
+    "test": "npm run test:parser && npm run test:parser:live && npm run test:cache && npm run test:backend",
     "test:parser": "node --test tests/parseEmbedcanais.test.mjs",
     "test:parser:live": "node --test tests/fetchChannels.test.mjs",
+    "test:cache": "node --test tests/catalogCache.test.mjs",
+    "test:cache:e2e": "node --test tests/cache.e2e.test.mjs",
     "test:backend": "node --test ../backend/tests/server.test.mjs"
   },
   "dependencies": {
