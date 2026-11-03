@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Embed Canais TV — Canais ao vivo</title>
+<meta name="description" content="Explore canais ao vivo em uma interface moderna e responsiva.">
+<meta name="robots" content="index,follow">
+<meta name="author" content="Embed Canais">
+<meta name="theme-color" content="#00f3fe">
+<link rel="icon" href="/icons/icon2026.png" sizes="32x32">
+<link rel="icon" href="/icons/icon2026.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/icons/icon2026.png">
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #090e13;
+  --bg-2: #0c1218;
+  --header: #00f3fe;
+  --panel: #10171f;
+  --panel-2: #141d27;
+  --panel-3: #18232f;
+  --line: #22303d;
+  --line-soft: #18232d;
+  --text: #f5f9fc;
+  --muted: #91a2b3;
+  --muted-2: #6f8192;
+  --accent: #00f3fe;
+  --accent-strong: #4ff8ff;
+  --accent-soft: rgba(0,243,254,.10);
+  --accent-soft-2: rgba(0,243,254,.16);
+  --success: #76f7b3;
+  --shadow: 0 18px 55px rgba(0,0,0,.24);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% -180px, rgba(0,243,254,.07), transparent 420px),
+    var(--bg);
+  color: var(--text);
+  font: 500 16px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+button, input, a { font: inherit; }
+button { border: 0; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; }
+::selection { background: rgba(0,243,254,.28); color: #fff; }
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 12px clamp(18px, 3vw, 42px);
+  border-bottom: 1px solid rgba(0,0,0,.15);
+  background: var(--header);
+  box-shadow: 0 8px 28px rgba(0,0,0,.14);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 150px;
+}
+.brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.12));
+}
+.brand-text {
+  display: grid;
+  line-height: .92;
+  font-weight: 950;
+  letter-spacing: -.55px;
+  text-transform: uppercase;
+  color: #041012;
+}
+.brand-text strong { font-size: 15px; }
+.brand-text span { margin-top: 4px; font-size: 15px; }
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.main-nav a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 15px;
+  border-radius: 11px;
+  color: rgba(1,19,21,.70);
+  font-weight: 800;
+  transition: .18s ease;
+}
+.main-nav a:hover,
+.main-nav a.active {
+  color: #031113;
+  background: rgba(0,0,0,.09);
+}
+
+.header-search {
+  position: relative;
+  width: min(370px, 30vw);
+  margin-left: auto;
+}
+.header-search svg,
+.hero-search svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  fill: none;
+  stroke-width: 2;
+  pointer-events: none;
+}
+.header-search svg { stroke: rgba(0,0,0,.52); }
+.header-search input {
+  width: 100%;
+  height: 46px;
+  padding: 0 18px 0 45px;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 999px;
+  outline: none;
+  background: rgba(0,0,0,.10);
+  color: #021012;
+  font-weight: 700;
+  transition: .18s ease;
+}
+.header-search input::placeholder { color: rgba(0,0,0,.52); }
+.header-search input:focus {
+  border-color: rgba(0,0,0,.30);
+  background: rgba(255,255,255,.18);
+  box-shadow: 0 0 0 4px rgba(0,0,0,.06);
+}
+
+.mobile-nav-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  place-items: center;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 11px;
+  background: rgba(0,0,0,.10);
+  color: #031113;
+  cursor: pointer;
+}
+.mobile-nav-toggle svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.page {
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: 42px clamp(16px, 3vw, 42px) 70px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 16px rgba(0,243,254,.75);
+}
+.page-title {
+  margin: 0;
+  max-width: 780px;
+  color: #f7fbfd;
+  font-size: clamp(32px, 3.2vw, 52px);
+  line-height: 1.01;
+  letter-spacing: -1.9px;
+}
+.page-subtitle {
+  max-width: 760px;
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: clamp(15px, 1.25vw, 18px);
+}
+.hero-guide {
+  min-width: 270px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 17px;
+  border: 1px solid rgba(0,243,254,.18);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(0,243,254,.10), rgba(0,243,254,.035));
+}
+.hero-guide-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  background: var(--accent);
+  color: #031113;
+}
+.hero-guide-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+.hero-guide-copy { display: grid; gap: 2px; }
+.hero-guide-copy strong { font-size: 14px; color: #f5fbfd; }
+.hero-guide-copy span { color: var(--muted); font-size: 12px; }
+
+.filter-panel {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 24px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(15,22,30,.92);
+  box-shadow: 0 14px 40px rgba(0,0,0,.11);
+}
+.filter-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+.hero-search {
+  position: relative;
+  width: 100%;
+}
+.hero-search input {
+  width: 100%;
+  height: 56px;
+  padding: 0 20px 0 54px;
+  border: 1px solid #2a3947;
+  border-radius: 14px;
+  outline: none;
+  background: #0b1117;
+  color: var(--text);
+  font-size: 16px;
+  transition: .18s ease;
+}
+.hero-search svg {
+  left: 19px;
+  width: 21px;
+  height: 21px;
+  stroke: var(--muted);
+}
+.hero-search input::placeholder { color: #738698; }
+.hero-search input:focus {
+  border-color: rgba(0,243,254,.62);
+  box-shadow: 0 0 0 4px rgba(0,243,254,.09);
+}
+.filter-tip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-right: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.filter-tip svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.category-strip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding: 1px 0 4px;
+  scrollbar-width: none;
+}
+.category-strip::-webkit-scrollbar { display: none; }
+.category-chip {
+  flex: 0 0 auto;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid #283846;
+  border-radius: 999px;
+  background: #111923;
+  color: #9eafbf;
+  cursor: pointer;
+  transition: .17s ease;
+}
+.category-chip:hover {
+  color: #e8fcfe;
+  border-color: rgba(0,243,254,.34);
+  background: rgba(0,243,254,.06);
+}
+.category-chip.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #031113;
+  font-weight: 850;
+  box-shadow: 0 9px 28px rgba(0,243,254,.15);
+}
+.category-chip .chip-icon {
+  width: 17px;
+  height: 17px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.category-chip .chip-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.results-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 11px 3px 0;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+.results {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.results strong { color: var(--text); }
+.copy-hint {
+  color: var(--muted-2);
+  font-size: 12px;
+}
+.copy-hint b { color: var(--accent); font-weight: 800; }
+
+.category-sections {
+  display: grid;
+  gap: 38px;
+}
+.category-section { min-width: 0; }
+.category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 15px;
+}
+.category-title-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.category-icon {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0,243,254,.18);
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.category-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.category-title {
+  margin: 0;
+  color: #f0f6f9;
+  font-size: clamp(22px, 1.8vw, 28px);
+  line-height: 1.1;
+  letter-spacing: -.65px;
+}
+.category-tools {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.category-total {
+  color: var(--muted-2);
+  font-size: 13px;
+  font-weight: 750;
+}
+.see-all-btn {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(0,243,254,.16);
+  border-radius: 10px;
+  background: rgba(0,243,254,.06);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: .17s ease;
+}
+.see-all-btn:hover {
+  border-color: rgba(0,243,254,.42);
+  background: rgba(0,243,254,.11);
+}
+.see-all-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.channel-carousel-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.channel-grid {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 12px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.channel-grid::-webkit-scrollbar { display: none; }
+
+.channel-grid .channel-card {
+  flex: 0 0 clamp(218px, 16.5vw, 252px);
+  scroll-snap-align: start;
+}
+
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.carousel-arrow {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #2a3a47;
+  border-radius: 10px;
+  background: #121b23;
+  color: #a9bac7;
+  cursor: pointer;
+  transition: .17s ease;
+}
+.carousel-arrow:hover {
+  border-color: rgba(0,243,254,.44);
+  background: rgba(0,243,254,.09);
+  color: var(--accent);
+}
+.carousel-arrow:disabled {
+  opacity: .34;
+  cursor: default;
+  border-color: #26343f;
+  background: #10171e;
+  color: #667682;
+}
+.carousel-arrow svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.carousel-count {
+  min-width: 48px;
+  color: var(--muted-2);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.channel-carousel-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 12px;
+  width: 34px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(9,14,19,.82));
+  opacity: .72;
+  transition: opacity .18s ease;
+}
+.channel-carousel-wrap.at-end::after {
+  opacity: 0;
+}
+.channel-card {
+  min-width: 0;
+  overflow: hidden;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: linear-gradient(180deg, #111922 0%, #0f161e 100%);
+  box-shadow: 0 7px 22px rgba(0,0,0,.07);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.channel-card:hover {
+  transform: translateY(-2px);
+  border-color: #344858;
+  background: linear-gradient(180deg, #131d27 0%, #101820 100%);
+  box-shadow: var(--shadow);
+}
+.card-top {
+  min-height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #c5d1da;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .25px;
+  text-transform: uppercase;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(0,243,254,.55);
+}
+.card-category {
+  max-width: 58%;
+  overflow: hidden;
+  color: var(--muted-2);
+  font-size: 10px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logo-box {
+  position: relative;
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 23px;
+  border: 1px solid rgba(255,255,255,.035);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0,243,254,.055), transparent 70%),
+    var(--panel-2);
+}
+.logo-box img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 62px;
+  object-fit: contain;
+  object-position: center;
+}
+.card-name {
+  margin: 12px 2px 11px;
+  overflow: hidden;
+  color: #f3f7fa;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.card-copy,
+.card-preview {
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: .17s ease;
+}
+/* Botão principal: assistir */
+.card-preview {
+  padding: 0 11px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #021113;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(0,243,254,.10);
+}
+.card-preview:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+/* Botão secundário: copiar iframe */
+.card-copy {
+  width: 42px;
+  padding: 0;
+  border: 1px solid #2a3946;
+  background: #151f29;
+  color: #a8b7c4;
+}
+.card-copy:hover {
+  border-color: rgba(0,243,254,.42);
+  background: rgba(0,243,254,.08);
+  color: var(--accent);
+}
+.card-copy.copied {
+  border-color: var(--success);
+  background: var(--success);
+  color: #062317;
+}
+.card-copy svg,
+.card-preview svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.card-copy span { display: none; }
+
+.empty {
+  display: none;
+  min-height: 280px;
+  place-items: center;
+  grid-column: 1 / -1;
+  border: 1px dashed #2b3a47;
+  border-radius: 18px;
+  background: #0d141b;
+  color: var(--muted);
+  text-align: center;
+}
+.empty.show { display: grid; }
+.empty h2 { margin: 0 0 6px; color: #e8f0f4; font-size: 20px; }
+.empty p { margin: 0; }
+
+.player-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+  place-items: center;
+  padding: 26px;
+  background: rgba(1,5,8,.84);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.player-modal.open { display: grid; }
+.player-shell {
+  width: min(1180px, 100%);
+  overflow: hidden;
+  border: 1px solid #2c3b48;
+  border-radius: 18px;
+  background: #05080c;
+  box-shadow: 0 30px 100px rgba(0,0,0,.58);
+}
+.player-head {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px 10px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: #0f161d;
+}
+.player-head img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.player-copy { min-width: 0; display: grid; }
+.player-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-copy span { margin-top: 2px; color: var(--muted); font-size: 12px; }
+.player-actions {
+  display: flex;
+  gap: 7px;
+  margin-left: auto;
+}
+.player-actions button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #141e27;
+  color: #acbbc8;
+  cursor: pointer;
+  transition: .17s ease;
+}
+.player-actions button:hover {
+  color: var(--accent);
+  border-color: rgba(0,243,254,.38);
+  background: rgba(0,243,254,.07);
+}
+.player-actions .copy-embed-modal {
+  width: auto;
+  min-width: 132px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #021113;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.player-actions .copy-embed-modal:hover {
+  background: var(--accent-strong);
+  color: #021113;
+}
+.player-actions button.copied {
+  color: #062317;
+  border-color: var(--success);
+  background: var(--success);
+}
+.player-actions svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.player-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.player-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+@media (max-width: 980px) {
+  .site-header { min-height: 70px; flex-wrap: wrap; gap: 10px; padding: 11px 18px; }
+  .mobile-nav-toggle { display: grid; }
+  .main-nav {
+    order: 3;
+    width: 100%;
+    display: none;
+    overflow-x: auto;
+    padding-top: 2px;
+  }
+  body.nav-open .main-nav { display: flex; }
+  .header-search {
+    order: 4;
+    display: none;
+    width: 100%;
+    margin-left: 0;
+  }
+  body.nav-open .header-search { display: block; }
+  .hero { grid-template-columns: 1fr; align-items: start; }
+  .hero-guide { min-width: 0; max-width: 430px; }
+  .page { padding-top: 32px; }
+}
+
+@media (max-width: 720px) {
+  .page { padding: 25px 12px 48px; }
+  .hero { gap: 19px; margin-bottom: 20px; }
+  .page-title { font-size: 34px; letter-spacing: -1.3px; }
+  .page-subtitle { font-size: 15px; }
+  .filter-panel { padding: 12px; border-radius: 16px; }
+  .filter-top { grid-template-columns: 1fr; gap: 10px; }
+  .filter-tip { display: none; }
+  .hero-search input { height: 52px; font-size: 14px; }
+  .category-chip { min-height: 38px; padding: 0 14px; font-size: 13px; }
+  .results-row { margin-top: 9px; }
+  .copy-hint { display: none; }
+  .category-sections { gap: 30px; }
+  .category-head { align-items: center; margin-bottom: 12px; }
+  .category-title { font-size: 20px; }
+  .category-icon { width: 32px; height: 32px; border-radius: 9px; }
+  .category-icon svg { width: 18px; height: 18px; }
+  .category-total { display: none; }
+  .see-all-btn { min-height: 33px; font-size: 12px; }
+  .category-tools { gap: 8px; }
+  .category-total { display: none; }
+  .channel-grid { gap: 9px; padding-bottom: 9px; }
+  .channel-grid .channel-card { flex-basis: min(76vw, 245px); }
+  .carousel-arrow { width: 34px; height: 34px; }
+  .carousel-count { display: none; }
+  .channel-card { padding: 10px; border-radius: 14px; }
+  .logo-box { height: 94px; padding: 15px; }
+  .logo-box img { max-height: 52px; }
+  .card-name { margin: 10px 1px 9px; font-size: 13px; }
+  .card-top { margin-bottom: 6px; }
+  .live-pill { font-size: 9px; }
+  .card-category { font-size: 9px; }
+  .card-preview { padding: 0 8px; font-size: 11px; }
+  .card-actions { gap: 6px; }
+  .card-copy { width: 40px; }
+  .player-modal { padding: 0; }
+  .player-shell { width: 100%; border: 0; border-radius: 0; }
+  .player-head { flex-wrap: wrap; padding: 10px; }
+  .player-actions { width: 100%; margin-left: 0; }
+  .player-actions .copy-embed-modal { flex: 1; }
+}
+
+@media (max-width: 400px) {
+  .brand-text strong, .brand-text span { font-size: 13px; }
+  .channel-grid .channel-card { flex-basis: 84vw; }
+  .logo-box { height: 108px; }
+  .card-preview { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="brand" href="/" aria-label="Embed Canais TV">
+    <img src="https://1.embedcanaisdetv.com/icons/icon2026.png" alt="">
+    <span class="brand-text"><strong>Embed</strong><span>Canais TV</span></span>
+  </a>
+
+  <nav class="main-nav" aria-label="Navegação principal">
+    <a href="/">Início</a>
+    <a href="#" class="active" aria-current="page">Canais</a>
+  </nav>
+
+  <label class="header-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+    <input id="headerSearch" type="search" autocomplete="off" placeholder="Buscar canal..." aria-label="Buscar canal">
+  </label>
+
+  <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+
+<main class="page">
+
+  <section class="filter-panel" aria-label="Busca e filtros">
+    <div class="filter-top">
+      <label class="hero-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        <input id="mainSearch" type="search" autocomplete="off" placeholder="Buscar por nome do canal ou categoria..." aria-label="Buscar canal ou categoria">
+      </label>
+      <span class="filter-tip">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        Use os filtros para chegar mais rápido ao canal.
+      </span>
+    </div>
+
+    <div class="category-strip" id="categoryStrip" aria-label="Categorias"></div>
+
+    <div class="results-row">
+      <div class="results" id="resultsText">0 canais encontrados</div>
+      <span class="copy-hint">Deslize os carrosséis ou use as setas • <b>Copiar iframe</b></span>
+    </div>
+  </section>
+
+  <div class="category-sections" id="categorySections" aria-label="Lista de canais por categoria"></div>
+  <div class="empty" id="emptyState">
+    <div>
+      <h2>Nenhum canal encontrado</h2>
+      <p>Tente outro nome ou selecione outra categoria.</p>
+    </div>
+  </div>
+</main>
+
+<div class="player-modal" id="playerModal" aria-hidden="true">
+  <div class="player-shell">
+    <div class="player-head">
+      <img id="playerLogo" alt="">
+      <span class="player-copy">
+        <strong id="playerTitle">Canal</strong>
+        <span id="playerCategory">Ao vivo</span>
+      </span>
+      <span class="player-actions">
+        <button class="copy-embed-modal" type="button" id="copyEmbedModal" title="Copiar iframe" aria-label="Copiar iframe">
+          <svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+          <span>Copiar iframe</span>
+        </button>
+        <button type="button" id="openExternal" title="Abrir em nova aba" aria-label="Abrir em nova aba">
+          <svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg>
+        </button>
+        <button type="button" id="closePlayer" title="Fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </span>
+    </div>
+    <div class="player-stage">
+      <iframe id="playerFrame" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="Player do canal"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const CHANNELS=[{"id":1,"slug":"amazonprimevideo","name":"Amazon Prime","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo/","image":"https://1.embedcanaisdetv.com/images/amazonprimevideo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":2,"slug":"amazonprimevideo02","name":"Amazon Prime 02","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02/","image":"https://1.embedcanaisdetv.com/images/amazonprimevideo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":3,"slug":"amazonprimevideo03","name":"Amazon Prime 03","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo03/","image":"https://1.embedcanaisdetv.com/images/amazonprimevideo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo03\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":4,"slug":"amazonprimevideo04","name":"Amazon Prime 04","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo04/","image":"https://1.embedcanaisdetv.com/images/amazonprimevideo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo04\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":5,"slug":"amazonprimevideo05","name":"Amazon Prime 05","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo05/","image":"https://1.embedcanaisdetv.com/images/amazonprimevideo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo05\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":6,"slug":"appletv01","name":"Apple TV 01","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv01/","image":"https://1.embedcanaisdetv.com/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv01\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":7,"slug":"appletv02","name":"Apple TV 02","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv02/","image":"https://1.embedcanaisdetv.com/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv02\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":8,"slug":"appletv03","name":"Apple TV 03","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv03/","image":"https://vipcanais.net/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv03\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":9,"slug":"appletv04","name":"Apple TV 04","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv04/","image":"https://vipcanais.net/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv04\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":10,"slug":"appletv05","name":"Apple TV 05","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv05/","image":"https://vipcanais.net/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv05\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":11,"slug":"appletv06","name":"Apple TV 06","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=appletv06/","image":"https://vipcanais.net/images/appletv1.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=appletv06\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":12,"slug":"bandsports","name":"Band Sports","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=bandsports/","image":"https://1.embedcanaisdetv.com/images/bandsports.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=bandsports\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":13,"slug":"canalgoat","name":"Canal GOAT","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=canalgoat/","image":"https://vipcanais.net/images/canalgoat.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=canalgoat\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":14,"slug":"canaloff","name":"Canal Off","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=canaloff/","image":"https://1.embedcanaisdetv.com/images/canaloff.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=canaloff\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":15,"slug":"cazetv","name":"CazéTV","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv/","image":"https://1.embedcanaisdetv.com/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":16,"slug":"cazetv2","name":"CazéTV 2","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/","image":"https://vipcanais.net/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":17,"slug":"cazetv3","name":"CazéTV 3","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/","image":"https://vipcanais.net/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":18,"slug":"cazetv4","name":"CazéTV 4","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv4/","image":"https://vipcanais.net/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv4\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":19,"slug":"cazetv5","name":"CazéTV 5","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv5/","image":"https://vipcanais.net/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv5\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":20,"slug":"cazetv6","name":"CazéTV 6","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv6/","image":"https://vipcanais.net/images/cazetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cazetv6\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":21,"slug":"combate","name":"Combate","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=combate/","image":"https://1.embedcanaisdetv.com/images/combate.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=combate\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":22,"slug":"dazn","name":"DAZN","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=dazn/","image":"https://1.embedcanaisdetv.com/images/dazn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=dazn\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":23,"slug":"disneyplus07","name":"Disney + 07","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus07/","image":"https://vipcanais.net/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus07\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":24,"slug":"disneyplus08","name":"Disney + 08","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus08/","image":"https://vipcanais.net/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus08\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":25,"slug":"disneyplus09","name":"Disney + 09","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus09/","image":"https://vipcanais.net/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus09\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":26,"slug":"disneyplus","name":"Disney+","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":27,"slug":"disneyplus02","name":"Disney+ 02","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02/","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":28,"slug":"disneyplus03","name":"Disney+ 03","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03/","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":29,"slug":"disneyplus04","name":"Disney+ 04","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus04/","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus04\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":30,"slug":"disneyplus05","name":"Disney+ 05","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus05/","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus05\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":31,"slug":"disneyplus06","name":"Disney+ 06","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus06","image":"https://1.embedcanaisdetv.com/images/disneyplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus06\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":32,"slug":"espn","name":"ESPN","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":33,"slug":"espn2","name":"ESPN 2","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn2/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":34,"slug":"espn3","name":"ESPN 3","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn3/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn3\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":35,"slug":"espn4","name":"ESPN 4","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn4/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn4\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":36,"slug":"espn5","name":"ESPN 5","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn5/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn5\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":37,"slug":"espn6","name":"ESPN 6","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=espn6/","image":"https://1.embedcanaisdetv.com/images/espn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=espn6\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":38,"slug":"getv","name":"GE TV","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=getv/","image":"https://1.embedcanaisdetv.com/images/getv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=getv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":39,"slug":"max","name":"Max","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":40,"slug":"max02","name":"Max 02","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max02/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max02\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":41,"slug":"max03","name":"Max 03","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max03/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max03\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":42,"slug":"max04","name":"Max 04","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max04/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max04\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":43,"slug":"max05","name":"Max 05","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max05/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max05\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":44,"slug":"max06","name":"Max 06","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=max06/","image":"https://1.embedcanaisdetv.com/images/max.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=max06\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":45,"slug":"nsports","name":"N Sports","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=nsports/","image":"https://1.embedcanaisdetv.com/images/nsports.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=nsports\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":46,"slug":"nossofutebol","name":"Nosso Futebol","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=nossofutebol/","image":"https://1.embedcanaisdetv.com/images/nossofutebol.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=nossofutebol\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":47,"slug":"paramountplus","name":"Paramount +","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus/","image":"https://1.embedcanaisdetv.com/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":48,"slug":"paramountplus02","name":"Paramount + 02","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02/","image":"https://1.embedcanaisdetv.com/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":49,"slug":"paramountplus03","name":"Paramount+ 03","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03/","image":"https://vipcanais.net/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":50,"slug":"paramountplus04","name":"Paramount+ 04","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus04/","image":"https://vipcanais.net/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus04\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":51,"slug":"paramountplus05","name":"Paramount+ 05","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus05/","image":"https://vipcanais.net/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus05\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":52,"slug":"paramountplus06","name":"Paramount+ 06","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus06/","image":"https://vipcanais.net/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus06\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":53,"slug":"paramountplus07","name":"Paramount+ 07","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus07/","image":"https://vipcanais.net/images/paramountplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus07\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":54,"slug":"premiere2","name":"Premiere 2","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere2/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":55,"slug":"premiere3","name":"Premiere 3","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere3/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere3\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":56,"slug":"premiere4","name":"Premiere 4","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere4/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere4\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":57,"slug":"premiere5","name":"Premiere 5","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere5/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere5\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":58,"slug":"premiere6","name":"Premiere 6","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere6/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere6\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":59,"slug":"premiere7","name":"Premiere 7","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere7/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere7\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":60,"slug":"premiere8","name":"Premiere 8","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiere8/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiere8\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":61,"slug":"premiereclubes","name":"Premiere Clubes","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=premiereclubes/","image":"https://1.embedcanaisdetv.com/images/premiere.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=premiereclubes\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":62,"slug":"sportv","name":"SporTV","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportv/","image":"https://1.embedcanaisdetv.com/images/sportv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":63,"slug":"sportv2","name":"SporTV 2","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportv2/","image":"https://1.embedcanaisdetv.com/images/sportv2.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportv2/ allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":64,"slug":"sportv3","name":"SporTV 3","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportv3/","image":"https://1.embedcanaisdetv.com/images/sportv3.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportv3\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":65,"slug":"sportynet","name":"SportyNet","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet/","image":"https://vipcanais.net/images/sportynet.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":66,"slug":"sportynet1","name":"SportyNet +1","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet1/","image":"https://vipcanais.net/images/sportynet.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet1\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":67,"slug":"sportynet2","name":"SportyNet +2","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet2/","image":"https://vipcanais.net/images/sportynet.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":68,"slug":"sportynet3","name":"SportyNet +3","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet3/","image":"https://vipcanais.net/images/sportynet.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sportynet3\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":69,"slug":"tnt","name":"TNT","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tnt/","image":"https://1.embedcanaisdetv.com/images/tnt.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tnt\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":71,"slug":"xsports","name":"Xsports","category":"Esportes","href":"https://embedcanaisdetv.xyz/e/index.php?canal=xsports/","image":"https://1.embedcanaisdetv.com/images/xsports.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=xsports\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":72,"slug":"aee","name":"A&E","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=aee/","image":"https://1.embedcanaisdetv.com/images/aee.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=aee\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":73,"slug":"amc","name":"AMC","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amc/","image":"https://1.embedcanaisdetv.com/images/amc.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amc\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":74,"slug":"amcseries","name":"AMC Séries","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=amcseries/","image":"https://vipcanais.net/images/amcseries.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=amcseries\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":75,"slug":"axn","name":"AXN","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=axn/","image":"https://1.embedcanaisdetv.com/images/axn.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=axn\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":76,"slug":"cinemax","name":"Cinemax","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cinemax/","image":"https://1.embedcanaisdetv.com/images/cinemax.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cinemax\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":77,"slug":"globoplaynovelas","name":"Globoplay Novelas","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globoplaynovelas/","image":"https://1.embedcanaisdetv.com/images/globoplaynovelas.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globoplaynovelas\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":78,"slug":"hbo","name":"HBO","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbo/","image":"https://1.embedcanaisdetv.com/images/hbo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbo\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":79,"slug":"hbo2","name":"HBO 2","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbo2/","image":"https://1.embedcanaisdetv.com/images/hbo2.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbo2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":80,"slug":"hbofamily","name":"HBO Family","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbofamily/","image":"https://1.embedcanaisdetv.com/images/hbofamily.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbofamily\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":81,"slug":"hbomundi","name":"HBO Mundi","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbomundi/","image":"https://1.embedcanaisdetv.com/images/hbomundi.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbomundi\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":82,"slug":"hboplus","name":"HBO Plus","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hboplus/","image":"https://1.embedcanaisdetv.com/images/hboplus.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hboplus\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":83,"slug":"hbopop","name":"HBO Pop","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbopop/","image":"https://1.embedcanaisdetv.com/images/hbopop.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbopop\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":84,"slug":"hbosignature","name":"HBO Signature","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hbosignature/","image":"https://1.embedcanaisdetv.com/images/hbosignature.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hbosignature\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":85,"slug":"hboxtreme","name":"HBO Xtreme","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hboxtreme/","image":"https://1.embedcanaisdetv.com/images/hboxtreme.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hboxtreme\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":86,"slug":"megapix","name":"Megapix","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=megapix/","image":"https://1.embedcanaisdetv.com/images/megapix.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=megapix\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":87,"slug":"paramountnetwork","name":"Paramount Network","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paramountnetwork/","image":"https://1.embedcanaisdetv.com/images/paramountnetwork.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paramountnetwork\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":88,"slug":"sonychannel","name":"Sony Channel","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sonychannel/","image":"https://1.embedcanaisdetv.com/images/sonychannel.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sonychannel\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":89,"slug":"space","name":"Space","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=space/","image":"https://1.embedcanaisdetv.com/images/space.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=space\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":90,"slug":"studiouniversal","name":"Studio Universal","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=studiouniversal/","image":"https://1.embedcanaisdetv.com/images/studiouniversal.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=studiouniversal\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":91,"slug":"tcaction","name":"Telecine Action","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tcaction/","image":"https://1.embedcanaisdetv.com/images/tcaction.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tcaction\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":92,"slug":"tccult","name":"Telecine Cult","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tccult/","image":"https://1.embedcanaisdetv.com/images/tccult.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tccult\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":93,"slug":"tcfun","name":"Telecine Fun","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tcfun/","image":"https://1.embedcanaisdetv.com/images/tcfun.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tcfun\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":94,"slug":"tcpipoca","name":"Telecine Pipoca","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tcpipoca/","image":"https://1.embedcanaisdetv.com/images/tcpipoca.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tcpipoca\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":95,"slug":"tcpremium","name":"Telecine Premium","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tcpremium/","image":"https://1.embedcanaisdetv.com/images/tcpremium.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tcpremium\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":96,"slug":"tctouch","name":"Telecine Touch","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tctouch/","image":"https://1.embedcanaisdetv.com/images/tctouch.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tctouch\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":97,"slug":"tnt","name":"TNT","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tnt/","image":"https://1.embedcanaisdetv.com/images/tnt.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tnt\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":98,"slug":"tntnovelas","name":"TNT Novelas","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tntnovelas/","image":"https://1.embedcanaisdetv.com/images/tntnovelas.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tntnovelas\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":99,"slug":"tntseries","name":"TNT Series","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tntseries/","image":"https://1.embedcanaisdetv.com/images/tntseries.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tntseries\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":100,"slug":"universaltv","name":"Universal TV","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=universaltv/","image":"https://1.embedcanaisdetv.com/images/universaltv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=universaltv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":101,"slug":"usa","name":"USA","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=usa/","image":"https://vipcanais.net/images/usa.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=usa\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":102,"slug":"warner","name":"Warner Channel","category":"Filmes e Séries","href":"https://embedcanaisdetv.xyz/e/index.php?canal=warner/","image":"https://1.embedcanaisdetv.com/images/warnertv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=warner\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":103,"slug":"bandsp","name":"Band SP","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=bandsp/","image":"https://1.embedcanaisdetv.com/images/bandsp.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=bandsp\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":104,"slug":"globodf","name":"Globo DF","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globodf/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globodf\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":105,"slug":"globoes","name":"Globo Espírito Santo","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globoes/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globoes\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":106,"slug":"globomg","name":"Globo Minas","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globomg/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globomg\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":107,"slug":"globors","name":"Globo Porto Alegre","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globors/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globors\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":108,"slug":"globorj","name":"Globo Rio","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globorj/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globorj\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":109,"slug":"globosp","name":"Globo São Paulo","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globosp/","image":"https://1.embedcanaisdetv.com/images/globo.webp","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globosp\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":110,"slug":"recorddf","name":"Record DF","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recorddf/","image":"https://1.embedcanaisdetv.com/images/record.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recorddf\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":111,"slug":"recordes","name":"Record Espírito Santo","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recordes/","image":"https://1.embedcanaisdetv.com/images/record.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recordes\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":112,"slug":"recordmg","name":"Record Minas","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recordmg/","image":"https://1.embedcanaisdetv.com/images/record.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recordmg\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":113,"slug":"recordrj","name":"Record Rio","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recordrj/","image":"https://1.embedcanaisdetv.com/images/record.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recordrj\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":114,"slug":"recordsp","name":"Record São Paulo","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recordsp/","image":"https://1.embedcanaisdetv.com/images/record.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recordsp\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":115,"slug":"redetv","name":"RedeTV!","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=redetv/","image":"https://1.embedcanaisdetv.com/images/redetv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=redetv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":116,"slug":"sbtrj","name":"SBT Rio","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sbtrj/","image":"https://1.embedcanaisdetv.com/images/sbtsp.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sbtrj\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":117,"slug":"sbtsp","name":"SBT São Paulo","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=sbtsp/","image":"https://1.embedcanaisdetv.com/images/sbtsp.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=sbtsp\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":118,"slug":"tvcultura","name":"TV Cultura","category":"Canais Abertos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tvcultura/","image":"https://1.embedcanaisdetv.com/images/tvcultura.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tvcultura\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":119,"slug":"adultswim","name":"Adult Swim","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=adultswim/","image":"https://1.embedcanaisdetv.com/images/adultswim.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=adultswim\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":120,"slug":"animalplanet","name":"Animal Planet","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=animalplanet/","image":"https://1.embedcanaisdetv.com/images/animalplanet.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=animalplanet\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":121,"slug":"comedycentral","name":"Comedy Central","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=comedycentral/","image":"https://1.embedcanaisdetv.com/images/comedycentral.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=comedycentral\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":122,"slug":"discoverychannel","name":"Discovery Channel","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoverychannel/","image":"https://1.embedcanaisdetv.com/images/discoverychannel.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoverychannel\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":123,"slug":"discoveryhh","name":"Discovery Home & Health","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryhh/","image":"https://1.embedcanaisdetv.com/images/discoveryhh.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryhh\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":124,"slug":"discoveryscience","name":"Discovery Science","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryscience/","image":"https://1.embedcanaisdetv.com/images/discoveryscience.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryscience\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":125,"slug":"discoverytheater","name":"Discovery Theater","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoverytheater/","image":"https://1.embedcanaisdetv.com/images/discoverytheater.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoverytheater\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":126,"slug":"discoveryturbo","name":"Discovery Turbo","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryturbo/","image":"https://1.embedcanaisdetv.com/images/discoveryturbo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryturbo\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":127,"slug":"discoveryworld","name":"Discovery World","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryworld/","image":"https://1.embedcanaisdetv.com/images/discoveryworld.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryworld\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":128,"slug":"foodnetwork","name":"Food Network","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=foodnetwork/","image":"https://1.embedcanaisdetv.com/images/foodnetwork.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=foodnetwork\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":129,"slug":"gnt","name":"GNT","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=gnt/","image":"https://1.embedcanaisdetv.com/images/gnt.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=gnt\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":130,"slug":"hgtv","name":"HGTV","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=hgtv/","image":"https://1.embedcanaisdetv.com/images/hgtv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=hgtv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":131,"slug":"history","name":"History","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=history/","image":"https://1.embedcanaisdetv.com/images/history.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=history\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":132,"slug":"history2","name":"History 2","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=history2/","image":"https://1.embedcanaisdetv.com/images/history2.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=history2\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":133,"slug":"discoveryid","name":"Investigation Discovery","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryid/","image":"https://1.embedcanaisdetv.com/images/discoveryid.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoveryid\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":134,"slug":"mtv","name":"MTV","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=mtv/","image":"https://1.embedcanaisdetv.com/images/mtv.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=mtv\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":135,"slug":"multishow","name":"Multishow","category":"Variedades","href":"https://embedcanaisdetv.xyz/e/index.php?canal=multishow/","image":"https://1.embedcanaisdetv.com/images/multishow.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=multishow\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":136,"slug":"bandnews","name":"BandNews","category":"Notícias","href":"https://embedcanaisdetv.xyz/e/index.php?canal=bandnews/","image":"https://1.embedcanaisdetv.com/images/bandnews.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=bandnews\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":137,"slug":"cnnbrasil","name":"CNN Brasil","category":"Notícias","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cnnbrasil/","image":"https://1.embedcanaisdetv.com/images/cnnbrasil.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cnnbrasil\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":138,"slug":"globonews","name":"GloboNews","category":"Notícias","href":"https://embedcanaisdetv.xyz/e/index.php?canal=globonews/","image":"https://1.embedcanaisdetv.com/images/globonews.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=globonews\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":139,"slug":"jovempannews","name":"Jovem Pan News","category":"Notícias","href":"https://embedcanaisdetv.xyz/e/index.php?canal=jovempannews/","image":"https://1.embedcanaisdetv.com/images/jovempannews.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=jovempannews\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":140,"slug":"recordnews","name":"Record News","category":"Notícias","href":"https://embedcanaisdetv.xyz/e/index.php?canal=recordnews/","image":"https://1.embedcanaisdetv.com/images/recordnews.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=recordnews\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":141,"slug":"cartoonnetwork","name":"Cartoon Network","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork/","image":"https://1.embedcanaisdetv.com/images/cartoonnetwork.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":142,"slug":"cartoonito","name":"Cartoonito","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito/","image":"https://1.embedcanaisdetv.com/images/cartoonito.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":143,"slug":"discoverykids","name":"Discovery Kids","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids/","image":"https://1.embedcanaisdetv.com/images/discoverykids.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":144,"slug":"dreamworks","name":"DreamWorks","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=dreamworks/","image":"https://1.embedcanaisdetv.com/images/dreamworks.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=dreamworks\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":145,"slug":"gloob","name":"Gloob","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=gloob/","image":"https://1.embedcanaisdetv.com/images/gloob.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=gloob\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":146,"slug":"gloobinho","name":"Gloobinho","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=gloobinho/","image":"https://1.embedcanaisdetv.com/images/gloobinho.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=gloobinho\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":147,"slug":"nickjr","name":"Nick Jr.","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=nickjr/","image":"https://1.embedcanaisdetv.com/images/nickjr.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=nickjr\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":148,"slug":"nickelodeon","name":"Nickelodeon","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=nickelodeon/","image":"https://1.embedcanaisdetv.com/images/nickelodeon.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=nickelodeon\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":149,"slug":"tooncast","name":"Tooncast","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tooncast/","image":"https://1.embedcanaisdetv.com/images/tooncast.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tooncast\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":150,"slug":"tvratimbum","name":"TV Ra Tim Bum","category":"Infantil","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tvratimbum/","image":"https://vipcanais.net/images/tvratimbum.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tvratimbum\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":151,"slug":"cancaonova","name":"Canção Nova","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=cancaonova/","image":"https://vipcanais.net/images/cancaonova.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=cancaonova\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":152,"slug":"novotempo","name":"Novo Tempo","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=novotempo/","image":"https://vipcanais.net/images/novotempo.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=novotempo\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":153,"slug":"paieterno","name":"Pai Eterno","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=paieterno/","image":"https://vipcanais.net/images/paieterno.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=paieterno\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":154,"slug":"redegospel","name":"Rede Gospel","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=redegospel/","image":"https://vipcanais.net/images/redegospel.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=redegospel\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":155,"slug":"redevida","name":"Rede Vida","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=redevida/","image":"https://vipcanais.net/images/redevida.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=redevida\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":156,"slug":"tvaparecida","name":"TV Aparecida","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tvaparecida/","image":"https://vipcanais.net/images/tvaparecida.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tvaparecida\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"},{"id":157,"slug":"tvevangelizar","name":"TV Evangelizar","category":"Religiosos","href":"https://embedcanaisdetv.xyz/e/index.php?canal=tvevangelizar/","image":"https://vipcanais.net/images/tvevangelizar.png","iframe":"<iframe src=\"https://embedcanaisdetv.xyz/e/index.php?canal=tvevangelizar\" allow=\"autoplay; fullscreen; encrypted-media\" frameborder=\"0\" width=\"100%\" height=\"550\" loading=\"lazy\"><\/iframe>"}];
+
+const state = {
+  query: '',
+  category: 'all',
+  current: null
+};
+
+const categoryOrder = [
+  'Canais Abertos',
+  'Variedades',
+  'Esportes',
+  'Filmes e Séries',
+  'Infantil',
+  'Notícias',
+  'Religiosos'
+];
+
+const categoryLabels = {
+  'Variedades': 'Entretenimento'
+};
+
+const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+const sectionsEl = document.getElementById('categorySections');
+const emptyState = document.getElementById('emptyState');
+const mainSearch = document.getElementById('mainSearch');
+const headerSearch = document.getElementById('headerSearch');
+const categoryStrip = document.getElementById('categoryStrip');
+
+function esc(value) {
+  return String(value).replace(/[&<>'"]/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+  }[c]));
+}
+
+
+function buildCategories() {
+  const available = new Set(CHANNELS.map(c => c.category));
+  const ordered = categoryOrder.filter(c => available.has(c));
+  [...available].filter(c => !ordered.includes(c)).sort(collator.compare).forEach(c => ordered.push(c));
+
+  const allIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`;
+  const chips = [
+    `<button class="category-chip active" type="button" data-category="all"><span class="chip-icon">${allIcon}</span><span>Todas</span></button>`,
+    ...ordered.map(cat =>
+      `<button class="category-chip" type="button" data-category="${esc(cat)}"><span class="chip-icon">${categoryIcon(cat)}</span><span>${esc(categoryLabels[cat] || cat)}</span></button>`
+    )
+  ];
+  categoryStrip.innerHTML = chips.join('');
+}
+
+function getFiltered() {
+  const q = state.query.trim().toLocaleLowerCase('pt-BR');
+  return CHANNELS
+    .filter(c => state.category === 'all' || c.category === state.category)
+    .filter(c => !q || `${c.name} ${c.category} ${c.slug}`.toLocaleLowerCase('pt-BR').includes(q))
+    .sort((a, b) => collator.compare(a.name, b.name));
+}
+
+function getGrouped(filtered) {
+  const grouped = new Map();
+  for (const channel of filtered) {
+    if (!grouped.has(channel.category)) grouped.set(channel.category, []);
+    grouped.get(channel.category).push(channel);
+  }
+
+  const orderedKeys = categoryOrder.filter(cat => grouped.has(cat));
+  [...grouped.keys()]
+    .filter(cat => !orderedKeys.includes(cat))
+    .sort(collator.compare)
+    .forEach(cat => orderedKeys.push(cat));
+
+  return orderedKeys.map(cat => ({
+    key: cat,
+    label: categoryLabels[cat] || cat,
+    items: grouped.get(cat) || []
+  }));
+}
+
+function categoryIcon(category) {
+  const icons = {
+    'Canais Abertos': `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m8 3 4 3 4-3"/></svg>`,
+    'Variedades': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18h16"/><path d="M7 15v-3a5 5 0 0 1 10 0v3"/><path d="M9 6h6"/><path d="M12 3v3"/></svg>`,
+    'Esportes': `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 9 4-3 4 3-1.5 5h-5z"/><path d="M4.5 10.5 8 9M16 9l3.5 1.5M9.5 14 7 18M14.5 14 17 18"/></svg>`,
+    'Filmes e Séries': `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M17 9h4M3 15h4M17 15h4"/></svg>`,
+    'Infantil': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h8l2 4-2 8H8l-2-8z"/><path d="m9 6 1-3h4l1 3"/><circle cx="10" cy="12" r="1"/><circle cx="14" cy="12" r="1"/><path d="M10 15h4"/></svg>`,
+    'Notícias': `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h10M7 17h10"/><rect x="15" y="8" width="2" height="3"/></svg>`,
+    'Religiosos': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M8 7h8"/><path d="M5 21h14"/></svg>`
+  };
+  return icons[category] || `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>`;
+}
+
+function cardTemplate(c) {
+  return `<article class="channel-card" data-slug="${esc(c.slug)}">
+    <div class="card-top">
+      <span class="live-pill"><span class="live-dot"></span>Disponível</span>
+      <span class="card-category">${esc(categoryLabels[c.category] || c.category)}</span>
+    </div>
+    <div class="logo-box">
+      <img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.name)}">
+    </div>
+    <h2 class="card-name">${esc(c.name)}</h2>
+    <div class="card-actions">
+      <button class="card-preview" type="button" data-preview="${esc(c.slug)}" title="Assistir ${esc(c.name)}" aria-label="Assistir ${esc(c.name)}">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <span>Assistir</span>
+      </button>
+      <button class="card-copy" type="button" data-copy-embed="${esc(c.slug)}" title="Copiar iframe" aria-label="Copiar iframe de ${esc(c.name)}">
+        <svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+        <span>Copiar iframe</span>
+      </button>
+    </div>
+  </article>`;
+}
+
+function sectionTemplate(group) {
+  return `<section class="category-section" data-section-category="${esc(group.key)}">
+    <header class="category-head">
+      <div class="category-title-wrap">
+        <span class="category-icon">${categoryIcon(group.key)}</span>
+        <h2 class="category-title">${esc(group.label)}</h2>
+      </div>
+      <div class="category-tools">
+        <span class="category-total">${group.items.length} canais</span>
+        <div class="carousel-controls" aria-label="Navegação do carrossel ${esc(group.label)}">
+          <button class="carousel-arrow" type="button" data-carousel-prev="${esc(group.key)}" aria-label="Canais anteriores de ${esc(group.label)}" disabled>
+            <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <span class="carousel-count" aria-hidden="true">${group.items.length}</span>
+          <button class="carousel-arrow" type="button" data-carousel-next="${esc(group.key)}" aria-label="Próximos canais de ${esc(group.label)}">
+            <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <div class="channel-carousel-wrap">
+      <div class="channel-grid" data-carousel="${esc(group.key)}">${group.items.map(cardTemplate).join('')}</div>
+    </div>
+  </section>`;
+}
+
+function render() {
+  const list = getFiltered();
+  const groups = getGrouped(list);
+  sectionsEl.innerHTML = groups.map(sectionTemplate).join('');
+  document.getElementById('resultsText').textContent =
+    `${list.length} canal${list.length === 1 ? '' : 'is'} encontrado${list.length === 1 ? '' : 's'}`;
+
+  emptyState.classList.toggle('show', list.length === 0);
+  sectionsEl.style.display = list.length ? 'grid' : 'none';
+
+  sectionsEl.querySelectorAll('.logo-box img').forEach(img => {
+    img.addEventListener('error', () => {
+      img.style.visibility = 'hidden';
+    }, { once: true });
+  });
+
+  requestAnimationFrame(() => {
+    sectionsEl.querySelectorAll('[data-carousel]').forEach(updateCarouselState);
+  });
+}
+
+function updateCarouselState(track) {
+  if (!track) return;
+
+  const section = track.closest('.category-section');
+  if (!section) return;
+
+  const prev = section.querySelector('[data-carousel-prev]');
+  const next = section.querySelector('[data-carousel-next]');
+  const wrap = track.closest('.channel-carousel-wrap');
+
+  const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+  const atStart = track.scrollLeft <= 4;
+  const atEnd = track.scrollLeft >= maxScroll - 4 || maxScroll <= 4;
+
+  if (prev) prev.disabled = atStart;
+  if (next) next.disabled = atEnd;
+  if (wrap) wrap.classList.toggle('at-end', atEnd);
+}
+
+function moveCarousel(track, direction) {
+  if (!track) return;
+
+  const firstCard = track.querySelector('.channel-card');
+  const styles = getComputedStyle(track);
+  const gap = parseFloat(styles.columnGap || styles.gap || 14) || 14;
+  const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 230;
+  const visibleCards = Math.max(1, Math.floor(track.clientWidth / (cardWidth + gap)));
+  const amount = Math.max(cardWidth + gap, (cardWidth + gap) * Math.max(1, visibleCards - 1));
+
+  track.scrollBy({
+    left: direction * amount,
+    behavior: 'smooth'
+  });
+}
+
+function setQuery(value, source) {
+  state.query = value;
+  if (source !== mainSearch) mainSearch.value = value;
+  if (source !== headerSearch) headerSearch.value = value;
+  render();
+}
+
+async function copyEmbed(channel, button) {
+  if (!channel || !channel.iframe) return;
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(channel.iframe);
+    } else {
+      const area = document.createElement('textarea');
+      area.value = channel.iframe;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+
+    if (button) {
+      button.classList.add('copied');
+      const label = button.querySelector('span');
+      const oldLabel = label ? label.textContent : '';
+      if (label) label.textContent = 'Copiado!';
+      button.title = 'Iframe copiado';
+      setTimeout(() => {
+        button.classList.remove('copied');
+        if (label) label.textContent = oldLabel || 'Copiar iframe';
+        button.title = 'Copiar iframe';
+      }, 1400);
+    }
+  } catch (err) {
+    console.error('Não foi possível copiar o embed:', err);
+  }
+}
+
+function openPlayer(channel) {
+  if (!channel) return;
+  state.current = channel;
+  document.getElementById('playerTitle').textContent = channel.name;
+  document.getElementById('playerCategory').textContent = `${categoryLabels[channel.category] || channel.category} • Ao vivo`;
+
+  const logo = document.getElementById('playerLogo');
+  logo.src = channel.image;
+  logo.alt = channel.name;
+
+  document.getElementById('playerFrame').src = channel.href;
+  document.getElementById('playerModal').classList.add('open');
+  document.getElementById('playerModal').setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePlayer() {
+  document.getElementById('playerModal').classList.remove('open');
+  document.getElementById('playerModal').setAttribute('aria-hidden', 'true');
+  document.getElementById('playerFrame').src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+buildCategories();
+render();
+
+mainSearch.addEventListener('input', e => setQuery(e.target.value, mainSearch));
+headerSearch.addEventListener('input', e => setQuery(e.target.value, headerSearch));
+
+categoryStrip.addEventListener('click', e => {
+  const chip = e.target.closest('[data-category]');
+  if (!chip) return;
+  state.category = chip.dataset.category;
+  categoryStrip.querySelectorAll('.category-chip').forEach(btn => btn.classList.toggle('active', btn === chip));
+  render();
+});
+
+sectionsEl.addEventListener('click', e => {
+  const copyButton = e.target.closest('[data-copy-embed]');
+  if (copyButton) {
+    e.preventDefault();
+    const channel = CHANNELS.find(c => c.slug === copyButton.dataset.copyEmbed);
+    copyEmbed(channel, copyButton);
+    return;
+  }
+
+  const previewButton = e.target.closest('[data-preview]');
+  if (previewButton) {
+    const channel = CHANNELS.find(c => c.slug === previewButton.dataset.preview);
+    openPlayer(channel);
+    return;
+  }
+
+  const prevButton = e.target.closest('[data-carousel-prev]');
+  if (prevButton) {
+    const track = sectionsEl.querySelector(`[data-carousel="${CSS.escape(prevButton.dataset.carouselPrev)}"]`);
+    moveCarousel(track, -1);
+    return;
+  }
+
+  const nextButton = e.target.closest('[data-carousel-next]');
+  if (nextButton) {
+    const track = sectionsEl.querySelector(`[data-carousel="${CSS.escape(nextButton.dataset.carouselNext)}"]`);
+    moveCarousel(track, 1);
+  }
+});
+
+sectionsEl.addEventListener('scroll', e => {
+  const track = e.target.closest && e.target.closest('[data-carousel]');
+  if (track) updateCarouselState(track);
+}, true);
+
+window.addEventListener('resize', () => {
+  sectionsEl.querySelectorAll('[data-carousel]').forEach(updateCarouselState);
+});
+
+document.getElementById('copyEmbedModal').addEventListener('click', e => {
+  copyEmbed(state.current, e.currentTarget);
+});
+document.getElementById('closePlayer').addEventListener('click', closePlayer);
+document.getElementById('openExternal').addEventListener('click', () => {
+  if (state.current) window.open(state.current.href, '_blank', 'noopener');
+});
+document.getElementById('playerModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closePlayer();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('playerModal').classList.contains('open')) closePlayer();
+});
+
+document.getElementById('mobileNavToggle').addEventListener('click', () => {
+  document.body.classList.toggle('nav-open');
+});
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"06d7f69c04a347f8b4417c6cdfa0a628","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>

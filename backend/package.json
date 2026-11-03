@@ -1,0 +1,15 @@
+{
+  "name": "webtv-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Proxy do catalogo de canais (resolve CORS do embedcanais.online)",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test ../backend/tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "webtv-frontend-v2",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run fetch:channels && tsc && vite build",
+    "build:offline": "tsc && vite build",
+    "preview": "vite preview",
+    "fetch:channels": "node scripts/fetch-channels.mjs",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "npm run test:parser && npm run test:parser:live && npm run test:backend",
+    "test:parser": "node --test tests/parseEmbedcanais.test.mjs",
+    "test:parser:live": "node --test tests/fetchChannels.test.mjs",
+    "test:backend": "node --test ../backend/tests/server.test.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "typescript": "^5.5.2",
+    "vite": "^5.3.1"
+  }
+}

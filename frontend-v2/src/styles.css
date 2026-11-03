@@ -1,0 +1,138 @@
+/* Estilo propositalmente minimalista: o objetivo desta v2 e validar o parser. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0f14;
+  color: #e6edf3;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+h2 {
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+
+.status {
+  margin: 4px 0;
+  color: #8b949e;
+}
+
+.status.ok {
+  color: #7ee787;
+}
+
+.status.error {
+  color: #ff7b72;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.controls input[type='search'],
+.controls select {
+  padding: 6px 8px;
+  background: #11161d;
+  color: #e6edf3;
+  border: 1px solid #2a323c;
+  border-radius: 4px;
+}
+
+.controls input[type='search'] {
+  min-width: 240px;
+}
+
+.count {
+  color: #8b949e;
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+.card {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #11161d;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: #0d1117;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+
+.info {
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.category,
+.slug,
+.url {
+  color: #8b949e;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.attempts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.attempts li {
+  padding: 6px 0;
+  border-bottom: 1px solid #21262d;
+}
+
+.attempts li.ok {
+  color: #7ee787;
+}
+
+.attempts li.fail {
+  color: #ff7b72;
+}
+
+.raw pre {
+  background: #11161d;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px;
+  overflow: auto;
+  font-size: 12px;
+}

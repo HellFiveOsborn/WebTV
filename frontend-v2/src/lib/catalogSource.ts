@@ -1,0 +1,261 @@
+/**
+ * Fontes de dados do catalogo de canais (embedcanais.online)
+ *
+ * O site NAO envia headers CORS, entao um `fetch` direto do browser para
+ * https://embedcanais.online/ e bloqueado pela Same-Origin Policy.
+ *
+ * A v2 roda 100% client-side (GitHub Pages = estatico, sem Node no runtime),
+ * entao o catalogo vem por tres vias, em ordem de confianca:
+ *
+ *  1. API     - backend na Suga (container Node). Busca o site no servidor
+ *               (sem restricao de CORS) e devolve JSON limpo com
+ *               `Access-Control-Allow-Origin: *`. E a via principal em
+ *               producao e resolve o problema de CORS de vez.
+ *  2. LIVE    - fetch direto ao site. Funciona em dev local (proxy do Vite
+ *               = mesma origem) ou se o site liberar CORS no futuro.
+ *  3. SNAPSHOT- JSON gerado no BUILD (GitHub Actions roda Node e baixa o site).
+ *               Arquivo estatico, sempre disponivel, fallback ultimo.
+ *
+ * O app requisita ao entrar: a API e o site sao consultados em paralelo e o
+ * primeiro que responder preenche a tela. A UI sempre informa qual via
+ * forneceu os dados, para deixar a origem transparente.
+ */
+
+import {
+  EMBEDCANAIS_SOURCE_URL,
+  EmbedcanaisCatalog,
+  parseEmbedcanaisHtml,
+} from './parseEmbedcanais'
+
+export type LoadStrategy = 'api' | 'live' | 'cors' | 'snapshot'
+
+export interface CatalogResult {
+  catalog: EmbedcanaisCatalog
+  strategy: LoadStrategy
+  /** URL efetiva usada (snapshot = caminho local) */
+  source: string
+  fetchedAt: number
+}
+
+export interface Attempt {
+  strategy: LoadStrategy
+  url: string
+  ok: boolean
+  error?: string
+}
+
+export const STRATEGY_LABEL: Record<LoadStrategy, string> = {
+  api: 'API (Suga)',
+  live: 'live (direto)',
+  cors: 'proxy CORS',
+  snapshot: 'snapshot (build)',
+}
+
+/** Caminho do snapshot gerado no build (public/data/embedcanais.json). */
+export const SNAPSHOT_URL = `${import.meta.env.BASE_URL}data/embedcanais.json`
+
+/**
+ * URL da API do backend (Suga).
+ *
+ * Em dev o Vite faz proxy de `/api/channels` para o backend local
+ * (http://127.0.0.1:8080), entao o app roda sem configuracao extra.
+ *
+ * Em producao o backend vive na Suga, com URL publica gerada por ela.
+ * Defina `VITE_API_URL` no build (ou ajuste aqui) para apontar para ele.
+ */
+export const API_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || '/api/channels'
+
+/**
+ * Em dev, o Vite tem um proxy para o site (mesma origem => sem CORS).
+ * Em producao (GitHub Pages) nao existe proxy, entao usa a URL direta.
+ */
+export const LIVE_URL = import.meta.env.DEV ? '/api/embedcanais/' : EMBEDCANAIS_SOURCE_URL
+
+/**
+ * Proxies publicos de CORS usados como ultimo recurso.
+ * Exigem a URL-alvo percent-encoded. Sao instaveis (522/520) e falham
+ * justamente quando o header `Origin` e enviado - ou seja, no caso do browser.
+ */
+export const CORS_PROXIES: Array<{ name: string; build: (target: string) => string }> = [
+  {
+    name: 'allorigins',
+    build: target => `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+  },
+  {
+    name: 'codetabs',
+    build: target => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,
+  },
+]
+
+const FETCH_TIMEOUT_MS = 15000
+
+async function fetchText(url: string): Promise<string> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: 'text/html,application/xhtml+xml,*/*' },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.text()
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Busca o catalogo na API do backend (JSON ja parseado).
+ */
+async function tryApi(url: string): Promise<
+  { ok: true; catalog: EmbedcanaisCatalog } | { ok: false; error: string }
+> {
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+    const data = (await res.json()) as EmbedcanaisCatalog
+    if (!data || !Array.isArray(data.channels) || data.channels.length === 0) {
+      throw new Error('resposta sem canais')
+    }
+    return { ok: true, catalog: data }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+/**
+ * Busca e parseia o HTML do site.
+ */
+async function tryUrl(
+  url: string,
+): Promise<{ ok: true; catalog: EmbedcanaisCatalog } | { ok: false; error: string }> {
+  try {
+    const text = await fetchText(url)
+    const catalog = parseEmbedcanaisHtml(text)
+    if (!catalog) return { ok: false, error: 'HTML sem a listagem de canais' }
+    return { ok: true, catalog }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+/**
+ * Carrega o snapshot gerado no build. Instantaneo e sempre disponivel
+ * (desde que o build tenha rodado com sucesso).
+ */
+export async function loadSnapshot(): Promise<
+  { ok: true; result: CatalogResult } | { ok: false; error: string }
+> {
+  try {
+    const res = await fetch(SNAPSHOT_URL, { cache: 'no-cache' })
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` }
+    const data = (await res.json()) as EmbedcanaisCatalog
+    if (!data || !Array.isArray(data.channels) || data.channels.length === 0) {
+      return { ok: false, error: 'Snapshot sem canais' }
+    }
+    return {
+      ok: true,
+      result: {
+        catalog: data,
+        strategy: 'snapshot',
+        source: SNAPSHOT_URL,
+        fetchedAt: Date.now(),
+      },
+    }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+/**
+ * Tenta a API do backend e, em seguida, o site direto.
+ * @param options.apiUrl URL da API (vazio desativa a via API)
+ */
+export async function loadCatalog(options?: {
+  apiUrl?: string
+  signal?: AbortSignal
+}): Promise<{
+  ok: boolean
+  result?: CatalogResult
+  attempts: Attempt[]
+}> {
+  const attempts: Attempt[] = []
+  const apiUrl = options?.apiUrl ?? API_URL
+
+  // 1) API do backend (resolve CORS).
+  if (apiUrl) {
+    const outcome = await tryApi(apiUrl)
+    attempts.push({ strategy: 'api', url: apiUrl, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
+    if (outcome.ok) {
+      return {
+        ok: true,
+        result: {
+          catalog: outcome.catalog,
+          strategy: 'api',
+          source: apiUrl,
+          fetchedAt: Date.now(),
+        },
+        attempts,
+      }
+    }
+  }
+
+  // 2) Site direto (dev local via proxy do Vite; producao se houver CORS).
+  {
+    const outcome = await tryUrl(LIVE_URL)
+    attempts.push({ strategy: 'live', url: LIVE_URL, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
+    if (outcome.ok) {
+      return {
+        ok: true,
+        result: {
+          catalog: outcome.catalog,
+          strategy: 'live',
+          source: LIVE_URL,
+          fetchedAt: Date.now(),
+        },
+        attempts,
+      }
+    }
+  }
+
+  // 3) Proxies publicos de CORS.
+  for (const proxy of CORS_PROXIES) {
+    const url = proxy.build(EMBEDCANAIS_SOURCE_URL)
+    const outcome = await tryUrl(url)
+    attempts.push({ strategy: 'cors', url, ok: outcome.ok, error: outcome.ok ? undefined : outcome.error })
+    if (outcome.ok) {
+      return {
+        ok: true,
+        result: {
+          catalog: outcome.catalog,
+          strategy: 'cors',
+          source: url,
+          fetchedAt: Date.now(),
+        },
+        attempts,
+      }
+    }
+  }
+
+  // 4) Snapshot do build (ultimo recurso, sempre local).
+  {
+    const outcome = await loadSnapshot()
+    attempts.push({
+      strategy: 'snapshot',
+      url: SNAPSHOT_URL,
+      ok: outcome.ok,
+      error: outcome.ok ? undefined : outcome.error,
+    })
+    if (outcome.ok && outcome.result) {
+      return { ok: true, result: outcome.result, attempts }
+    }
+  }
+
+  return { ok: false, attempts }
+}

@@ -1,0 +1,20 @@
+# Build
+dist/
+node_modules/
+
+# O snapshot E versionado como fallback (o CI regenera a cada build).
+# Comente a linha abaixo para nao versionar.
+# public/data/embedcanais.json
+
+# Compilados de teste
+src/lib/__compiled__/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
