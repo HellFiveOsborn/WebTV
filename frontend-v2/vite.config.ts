@@ -14,8 +14,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // v2 roda em root do GitHub Pages (repo dedicado) ou sob /WebTV/
-  base: process.env.BASE_URL || '/',
+  // A v2 e published em /WebTV/v2/ (mesmo Pages da v1, subpasta).
+  base: process.env.BASE_URL || '/WebTV/v2/',
   server: {
     port: 3001,
     host: true,

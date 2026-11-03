@@ -1,9 +1,23 @@
 name: Deploy Frontend to GitHub Pages
 
+# Publica v1 (raiz /WebTV/) e v2 (/WebTV/v2/) no MESMO artifact do Pages.
+#
+# Por que um workflow unico: `actions/upload-pages-artifact` envia o site
+# inteiro. Dois workflows competindo pelo mesmo artifact sobrescrevem um ao
+# outro - o ultimo a terminar vence. Montando os dois builds em subpastas
+# dentro de um unico artifact, v1 e v2 coexistem.
+#
+#   /WebTV/         -> v1 (frontend/)
+#   /WebTV/v2/      -> v2 (frontend-v2/)
+
 on:
   push:
     branches: [main]
-    paths: ['frontend/**']
+    paths:
+      - 'frontend/**'
+      - 'frontend-v2/**'
+      - 'shared/**'
+      - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,12 +32,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
+      # ---------- v1 (raiz) ----------
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -31,22 +43,56 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install v1 dependencies
         run: npm ci
+        working-directory: frontend
 
-      - name: Build
+      - name: Build v1
         run: npm run build
+        working-directory: frontend
 
-      - name: Build widget
+      - name: Build v1 widget
         run: npm run build:widget
+        working-directory: frontend
 
-      - name: Create .nojekyll
-        run: touch dist/.nojekyll
+      # ---------- v2 (/v2) ----------
+      - name: Install v2 dependencies
+        run: npm ci
+        working-directory: frontend-v2
+
+      # Testes: parser (unit + live contra o site) e backend (CORS).
+      - name: Test v2
+        run: npm test
+        working-directory: frontend-v2
+
+      # Gera public/data/embedcanais.json a partir do site real.
+      # Falhas de rede nao quebram o build (o script mantem o snapshot anterior).
+      - name: Fetch v2 channels snapshot
+        run: npm run fetch:channels
+        working-directory: frontend-v2
+
+      # URL da API do backend (Deno Function na Suga) vem de var do repo.
+      # Sem ela, o v2 usa o snapshot do build.
+      - name: Build v2
+        run: npm run build:offline
+        working-directory: frontend-v2
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+      # ---------- Monta o site completo ----------
+      - name: Stage site
+        run: |
+          mkdir -p _site/v2
+          cp -r frontend/dist/. _site/
+          cp -r frontend-v2/dist/. _site/v2/
+          # SPA fallback do v2 para rotas internas (/v2/...)
+          cp frontend-v2/dist/index.html _site/v2/404.html
+          touch _site/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/dist
+          path: _site
 
   deploy:
     environment:
