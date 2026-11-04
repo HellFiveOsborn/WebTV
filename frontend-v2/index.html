@@ -26,7 +26,15 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      `app-frame` e o container que gira no modo paisagem do app Android
+      (ver src/lib/screenOrientation.ts). Os overlays (busca/modal) ficam
+      em `overlay-root`, DENTRO do frame, para acompanharem a rotacao.
+    -->
+    <div id="app-frame">
+      <div id="root"></div>
+      <div id="overlay-root"></div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

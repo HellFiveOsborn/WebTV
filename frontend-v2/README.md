@@ -84,6 +84,14 @@ o padrao web (base de 15px), pensada para TV/projetor - a WebView tambem roda
 em telas grandes, vistas a distancia. O layout nao muda: cards, grid e
 rolagem continuam com as mesmas medidas.
 
+**Orientacao:** no app Android em celular/tablet na vertical, o catalogo gira
+automaticamente para paisagem. A WebView do Android nao suporta
+`screen.orientation.lock()`, entao a rotacao e feita via CSS no `#app-frame`
+(ver `src/lib/screenOrientation.ts`). A pagina do canal tambem gira: o
+`embedcanais-simple-player.js` aplica a mesma estrategia no `body` depois de
+trocar o player. Em paisagem nada muda; no navegador comum tambem nao (apenas
+o app gira).
+
 | Elemento | Onde | O que faz |
 |---|---|---|
 | Bloco "Top 10" | Home | Card grande do #1 com o numero gigante ao fundo + os demais em rolagem horizontal. |

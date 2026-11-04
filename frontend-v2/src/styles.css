@@ -1767,3 +1767,68 @@ html[data-theme='light'] .top-thumb img {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Modo paisagem do app Android (celular/tablet em retrato)
+ * ------------------------------------------------------------------ */
+
+/*
+ * A WebView do Android nao suporta `screen.orientation.lock()` e o Kotlin
+ * nao pode ser alterado. O frontend gira o frame inteiro: a largura vira
+ * a altura da janela (e vice-versa) e o conteudo roda 90 graus.
+ *
+ * O `#app-frame` passa a ser o container de rolagem - a barra sticky, as
+ * linhas horizontais e os overlays (portal em `#overlay-root`, dentro do
+ * frame) continuam funcionando. Ver `src/lib/screenOrientation.ts`.
+ */
+html.webtv-force-landscape,
+html.webtv-force-landscape body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+html.webtv-force-landscape #app-frame {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  width: var(--webtv-landscape-width);
+  height: var(--webtv-landscape-height);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+  transform: translateX(var(--webtv-landscape-height)) rotate(90deg);
+  transform-origin: top left;
+  scrollbar-width: none;
+}
+
+html.webtv-force-landscape #app-frame::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * `100vh` continua sendo a altura do aparelho em retrato; no frame girado
+ * a altura util e a largura da janela (variavel definida pelo modulo).
+ */
+html.webtv-force-landscape .app,
+html.webtv-force-landscape .api-fallback {
+  min-height: var(--webtv-landscape-height);
+}
+
+/*
+ * Modais: `90vh` e `5vh` tambem apontam para a altura do aparelho em
+ * retrato (915px), maior que o frame girado (412px). Limita o painel a
+ * altura util e deixa o corpo rolar.
+ */
+html.webtv-force-landscape .modal-backdrop {
+  padding: 24px;
+}
+
+html.webtv-force-landscape .modal-panel {
+  max-height: calc(var(--webtv-landscape-height) - 48px);
+}

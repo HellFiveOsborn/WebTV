@@ -465,6 +465,15 @@ test('o "Back" e tratado antes do OK e do play/pause', () => {
   assert.ok(iBack < iInfo, 'o Back vem antes dos atalhos')
 })
 
+test('o script gira a pagina do canal no app Android em retrato', () => {
+  // A WebView nao suporta `screen.orientation.lock()`: o body e girado
+  // via CSS com as dimensoes trocadas (mesma estrategia do catalogo).
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('webtv-player-landscape'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('orientationchange'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('rotate(90deg)'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('--webtv-player-w'))
+})
+
 test('o script usa Hls.js (o player minimo)', () => {
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('hls.js'))
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('hls.loadSource'))

@@ -2,6 +2,7 @@ import { ReactNode, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useDpad } from './useDpad'
 import { DPAD_ITEM_ATTR } from '../lib/dpad.js'
+import { getOverlayRoot } from '../lib/overlayRoot'
 
 interface ModalDialogProps {
   /** true = modal aberto. */
@@ -154,6 +155,6 @@ export function ModalDialog({ open, title, children, onClose }: ModalDialogProps
         <div className="modal-body">{children}</div>
       </div>
     </div>,
-    document.body,
+    getOverlayRoot(),
   )
 }

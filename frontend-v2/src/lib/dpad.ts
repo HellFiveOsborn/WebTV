@@ -282,6 +282,17 @@ export function revealElement(el: HTMLElement, options: RevealOptions = {}): voi
   const direction = options.direction ?? 'right'
   const horizontal = direction === 'left' || direction === 'right'
 
+  /*
+   * No modo paisagem forcado (app Android em retrato), o `#app-frame`
+   * girado e o container de rolagem e as coordenadas de tela estao
+   * rotacionadas. `scrollIntoView` entende transforms e containers
+   * aninhados; a matematica manual abaixo (baseada na tela) nao.
+   */
+  if (document.documentElement.classList.contains('webtv-force-landscape')) {
+    el.scrollIntoView({ block: 'center', inline: 'nearest', behavior })
+    return
+  }
+
   // --- 1) containers ancestrais (carrosseis / listas) -----------------
   let node: HTMLElement | null = el.parentElement
   while (node && node !== document.body && node !== document.documentElement) {

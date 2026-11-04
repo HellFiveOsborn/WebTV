@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { installEventBus } from './lib/events.js'
+import { installScreenOrientation } from './lib/screenOrientation'
 import './styles.css'
 
 /*
@@ -12,6 +13,13 @@ import './styles.css'
  * carregar; se o bus nao existir, ele espera e nunca recebe nada.
  */
 installEventBus()
+
+/*
+ * No app Android em celular na vertical, gira o catalogo para paisagem
+ * (a WebView nao suporta `screen.orientation.lock`). Ver
+ * `lib/screenOrientation.ts`.
+ */
+installScreenOrientation()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

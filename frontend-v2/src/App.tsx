@@ -16,6 +16,7 @@ import { UsageMap, readUsage, recordOpen } from './lib/usage'
 import { RankedChannel, rankChannels } from './lib/ranking'
 import { eventBus } from './lib/events'
 import { useBridgeIntegration } from './lib/useBridge'
+import { scrollAppToTop } from './lib/screenOrientation'
 import { Header } from './components/Header'
 import { TopRow } from './components/TopRow'
 import { Row } from './components/Row'
@@ -244,7 +245,7 @@ function AppContent() {
     // Voltar para a Home limpa a busca: a busca e um filtro global e
     // esconderia a home inteira enquanto estiver preenchida.
     if (next === '') setQuery('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollAppToTop()
 
     // Avisa o app Kotlin qual categoria foi escolhida.
     eventBus.emit('category:changed', {

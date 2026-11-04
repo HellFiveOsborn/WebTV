@@ -35,6 +35,7 @@
 
   var VIDEO_ID = 'webtv-player-video';
   var HLSJS_CDN = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
+  var ORIENTATION_CLASS = 'webtv-player-landscape';
   var DISCOVERY_TIMEOUT_MS = 30000;
   var POLL_MS = 250;
   var BANNER_SELECTOR = [
@@ -389,6 +390,11 @@
           '#webtv-error-msg{font:14px/1.5 Arial;color:#f88;margin-bottom:16px;max-width:90vw}' +
           '#webtv-error button{background:#00c853;color:#000;border:0;border-radius:6px;' +
             'padding:10px 22px;font:bold 14px Arial;cursor:pointer}' +
+          'html.webtv-player-landscape,html.webtv-player-landscape body{' +
+            'width:100%;height:100%;overflow:hidden;background:#000}' +
+          'html.webtv-player-landscape body{position:fixed;top:0;left:0;' +
+            'width:var(--webtv-player-w);height:var(--webtv-player-h);' +
+            'transform:translateX(var(--webtv-player-h)) rotate(90deg);transform-origin:top left}' +
           BANNER_CSS +
         '</style>' +
       '</head>' +
@@ -440,6 +446,44 @@
       video.addEventListener('play', hideTap);
       video.addEventListener('playing', hideTap);
     }
+
+    watchOrientation();
+  }
+
+  /*
+   * Paisagem forcada no app Android em retrato.
+   *
+   * A WebView do Android nao implementa 'screen.orientation.lock()' e o
+   * Kotlin nao pode ser alterado. A saida e a mesma do catalogo da v2:
+   * girar o body via CSS com as dimensoes trocadas. Ao girar o aparelho,
+   * o viewport fica deitado e a rotacao e removida (a nativa assume).
+   */
+  function isWebTvAndroidApp() {
+    var ua = navigator.userAgent || '';
+    return (!!window.WebTVBridge || /WebTV\/\d/i.test(ua)) && /Android/i.test(ua);
+  }
+
+  function applyOrientation() {
+    var html = document.documentElement;
+    if (!html) return;
+
+    if (!isWebTvAndroidApp() || window.innerHeight <= window.innerWidth) {
+      html.classList.remove(ORIENTATION_CLASS);
+      html.style.removeProperty('--webtv-player-w');
+      html.style.removeProperty('--webtv-player-h');
+      return;
+    }
+
+    html.style.setProperty('--webtv-player-w', window.innerHeight + 'px');
+    html.style.setProperty('--webtv-player-h', window.innerWidth + 'px');
+    html.classList.add(ORIENTATION_CLASS);
+  }
+
+  function watchOrientation() {
+    applyOrientation();
+    window.addEventListener('resize', applyOrientation);
+    window.addEventListener('orientationchange', applyOrientation);
+    window.requestAnimationFrame(applyOrientation);
   }
 
   function unlockAudio(video) {

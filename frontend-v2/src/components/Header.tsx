@@ -4,6 +4,7 @@ import { ModalDialog } from './ModalDialog'
 import { VirtualKeyboard } from './VirtualKeyboard'
 import { useDpad, useDpadGroup } from './useDpad'
 import { DPAD_ITEM_ATTR } from '../lib/dpad.js'
+import { getOverlayRoot } from '../lib/overlayRoot'
 
 interface HeaderProps {
   /** Categorias do catalogo, na ordem do site. */
@@ -385,9 +386,10 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
   }
 
   /*
-   * Renderizado via portal no `body`: o `backdrop-filter` da barra
-   * superior criaria um containing block e a tela de busca ficaria
-   * presa ao cabecalho em vez de cobrir a janela inteira.
+   * Renderizado via portal em `#overlay-root`: o `backdrop-filter` da barra
+   * superior criaria um containing block e a tela de busca ficaria presa
+   * ao cabecalho em vez de cobrir a janela inteira. O container fica dentro
+   * do frame que gira no modo paisagem (ver `lib/screenOrientation.ts`).
    */
   return createPortal(
     <div
@@ -509,6 +511,6 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
         )}
       </div>
     </div>,
-    document.body,
+    getOverlayRoot(),
   )
 }
