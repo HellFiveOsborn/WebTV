@@ -1,14 +1,15 @@
 name: Deploy Frontend to GitHub Pages
 
-# Publica v1 (raiz /WebTV/) e v2 (/WebTV/v2/) no MESMO artifact do Pages.
+# Publica v1 (em /WebTV/index-v1.html) e v2 (raiz /WebTV/) no MESMO artifact do Pages.
 #
 # Por que um workflow unico: `actions/upload-pages-artifact` envia o site
 # inteiro. Dois workflows competindo pelo mesmo artifact sobrescrevem um ao
 # outro - o ultimo a terminar vence. Montando os dois builds em subpastas
 # dentro de um unico artifact, v1 e v2 coexistem.
 #
-#   /WebTV/         -> v1 (frontend/)
-#   /WebTV/v2/      -> v2 (frontend-v2/)
+#   /WebTV/              -> redirect para /WebTV/v2/ (v2 e o default)
+#   /WebTV/v2/           -> v2 (frontend-v2/)
+#   /WebTV/index-v1.html -> v1 (frontend/), fallback manual
 
 on:
   push:
@@ -86,6 +87,29 @@ jobs:
           mkdir -p _site/v2
           cp -r frontend/dist/. _site/
           cp -r frontend-v2/dist/. _site/v2/
+
+          # A raiz agora inicia o v2. O v1 continua publicado em
+          # /WebTV/index-v1.html como fallback manual.
+          mv _site/index.html _site/index-v1.html
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="utf-8" />
+              <title>WebTV</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <meta http-equiv="refresh" content="0; url=./v2/" />
+              <link rel="canonical" href="./v2/" />
+            </head>
+            <body>
+              <script>
+                location.replace('./v2/' + location.search + location.hash)
+              </script>
+              <p><a href="./v2/">Abrir WebTV</a></p>
+            </body>
+          </html>
+          HTML
+
           # SPA fallback do v2 para rotas internas (/v2/...)
           cp frontend-v2/dist/index.html _site/v2/404.html
           touch _site/.nojekyll

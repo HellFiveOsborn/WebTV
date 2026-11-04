@@ -417,8 +417,9 @@ frontend-v2/
 ## Deploy
 
 - **Frontend:** `.github/workflows/deploy-frontend.yml` - build no GitHub
-  Actions (Node roda no CI, nunca no runtime), publica v1 na raiz e v2 em
-  `/v2/` do **mesmo** Pages.
+  Actions (Node roda no CI, nunca no runtime), publica v1 em
+  `/WebTV/index-v1.html` e v2 em `/WebTV/v2/` do **mesmo** Pages. A raiz
+  `/WebTV/` redireciona para o v2 (default).
   URL: <https://hellfiveosborn.github.io/WebTV/v2/>
 - **Backend:** Netlify Function em `netlify/functions/channels.mjs` (ver
   `../backend/README.md`). A URL publica entra no build via a var de
