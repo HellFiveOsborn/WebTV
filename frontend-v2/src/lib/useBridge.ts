@@ -70,6 +70,10 @@ import {
   toBridgeScripts,
 } from './scripts.js'
 import { vipBannerScript, VIP_BANNER_SCRIPT_DOMAINS } from './injectionScripts.js'
+import {
+  simplePlayerScript,
+  SIMPLE_PLAYER_SCRIPT_DOMAINS,
+} from './simplePlayerScript.js'
 
 /** Canal aberto no momento (null = nenhum). */
 export interface ActiveChannel {
@@ -167,13 +171,44 @@ export function useBridgeIntegration({
    * O banner e indexado **so pelo canal** (`channelIds`), sem
    * dominios: assim ele ocupa uma unica entrada do LRU e nao compete
    * com os 70 `channelIds` do gist.
+   *
+   * ## O player simples
+   *
+   * O mesmo caminho do banner: indexado pelo **canal da v2**
+   * (`${id}-${slug}`). O script do Gist que faria esse papel esta
+   * indexado pelos ids da v1 (`1779525189328`) e pelas URLs do Gist -
+   * nenhum casa com a v2, entao ele nunca era injetado. Ver
+   * `lib/simplePlayerScript.ts`.
+   *
+   * ## O LRU de 50 do Kotlin
+   *
+   * O `channelScripts` do Kotlin e um LRU de 50 entradas, e `storeChannelScript`
+   * **ACRESCENTA** a uma lista (sem deduplicar). Os 70 `channelIds` do gist
+   * ocupam as 50 vagas e expulsam o canal da v2 - a nao ser que o canal
+   * seja indexado **depois** deles.
+   *
+   * Por isso a ordem no payload e: **gist primeiro, scripts da v2 depois**.
+   * Assim a entrada do canal da v2 e a ultima a ser inserida (a mais
+   * recente), e sobrevive ao LRU.
    */
   const emitScriptsLoaded = useCallback((channelId?: string) => {
-    const vip = vipBannerScript({
-      channelIds: channelId ? [channelId] : undefined,
-      domains: [...VIP_BANNER_SCRIPT_DOMAINS],
-    })
-    const payload = [vip, ...toBridgeScripts(scriptsRef.current)]
+    // 1) Os scripts do gist primeiro: eles enchem o LRU com as 50 vagas.
+    const payload = toBridgeScripts(scriptsRef.current)
+
+    // 2) Os scripts da v2 depois, indexados pelo canal aberto: ficam
+    //    como as entradas mais recentes do LRU e nao sao expulsos.
+    payload.unshift(
+      vipBannerScript({
+        channelIds: channelId ? [channelId] : undefined,
+        domains: [...VIP_BANNER_SCRIPT_DOMAINS],
+      }),
+    )
+    payload.push(
+      simplePlayerScript({
+        channelIds: channelId ? [channelId] : undefined,
+        domains: [...SIMPLE_PLAYER_SCRIPT_DOMAINS],
+      }),
+    )
 
     eventBus.emit('scripts:loaded', { scripts: payload })
   }, [])

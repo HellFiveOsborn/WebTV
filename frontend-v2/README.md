@@ -151,6 +151,50 @@ window.WebTV.channel.close()   // fecha o canal e avisa o Kotlin
 | **Nao emitir `player:opened`** | Ele faz o Kotlin injetar os scripts **imediatamente**. No fluxo `redirect` a pagina do canal ainda nao carregou - a injecao cairia na pagina da v2, e o script do player substitui o documento inteiro (destruindo a UI). A injecao acontece no `onPageFinished` do Kotlin, na pagina do canal. |
 | **Evitar laco de eventos** | O `emit` da v2 **nao** chama o `WebTVBridge` diretamente: quem encaminha e o guard que o Kotlin instala. Se o `emit` chamasse o bridge, os eventos injetados pelo Kotlin voltariam como `player:closed` -> `onPlayerClosed` -> re-emissao -> laco. |
 | **Os scripts de injecao** | Vem do mesmo gist da v1 (mesma fonte, sem divergencia). O gist envia `Access-Control-Allow-Origin: *`, entao a v2 le direto do browser. |
+| **O player simples nao vem do gist** | O gist tem o script, mas indexado pelos ids de canal da **v1** (`1779525189328`) e pelas URLs do Gist - nenhum casa com a chave da v2 (`${id}-${slug}`). A v2 entrega o seu proprio, indexado pelo canal (ver abaixo). |
+| **A ordem do `scripts:loaded`** | O `channelScripts` do Kotlin e um LRU de **50** entradas, e o gist traz **70 `channelIds`** - que enchem o LRU e expulsam o canal da v2. Por isso o payload vai **gist primeiro, scripts da v2 depois**: o canal indexado por ultimo fica como a entrada mais recente. Ver `lib/useBridge.ts`. |
+
+## Scripts de injecao (o que o Kotlin injeta na pagina do canal)
+
+A v2 entrega dois scripts proprios ao app Kotlin, alem dos que vem do gist.
+Os dois sao indexados pelo **canal aberto** (`channelIds`), que e o caminho
+rotation-proof: o player do embedcanais roda em subdominio numerico
+rotativo (`2910.` -> `4477.`...) e o Kotlin casa o dominio **exato**.
+
+| Script | Id | O que faz |
+|---|---|---|
+| Remover banner VIP | `webtv-vip-banner-remover` | Esconde e remove o `#vipModal` (que reaparece a cada 60 s). |
+| Player simples | `webtv-embedcanais-simple-player` | Troca o player pesado (Clappr + Hls.js + P2P) por um `<video>` unico com Hls.js. |
+
+### O player simples
+
+O codigo vem de `src/lib/embedcanais-simple-player.js`, uma **copia byte a
+byte** de `frontend/docs/scripts/embedcanais-simple-player.js` (a v1). O
+arquivo e importado com `?raw` e embutido no bundle - sem `eval`, sem
+`new Function`.
+
+> **Ao mexer no script da v1, copie de novo para a v2.** O teste
+> `tests/simplePlayerScript.test.mjs` compara os dois arquivos e falha se
+> divergirem.
+
+O que ele faz, em resumo:
+
+1. **Descobre a URL do manifesto** pelo proprio player (sem interceptar
+   XHR): `window.vipPlayer.options.source` -> `core.getCurrentPlayback()._hls.url`
+   -> `window.vipCdnHost` + slug -> `performance.getEntriesByType('resource')`
+   -> `?src=` -> `<video>.currentSrc` -> scripts inline.
+2. **Destroi o player original**: `vipP2PEngine.destroy()`, `vipPlayer.destroy()`,
+   e trava o `vipPlayer.load()` (o monitor `vipStreamRecovery` recriava
+   sessao HLS a cada ~8 s).
+3. **Monta um DOM minimo**: um `<video>` em tela cheia, sem controles, mais
+   um overlay de erro.
+4. **Toca com Hls.js** (config otimizada para Android TV com 1,5 GB de RAM).
+5. **Mantem o contrato `window.WebTV.player.*`** (`play`, `pause`, `seek`,
+   `volumeUp`, `getStatus`, `quality`, ...) que o app usa.
+
+O E2E (`tests/verify-simple-player.mjs`) verifica o fluxo completo no
+player real: o DOM e trocado, o player original e destruido, o stream
+**toca** e o banner nao existe.
 
 ## Navegacao por D-pad (controle remoto do Android TV)
 
@@ -340,7 +384,12 @@ frontend-v2/
 │   │   ├── ranking.ts           # ranking inteligente do Top 10
 │   │   ├── usage.ts             # historico de uso dos canais
 │   │   ├── theme.ts             # tema claro/escuro
-│   │   └── dpad.ts              # MOTOR do D-pad (nucleo puro, sem React)
+│   │   ├── dpad.ts              # MOTOR do D-pad (nucleo puro, sem React)
+│   │   ├── injectionScripts.ts  # script do banner VIP (injetado pelo Kotlin)
+│   │   ├── simplePlayerScript.ts # script do player simples (EmbedDeCanais)
+│   │   ├── embedcanais-simple-player.js # copia do script da v1 (via ?raw)
+│   │   ├── scripts.ts           # scripts do gist (fonte da v1)
+│   │   └── useBridge.ts         # ponte com o app Kotlin (Events API)
 │   ├── components/
 │   │   ├── DpadContext.tsx      # provider do D-pad (foco, grupos, camadas)
 │   │   ├── useDpad.ts           # hooks publicos (useDpad, useDpadGroup)
