@@ -107,6 +107,19 @@ export function useBridgeIntegration({
   const appLoadedSentRef = useRef(false)
   /** Evitar `scripts:loaded` duplicado. */
   const scriptsSentRef = useRef(false)
+  /**
+   * Ultimo canal aberto.
+   *
+   * O gist pode resolver DEPOIS do clique no canal. Nesse caso o
+   * `scripts:loaded` inicial precisa reindexar o canal aberto no fim do
+   * payload; senao os 70 `channelIds` do gist enchem o LRU de 50 e
+   * expulsam a chave do canal.
+   */
+  const openedChannelRef = useRef<{
+    key: string
+    name?: string
+    image?: string
+  } | null>(null)
 
   /* ------------------------------------------------------------------ *
    * 1) app:loaded
@@ -143,7 +156,16 @@ export function useBridgeIntegration({
     void fetchScripts().then(scripts => {
       if (cancelled) return
       scriptsRef.current = scripts
-      emitScriptsLoaded()
+
+      // Se o usuario ja abriu um canal enquanto o gist baixava, reindexa
+      // esse canal DEPOIS do gist. Sem isso, os 70 channelIds do gist
+      // expulsam a chave do canal do LRU de 50.
+      const opened = openedChannelRef.current
+      if (opened) {
+        emitScriptsLoaded(opened.key, { name: opened.name, image: opened.image })
+      } else {
+        emitScriptsLoaded()
+      }
     })
 
     return () => {
@@ -317,6 +339,13 @@ export function useBridgeIntegration({
       const type = channelTypeOf(channel)
       const url = playerUrlOf(channel)
       const key = channelKeyOf(channel)
+
+      // Guarda o canal para o caso de o gist resolver depois deste clique.
+      openedChannelRef.current = {
+        key,
+        name: channel.name,
+        image: channel.image,
+      }
 
       // 1) `scripts:loaded` - indexa o script do banner para o canal
       //    que esta sendo aberto.

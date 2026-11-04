@@ -288,3 +288,72 @@ test('o player simples sobrevive a varias aberturas de canal', () => {
   assert.ok(scripts, 'o ultimo canal aberto foi expulso')
   assert.ok(scripts.includes(PLAYER_ID))
 })
+
+/* ------------------------------------------------------------------ *
+ * A corrida: o gist resolvendo DEPOIS do clique no canal
+ * ------------------------------------------------------------------ */
+
+test('openChannel guarda o canal aberto para a reemissao tardia', () => {
+  const start = SOURCE.indexOf('const openChannel = useCallback(')
+  assert.ok(start > 0, 'nao encontrei openChannel')
+  const end = SOURCE.indexOf('setActive({ channel, key, type, url })', start)
+  assert.ok(end > start, 'nao encontrei o fim de openChannel')
+
+  const body = SOURCE.slice(start, end)
+  assert.ok(
+    body.includes('openedChannelRef.current = {'),
+    'o canal aberto precisa ser guardado antes do gist resolver',
+  )
+  assert.ok(body.includes('name: channel.name'), 'o nome precisa ser guardado')
+  assert.ok(body.includes('image: channel.image'), 'o logo precisa ser guardado')
+})
+
+test('se o gist resolver depois do clique, o canal e reindexado por ultimo', () => {
+  const start = SOURCE.indexOf('void fetchScripts().then(scripts => {')
+  assert.ok(start > 0, 'nao encontrei o fetchScripts')
+  const end = SOURCE.indexOf('\n    })', start)
+  assert.ok(end > start, 'nao encontrei o fim do fetchScripts')
+
+  const body = SOURCE.slice(start, end)
+
+  // O gist precisa virar o `scriptsRef` ANTES da reemissao: e a
+  // reemissao que reindexa o canal aberto depois dos 70 channelIds.
+  const iAssign = body.indexOf('scriptsRef.current = scripts')
+  const iReemit = body.indexOf('emitScriptsLoaded(opened.key')
+  assert.ok(iAssign > 0, 'o gist precisa ser guardado')
+  assert.ok(iReemit > iAssign, 'o canal precisa ser reindexado depois do gist')
+  assert.ok(
+    body.includes('emitScriptsLoaded(opened.key, { name: opened.name, image: opened.image })'),
+    'a reemissao precisa manter nome e logo da faixa',
+  )
+})
+
+test('sem a reemissao tardia, o gist que resolve depois expulsa o canal', () => {
+  const channelScripts = new KotlinLru(50)
+
+  // Clique no canal antes do gist resolver: so o canal e indexado.
+  indexScripts(channelScripts, buildPayload(V2_CHANNEL, 'gist-first'))
+  assert.ok(channelScripts.peek(V2_CHANNEL), 'o canal foi indexado no clique')
+
+  // O gist resolve atrasado: os 70 channelIds enchem o LRU de 50.
+  indexScripts(channelScripts, buildPayload(undefined, 'gist-first'))
+  assert.equal(
+    channelScripts.peek(V2_CHANNEL),
+    undefined,
+    'e a corrida que expulsava o canal (o bug)',
+  )
+})
+
+test('com a reemissao tardia, o canal sobrevive ao LRU de 50', () => {
+  const channelScripts = new KotlinLru(50)
+
+  indexScripts(channelScripts, buildPayload(V2_CHANNEL, 'gist-first'))
+  indexScripts(channelScripts, buildPayload(undefined, 'gist-first'))
+  // O fix: reemite `scripts:loaded` com o canal aberto por ultimo.
+  indexScripts(channelScripts, buildPayload(V2_CHANNEL, 'gist-first'))
+
+  const scripts = channelScripts.peek(V2_CHANNEL)
+  assert.ok(scripts, 'a reemissao tardia precisa salvar o canal')
+  assert.ok(scripts.includes(PLAYER_ID), 'o player simples nao foi indexado')
+  assert.ok(scripts.includes(VIP_ID), 'o banner nao foi indexado')
+})
