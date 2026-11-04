@@ -10,17 +10,41 @@
  *    (`json.getString("id")`).
  * 3. O Kotlin marca o canal como ativo e, como o tipo e `redirect`,
  *    arma a injecao de scripts (`setPendingScriptInjection`).
- * 4. A v2 emite `scripts:preloaded` com os scripts que valem para a URL
- *    do canal. O Kotlin guarda esse payload.
- * 5. A pagina do canal carrega. O Kotlin injeta os scripts (pelo
- *    indice por dominio/URL, construido do `scripts:loaded`, e pelo
- *    payload preloaded) - no lugar certo: a pagina do canal.
+ * 4. A v2 emite `scripts:loaded` com o **script do banner VIP** indexado
+ *    pelo canal que acabou de ser aberto. O Kotlin guarda esse indice.
+ * 5. A pagina do canal carrega. No `onPageFinished` o Kotlin chama
+ *    `injectChannelScripts(url)`, que injeta no **documento principal**
+ *    o script indexado para o canal ativo (ou para o dominio da URL).
+ * 6. O script roda na pagina do canal e remove o `#vipModal`.
+ *
+ * ## Por que o script vai no `scripts:loaded` (e nao no `scripts:preloaded`)
+ *
+ * O Kotlin tem dois caminhos de injecao:
+ *
+ * | Caminho | Evento | Onde injeta |
+ * |---|---|---|
+ * | `injectChannelScripts(url)` | `scripts:loaded` | documento principal |
+ * | `injectPreloadedScripts()` | `scripts:preloaded` | `window.frames[0]` |
+ *
+ * O segundo chama o injetor com a URL **vazia**, e o injetor procura
+ * `iframeUrl.includes('')` - sempre verdadeiro - caindo no primeiro
+ * frame da pagina. No player isso e um iframe de anuncio
+ * (cross-origin), nao o documento principal onde o `#vipModal` vive.
+ *
+ * Entao o script do banner vai pelo primeiro caminho.
+ *
+ * ## Por que reindexar a cada abertura
+ *
+ * `channelScripts` e um LRU de **50 entradas** no Kotlin. Indexar os
+ * 156 canais de uma vez descartaria 106. Por isso o `scripts:loaded` e
+ * reemitido a cada abertura de canal, indexado apenas para o canal
+ * atual (alem do index por dominio, que cobre o host do player).
  *
  * ## Por que NAO emitimos `player:opened`
  *
  * `player:opened` faz o Kotlin injetar os scripts IMEDIATAMENTE
  * (`injectScriptsForChannel`). No fluxo `redirect` a pagina do canal
- * ainda nao carregou - a injetacao cairia na pagina da v2, e o script
+ * ainda nao carregou - a injecao cairia na pagina da v2, e o script
  * do player (`EmbedDeCanais Player Simples`) SUBSTITUI o documento
  * inteiro. A UI da v2 seria destruida.
  *
@@ -45,6 +69,7 @@ import {
   scriptsForUrl,
   toBridgeScripts,
 } from './scripts.js'
+import { vipBannerScript, VIP_BANNER_SCRIPT_DOMAINS } from './injectionScripts.js'
 
 /** Canal aberto no momento (null = nenhum). */
 export interface ActiveChannel {
@@ -98,11 +123,13 @@ export function useBridgeIntegration({
   }, [channels, categories])
 
   /* ------------------------------------------------------------------ *
-   * 2) scripts:loaded - entrega os scripts ao Kotlin (ele indexa por
-   *    canal/URL/dominio e injeta na pagina do canal).
+   * 2) scripts:loaded - entrega os scripts ao Kotlin.
    *
-   * Vai uma vez, no inicio - o Kotlin mantem o indice ate a pagina
-   * voltar para a home.
+   * O Kotlin indexa por canal/URL/dominio e injeta na pagina do canal.
+   *
+   * Vai no inicio (sem canal) e **de novo a cada abertura**: o
+   * `channelScripts` do Kotlin e um LRU de 50, entao o indice precisa
+   * ter o canal atual na mao. Ver `emitScriptsLoaded`.
    * ------------------------------------------------------------------ */
   useEffect(() => {
     if (channels === 0 || scriptsSentRef.current) return
@@ -110,16 +137,46 @@ export function useBridgeIntegration({
     let cancelled = false
 
     void fetchScripts().then(scripts => {
-      if (cancelled || scripts.length === 0) return
+      if (cancelled) return
       scriptsRef.current = scripts
-
-      emitWhenBridgeReady('scripts:loaded', { scripts: toBridgeScripts(scripts) })
+      emitScriptsLoaded()
     })
 
     return () => {
       cancelled = true
     }
+    // `emitScriptsLoaded` e estavel (so usa refs).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channels])
+
+  /**
+   * Entrega o indice de scripts ao Kotlin.
+   *
+   * ## Ordem importa
+   *
+   * O Kotlin le `scripts:loaded` e **acrescenta** cada script aos
+   * maps (sem deduplicar). Se os scripts do gist forem enviados
+   * depois, o `channelScripts` (LRU de 50) pode expulsar o script do
+   * banner - e o banner nao seria injetado.
+   *
+   * Por isso o `scripts:loaded` com o script do banner vai **no
+   * inicio** (antes do `channel:clicked`), e o do gist vai junto.
+   *
+   * ## O que indexa o banner
+   *
+   * O banner e indexado **so pelo canal** (`channelIds`), sem
+   * dominios: assim ele ocupa uma unica entrada do LRU e nao compete
+   * com os 70 `channelIds` do gist.
+   */
+  const emitScriptsLoaded = useCallback((channelId?: string) => {
+    const vip = vipBannerScript({
+      channelIds: channelId ? [channelId] : undefined,
+      domains: [...VIP_BANNER_SCRIPT_DOMAINS],
+    })
+    const payload = [vip, ...toBridgeScripts(scriptsRef.current)]
+
+    eventBus.emit('scripts:loaded', { scripts: payload })
+  }, [])
 
   /* ------------------------------------------------------------------ *
    * 3) Fecha o canal.
@@ -216,11 +273,22 @@ export function useBridgeIntegration({
       const url = playerUrlOf(channel)
       const key = channelKeyOf(channel)
 
-      // `channel:clicked` - o Kotlin registra o canal ativo e, para
-      // redirect/mixed, arma a injecao de scripts.
+      // 1) `scripts:loaded` - indexa o script do banner para o canal
+      //    que esta sendo aberto.
       //
-      // O payload tem `id`/`name`/`type` NO NIVEL RAIZ: e o que o
-      // `WebTVBridge.onChannelClicked` le (`json.getString("id")`).
+      //    Precisa vir ANTES do `channel:clicked`: o Kotlin so
+      //    injeta scripts quando tem um `activeChannelId`, e o indice
+      //    precisa estar pronto antes da pagina do canal carregar.
+      //
+      //    O `channelScripts` do Kotlin e um LRU de 50: reindexar a
+      //    cada abertura mantem o canal atual na mao.
+      emitScriptsLoaded(key)
+
+      // 2) `channel:clicked` - o Kotlin registra o canal ativo e, para
+      //    redirect/mixed, arma a injecao de scripts.
+      //
+      //    O payload tem `id`/`name`/`type` NO NIVEL RAIZ: e o que o
+      //    `WebTVBridge.onChannelClicked` le (`json.getString("id")`).
       eventBus.emit('channel:clicked', {
         id: key,
         name: channel.name,
@@ -237,12 +305,13 @@ export function useBridgeIntegration({
       }
 
       // Avisa quais scripts valem para a URL do canal. O Kotlin guarda
-      // esse payload e injeta quando a pagina do canal carrega.
+      // esse payload e injeta junto com os scripts indexados, quando a
+      // pagina do canal termina de carregar.
       preloadScripts(url)
 
       setActive({ channel, key, type, url })
     },
-    // `preloadScripts` e estavel (sem dependencias).
+    // `preloadScripts` e `emitScriptsLoaded` sao estaveis.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onOpen],
   )
@@ -253,6 +322,17 @@ export function useBridgeIntegration({
    * O Kotlin guarda esse payload (`cachePreloadedScriptsForUrl`) e
    * injeta junto com os scripts indexados, quando a pagina do canal
    * termina de carregar.
+   *
+   * ## Atencao: este caminho nao serve para o banner
+   *
+   * O `injectPreloadedScripts` chama o injetor com a URL **vazia**, e
+   * o injetor procura `iframeUrl.includes('')` - sempre verdadeiro -
+   * caindo no primeiro frame da pagina. No player isso e um iframe de
+   * anuncio (cross-origin), nao o documento principal onde o
+   * `#vipModal` vive.
+   *
+   * O banner e injection garantido pelo `scripts:loaded` (canal).
+   * Aqui mandamos os scripts do gist, que casam por URL/dominio.
    */
   const preloadScripts = useCallback((url: string) => {
     const matching = scriptsForUrl(scriptsRef.current, url)

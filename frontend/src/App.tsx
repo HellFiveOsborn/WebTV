@@ -39,6 +39,30 @@ const ReloadButton = ({ onClick }: { onClick: () => void }) => {
   )
 }
 
+/**
+ * Botao que leva para a v2 do WebTV.
+ *
+ * A v2 e a interface nova (catalogo em estilo streaming, D-pad para
+ * Android TV, cache local). Fica ao lado do botao de recarregar para
+ * o usuario poder trocar sem digitar a URL.
+ */
+const V2Button = ({ onClick }: { onClick: () => void }) => {
+  const { ref, isFocused } = useFocusable('toolbar', 2)
+  return (
+    <button
+      ref={ref as React.RefObject<HTMLButtonElement>}
+      onClick={onClick}
+      onMouseDown={(e) => e.preventDefault()}
+      tabIndex={-1}
+      title="Ir para a interface v2"
+      aria-label="Ir para a interface v2"
+      className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center transition-all duration-150 text-gray-400 hover:text-primary hover:border-primary ${isFocused ? 'ring-4 ring-primary text-primary border-primary' : ''}`}
+    >
+      <span className="text-sm font-bold leading-none">v2</span>
+    </button>
+  )
+}
+
 function App() {
   const { channels: allChannels, categories, loading } = useChannelsData()
 
@@ -82,6 +106,18 @@ function App() {
     clearRecentChannels()
     window.location.reload()
   }, [clearRecentChannels])
+
+  /**
+   * Vai para a v2 do WebTV.
+   *
+   * A URL e montada a partir da base atual, para funcionar tanto no
+   * GitHub Pages (`/WebTV/`) quanto num servidor local.
+   */
+  const handleGoToV2 = useCallback(() => {
+    const base = import.meta.env.BASE_URL || '/'
+    const v2 = new URL('v2/', new URL(base, window.location.origin)).toString()
+    window.location.href = v2
+  }, [])
 
   useEffect(() => {
     if (!loading && !channelIdParam) {
@@ -365,6 +401,7 @@ function App() {
                 />
               </div>
               <ReloadButton onClick={() => setShowConfirmModal(true)} />
+              <V2Button onClick={handleGoToV2} />
             </div>
             <SortTabs
               options={sortOptions}

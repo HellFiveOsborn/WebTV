@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "fetch:channels": "node scripts/fetch-channels.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "test": "npm run test:parser && npm run test:parser:live && npm run test:storage && npm run test:cache && npm run test:theme && npm run test:usage && npm run test:ranking && npm run test:dpad && npm run test:events && npm run test:channelSession && npm run test:scripts && npm run test:backend",
+    "test": "npm run test:parser && npm run test:parser:live && npm run test:storage && npm run test:cache && npm run test:theme && npm run test:usage && npm run test:ranking && npm run test:dpad && npm run test:events && npm run test:channelSession && npm run test:scripts && npm run test:injection && npm run test:backend",
     "test:parser": "node --test tests/parseEmbedcanais.test.mjs",
     "test:parser:live": "node --test tests/fetchChannels.test.mjs",
     "test:storage": "node --test tests/storage.test.mjs",
@@ -22,6 +22,7 @@
     "test:events": "node --test tests/events.test.mjs",
     "test:channelSession": "node --test tests/channelSession.test.mjs",
     "test:scripts": "node --test tests/scripts.test.mjs",
+    "test:injection": "node --test tests/injectionScripts.test.mjs",
     "test:cache:e2e": "node --test tests/cache.e2e.test.mjs",
     "test:backend": "node --test ../backend/tests/server.test.mjs"
   },
