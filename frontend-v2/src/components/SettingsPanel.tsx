@@ -109,7 +109,7 @@ export function SettingsPanel({
             {...{ [DPAD_ITEM_ATTR]: true }}
             onClick={onRefresh}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path
                 d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"
                 fill="none"
@@ -128,7 +128,7 @@ export function SettingsPanel({
             {...{ [DPAD_ITEM_ATTR]: true }}
             onClick={onClearCache}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path
                 d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13"
                 fill="none"

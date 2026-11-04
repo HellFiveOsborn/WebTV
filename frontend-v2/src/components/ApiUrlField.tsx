@@ -137,7 +137,7 @@ export function ApiUrlField({
             onClick={() => setKeyboardOpen(v => !v)}
           >
             {keyboardOpen ? (
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                 <path
                   d="M6 9l6 6 6-6"
                   fill="none"
@@ -148,7 +148,7 @@ export function ApiUrlField({
                 />
               </svg>
             ) : (
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                 <rect
                   x="2"
                   y="6"

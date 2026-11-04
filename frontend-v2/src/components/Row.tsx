@@ -356,7 +356,7 @@ export function Row({ title, channels, subtitle, onOpen }: RowProps) {
             aria-label={`Ver mais em ${title}`}
             onClick={() => scrollBy(-1)}
           >
-            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
               <path
                 d="M15 5l-7 7 7 7"
                 fill="none"
@@ -396,7 +396,7 @@ export function Row({ title, channels, subtitle, onOpen }: RowProps) {
             aria-label={`Ver mais em ${title}`}
             onClick={() => scrollBy(1)}
           >
-            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
               <path
                 d="M9 5l7 7-7 7"
                 fill="none"

@@ -263,7 +263,7 @@ export function VirtualKeyboard({
           aria-label="Recolher teclado"
           onClick={onHide}
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path
               d="M6 9l6 6 6-6"
               fill="none"
@@ -320,7 +320,7 @@ export function VirtualKeyboard({
                   }}
                 >
                   {key.kind === 'mic' ? (
-                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                       <path
                         d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 0 0-7 0v5A3.5 3.5 0 0 0 12 15m6-3.5a6 6 0 0 1-12 0M12 18v3"
                         fill="none"
@@ -331,7 +331,7 @@ export function VirtualKeyboard({
                       />
                     </svg>
                   ) : key.kind === 'backspace' ? (
-                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                       <path
                         d="M9 5h11v14H9L3 12zM17 9l-5 6M12 9l5 6"
                         fill="none"

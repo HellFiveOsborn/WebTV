@@ -79,6 +79,11 @@ Para evitar isso, a v2 tem um **override local** da URL da API:
 
 A v2 replica o visual de um catalogo de streaming (referencia: tela "Top 10").
 
+**Escala de leitura:** a tipografia e os icones usam uma escala ~8% maior que
+o padrao web (base de 15px), pensada para TV/projetor - a WebView tambem roda
+em telas grandes, vistas a distancia. O layout nao muda: cards, grid e
+rolagem continuam com as mesmas medidas.
+
 | Elemento | Onde | O que faz |
 |---|---|---|
 | Bloco "Top 10" | Home | Card grande do #1 com o numero gigante ao fundo + os demais em rolagem horizontal. |

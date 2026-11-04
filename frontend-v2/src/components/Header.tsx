@@ -105,12 +105,12 @@ export function Header({
       <div className="topbar-inner" ref={attachBar}>
         <a className="brand" href="#inicio" aria-label="WebTV - inicio">
           <span className="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16">
+            <svg viewBox="0 0 24 24" width="18" height="18">
               <path d="M7 4.5v15l13-7.5z" fill="currentColor" />
             </svg>
           </span>
           <span className="brand-caret" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="14" height="14">
+            <svg viewBox="0 0 24 24" width="16" height="16">
               <path
                 d="M6 9l6 6 6-6"
                 fill="none"
@@ -153,7 +153,7 @@ export function Header({
             data-dpad-item
             onClick={() => setSearchOpen(true)}
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <circle
                 cx="11"
                 cy="11"
@@ -181,7 +181,7 @@ export function Header({
             data-dpad-item
             onClick={() => setSettingsOpen(true)}
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <path
                 d="M12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5m7.43-2.53a7.6 7.6 0 0 0 0-1.94l2.05-1.58a.5.5 0 0 0 .12-.64l-1.94-3.36a.5.5 0 0 0-.6-.22l-2.42.97a7.3 7.3 0 0 0-1.68-.97l-.36-2.57a.5.5 0 0 0-.5-.42h-3.88a.5.5 0 0 0-.49.42l-.36 2.57a7.6 7.6 0 0 0-1.69.97l-2.42-.97a.5.5 0 0 0-.6.22L2.39 8.79a.5.5 0 0 0 .12.64l2.06 1.58a7.7 7.7 0 0 0 0 1.94l-2.06 1.58a.5.5 0 0 0-.12.64l1.94 3.36a.5.5 0 0 0 .6.22l2.42-.97c.52.4 1.08.73 1.69.97l.36 2.57a.5.5 0 0 0 .49.42h3.88a.5.5 0 0 0 .5-.42l.36-2.57a7.3 7.3 0 0 0 1.68-.97l2.42.97a.5.5 0 0 0 .6-.22l1.94-3.36a.5.5 0 0 0-.12-.64Z"
                   fill="none"
@@ -405,8 +405,8 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
           <svg
             className="search-overlay-icon"
             viewBox="0 0 24 24"
-            width="22"
-            height="22"
+            width="24"
+            height="24"
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -436,7 +436,7 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
             {...{ [DPAD_ITEM_ATTR]: true }}
             onClick={startVoice}
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <path
                 d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 0 0-7 0v5A3.5 3.5 0 0 0 12 15m6-3.5a6 6 0 0 1-12 0M12 18v3"
                 fill="none"
@@ -455,7 +455,7 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
             {...{ [DPAD_ITEM_ATTR]: true }}
             onClick={onClose}
           >
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
@@ -485,7 +485,7 @@ function SearchOverlay({ open, query, onQueryChange, onClose }: SearchOverlayPro
             {...{ [DPAD_ITEM_ATTR]: true }}
             onClick={() => setKeyboardOpen(true)}
           >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <rect
                 x="2"
                 y="6"

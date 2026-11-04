@@ -81,7 +81,7 @@ export function ApiFallbackScreen({
     <div className="api-fallback">
       <div className="api-fallback-card">
         <div className="api-fallback-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="34" height="34">
+          <svg viewBox="0 0 24 24" width="38" height="38">
             <path
               d="M12 3a9 9 0 1 0 9 9"
               fill="none"
