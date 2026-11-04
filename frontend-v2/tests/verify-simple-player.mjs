@@ -11,8 +11,9 @@
  *    (`injectChannelScripts`), o script roda na pagina real do canal.
  *
  * 3. **O efeito**: o player original (Clappr + P2P) some, sobra um
- *    `<video>` unico, o manifesto e descobertos e o banner `#vipModal`
- *    nao existe.
+ *    `<video>` unico sem controles, o manifesto e descoberto, o banner
+ *    `#vipModal` nao existe e o OK/Enter abre a faixa do canal (nome,
+ *    logo e hora) na metade inferior da tela.
  *
  * O player real e `embedcanaisdetv.xyz/e/index.php?canal=<slug>`, que
  * redireciona para `<numero>.playerembcanais.com/<slug>/`.
@@ -32,11 +33,18 @@ const { chromium } = await import(
   pathToFileURL(resolve(REPO_ROOT, 'frontend/node_modules/playwright-core/index.mjs')).href
 )
 
-/** O codigo do script (como o bundle embute). */
-const CODE = readFileSync(
-  resolve(V2_ROOT, 'src/lib/embedcanais-simple-player.js'),
-  'utf8',
-)
+/** Dados que o `simplePlayerScript` embute antes do corpo do script. */
+const CHANNEL_INFO = {
+  name: 'Globo DF',
+  image: 'https://1.embedcanaisdetv.com/images/globo.webp',
+}
+
+/** O codigo do script (como o bundle embute, com o prefixo do canal). */
+const CODE =
+  'window.__webtv_channel_info = ' +
+  JSON.stringify(CHANNEL_INFO) +
+  ';\n' +
+  readFileSync(resolve(V2_ROOT, 'src/lib/embedcanais-simple-player.js'), 'utf8')
 
 /** Reproduz o escaping exato do `injectChannelScripts` do Kotlin. */
 function kotlinEscape(code) {
@@ -173,7 +181,10 @@ const depois = await page.evaluate(() => {
       window.vipPlayer.destroy.toString().indexOf('return this') !== -1,
     hls: !!window.__webtv_hls,
     banner: !!document.getElementById('vipModal'),
-    status: document.getElementById('webtv-status')?.textContent || '',
+    controles: video ? video.hasAttribute('controls') : null,
+    statusExiste: !!document.getElementById('webtv-status'),
+    infoExiste: !!document.getElementById('webtv-info'),
+    infoVisivel: !!document.getElementById('webtv-info')?.classList.contains('webtv-info-visible'),
     playerApi: typeof window.WebTV?.player?.getStatus === 'function',
   }
 })
@@ -183,11 +194,12 @@ check('o DOM foi trocado por um <video> unico', depois.videoExiste && depois.vid
 check('o player original foi destruido', depois.vipPlayerDestruido)
 check('o Hls.js foi criado', depois.hls)
 check('o banner #vipModal nao existe', !depois.banner)
+check('o <video> nao tem controles nativos', depois.controles === false)
+check('o selo LIVE (#webtv-status) nao existe', !depois.statusExiste)
+check('a faixa de informacoes existe e comeca oculta', depois.infoExiste && !depois.infoVisivel)
 check('o contrato window.WebTV.player existe', depois.playerApi)
 
-// O texto de status e TEMPORARIO (o script limpa depois de 3,5 s), entao
-// nao da para exigir que ele esteja na tela neste ponto. O que importa
-// e o `getStatus` do player (o contrato que o app Kotlin usa).
+// O `getStatus` e o contrato que o app Kotlin usa.
 const status = await page.evaluate(() => {
   const api = window.WebTV?.player
   if (!api || typeof api.getStatus !== 'function') return null
@@ -204,6 +216,62 @@ check(
   Boolean(status && status.found),
   `found=${status?.found} paused=${status?.paused} muted=${status?.muted}`,
 )
+
+// --- 2.1) OK/Enter abre a faixa de informacoes ----------------------
+console.log('\n--- 2.1) OK/Enter abre a faixa ---')
+
+const antesDoEnter = await page.evaluate(() => ({
+  paused: document.getElementById('webtv-player-video')?.paused ?? null,
+}))
+
+await page.keyboard.press('Enter')
+await page.waitForTimeout(500)
+
+const faixa = await page.evaluate(() => {
+  const band = document.getElementById('webtv-info')
+  const rect = band ? band.getBoundingClientRect() : null
+  const logoBox = document.getElementById('webtv-info-logo')
+  const logoImg = document.getElementById('webtv-info-logo-img')
+  const video = document.getElementById('webtv-player-video')
+  return {
+    visivel: !!band && band.classList.contains('webtv-info-visible'),
+    nome: document.getElementById('webtv-info-name')?.textContent || '',
+    hora: document.getElementById('webtv-info-time')?.textContent || '',
+    logo: logoImg?.getAttribute('src') || '',
+    logoVisivel: !!logoBox && !logoBox.classList.contains('webtv-info-no-logo'),
+    paused: video?.paused ?? null,
+    altura: rect?.height ?? 0,
+    fundo: rect?.bottom ?? 0,
+    viewport: window.innerHeight,
+    opacidade: band ? getComputedStyle(band).opacity : '',
+  }
+})
+
+check('o OK/Enter mostra a faixa', faixa.visivel)
+check('a faixa mostra o nome do canal', faixa.nome === CHANNEL_INFO.name, faixa.nome)
+check('a faixa mostra a hora atual (HH:MM)', /^\d{2}:\d{2}$/.test(faixa.hora), faixa.hora)
+check('a faixa mostra o logo do canal', faixa.logo === CHANNEL_INFO.image, faixa.logo)
+check('o logo do canal esta visivel', faixa.logoVisivel)
+check(
+  'a faixa ocupa a metade inferior da tela',
+  Math.abs(faixa.altura - faixa.viewport / 2) <= 1 &&
+    Math.abs(faixa.fundo - faixa.viewport) <= 1,
+  `altura=${faixa.altura} viewport=${faixa.viewport} fundo=${faixa.fundo}`,
+)
+check('a faixa fica opaca quando aberta', faixa.opacidade === '1', faixa.opacidade)
+check(
+  'o OK/Enter nao pausa o video',
+  antesDoEnter.paused === faixa.paused,
+  `antes=${antesDoEnter.paused} depois=${faixa.paused}`,
+)
+
+await page.keyboard.press('Enter')
+await page.waitForTimeout(500)
+
+const faixaFechada = await page.evaluate(
+  () => !document.getElementById('webtv-info')?.classList.contains('webtv-info-visible'),
+)
+check('o segundo OK/Enter fecha a faixa', faixaFechada)
 
 // --- 3) O stream toca -----------------------------------------------
 console.log('\n--- 3) o stream toca ---')

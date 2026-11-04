@@ -168,14 +168,15 @@ rotativo (`2910.` -> `4477.`...) e o Kotlin casa o dominio **exato**.
 
 ### O player simples
 
-O codigo vem de `src/lib/embedcanais-simple-player.js`, uma **copia byte a
-byte** de `frontend/docs/scripts/embedcanais-simple-player.js` (a v1). O
-arquivo e importado com `?raw` e embutido no bundle - sem `eval`, sem
-`new Function`.
+O codigo vem de `src/lib/embedcanais-simple-player.js`, que nasceu do
+script da v1 (`frontend/docs/scripts/embedcanais-simple-player.js`) e foi
+evoluido na v2: sem o selo "LIVE", sem controles nativos e com a faixa de
+informacoes do canal. O arquivo e importado com `?raw` e embutido no
+bundle - sem `eval`, sem `new Function`.
 
-> **Ao mexer no script da v1, copie de novo para a v2.** O teste
-> `tests/simplePlayerScript.test.mjs` compara os dois arquivos e falha se
-> divergirem.
+O `simplePlayerScript()` aceita `channel: { name, image }` e embute esses
+dados num prefixo `window.__webtv_channel_info` antes do corpo do script.
+O nome e o logo vem do catalogo da v2; a pagina do player so expoe o slug.
 
 O que ele faz, em resumo:
 
@@ -189,7 +190,10 @@ O que ele faz, em resumo:
 3. **Monta um DOM minimo**: um `<video>` em tela cheia, sem controles, mais
    um overlay de erro.
 4. **Toca com Hls.js** (config otimizada para Android TV com 1,5 GB de RAM).
-5. **Mantem o contrato `window.WebTV.player.*`** (`play`, `pause`, `seek`,
+5. **Mostra a faixa de informacoes do canal** no OK/Enter do controle:
+   nome, logo e hora atual, no estilo de receptor de TV por assinatura. A
+   faixa ocupa a metade inferior da tela e some sozinha depois de 6 s.
+6. **Mantem o contrato `window.WebTV.player.*`** (`play`, `pause`, `seek`,
    `volumeUp`, `getStatus`, `quality`, ...) que o app usa.
 
 O E2E (`tests/verify-simple-player.mjs`) verifica o fluxo completo no
@@ -387,7 +391,7 @@ frontend-v2/
 │   │   ├── dpad.ts              # MOTOR do D-pad (nucleo puro, sem React)
 │   │   ├── injectionScripts.ts  # script do banner VIP (injetado pelo Kotlin)
 │   │   ├── simplePlayerScript.ts # script do player simples (EmbedDeCanais)
-│   │   ├── embedcanais-simple-player.js # copia do script da v1 (via ?raw)
+│   │   ├── embedcanais-simple-player.js # script do player simples (via ?raw)
 │   │   ├── scripts.ts           # scripts do gist (fonte da v1)
 │   │   └── useBridge.ts         # ponte com o app Kotlin (Events API)
 │   ├── components/

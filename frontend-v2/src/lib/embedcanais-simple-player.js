@@ -61,7 +61,9 @@
   var _streamUrl = null;
   var _streamSource = null;
   var _HlsCtor = null;
-  var _statusTimer = null;
+  var _infoHideTimer = null;
+  var _infoClockTimer = null;
+  var _infoLogoFailed = '';
 
   // ─── 1. Áudio: persistência + proteção contra re-mute ─────────────
   try {
@@ -364,9 +366,19 @@
           'body{font-family:Arial,Helvetica,sans-serif}' +
           '#webtv-stage{position:fixed;top:0;left:0;right:0;bottom:0;background:#000}' +
           '#' + VIDEO_ID + '{width:100%;height:100%;object-fit:contain;background:#000;outline:none}' +
-          '#webtv-status{position:fixed;left:10px;bottom:10px;z-index:20;color:#0f0;' +
-            'background:rgba(0,0,0,.65);font:11px/1.4 monospace;padding:4px 8px;border-radius:4px;' +
-            'pointer-events:none;max-width:80vw}' +
+          '#webtv-info{position:fixed;left:0;right:0;bottom:0;height:50%;z-index:25;display:flex;' +
+            'align-items:flex-end;box-sizing:border-box;padding:0 5% 6%;pointer-events:none;' +
+            'background:linear-gradient(to top,rgba(0,0,0,.94) 0%,rgba(0,0,0,.82) 40%,rgba(0,0,0,0) 100%);' +
+            'opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}' +
+          '#webtv-info.webtv-info-visible{opacity:1;visibility:visible}' +
+          '#webtv-info-logo{flex:0 0 auto;width:120px;height:120px;margin-right:28px;border-radius:10px;' +
+            'background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;overflow:hidden}' +
+          '#webtv-info-logo img{display:block;max-width:100%;max-height:100%;object-fit:contain}' +
+          '#webtv-info-logo.webtv-info-no-logo{display:none}' +
+          '#webtv-info-text{display:flex;flex-direction:column;min-width:0}' +
+          '#webtv-info-name{color:#fff;font:bold 34px/1.15 Arial,Helvetica,sans-serif;' +
+            'text-shadow:0 2px 8px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+          '#webtv-info-time{color:#c8c8c8;font:20px/1.4 Arial,Helvetica,sans-serif;margin-top:6px;letter-spacing:1px}' +
           '#webtv-tap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:30;display:none;' +
             'align-items:center;justify-content:center;background:rgba(0,0,0,.72);cursor:pointer}' +
           '#webtv-tap button{background:#00c853;color:#000;border:0;border-radius:6px;' +
@@ -382,9 +394,15 @@
       '</head>' +
       '<body>' +
         '<div id="webtv-stage">' +
-          '<video id="' + VIDEO_ID + '" controls autoplay playsinline preload="auto"></video>' +
+          '<video id="' + VIDEO_ID + '" autoplay playsinline preload="auto"></video>' +
         '</div>' +
-        '<div id="webtv-status"></div>' +
+        '<div id="webtv-info" aria-hidden="true">' +
+          '<div id="webtv-info-logo"><img id="webtv-info-logo-img" alt=""></div>' +
+          '<div id="webtv-info-text">' +
+            '<span id="webtv-info-name"></span>' +
+            '<span id="webtv-info-time"></span>' +
+          '</div>' +
+        '</div>' +
         '<div id="webtv-tap"><button type="button">Toque para iniciar</button></div>' +
         '<div id="webtv-error">' +
           '<div id="webtv-error-msg"></div>' +
@@ -395,6 +413,15 @@
     var video = document.getElementById(VIDEO_ID);
     var tap = document.getElementById('webtv-tap');
     var retry = document.getElementById('webtv-retry');
+    var logoImg = document.getElementById('webtv-info-logo-img');
+
+    if (logoImg) {
+      logoImg.addEventListener('error', function () {
+        _infoLogoFailed = logoImg.getAttribute('src') || '';
+        var logoBox = document.getElementById('webtv-info-logo');
+        if (logoBox) logoBox.classList.add('webtv-info-no-logo');
+      });
+    }
 
     if (tap) {
       tap.addEventListener('click', function () {
@@ -451,16 +478,78 @@
     if (overlay) overlay.style.display = 'none';
   }
 
-  function setStatus(message) {
-    var el = document.getElementById('webtv-status');
-    if (!el) return;
-    el.textContent = message || '';
-    if (_statusTimer) clearTimeout(_statusTimer);
-    if (message) {
-      _statusTimer = setTimeout(function () {
-        if (el.textContent === message) el.textContent = '';
-      }, 3500);
+  // ─── 5.1 Faixa de informacoes (estilo TV por assinatura) ──────────
+  function channelInfo() {
+    var info = window.__webtv_channel_info || {};
+    var name = String(info.name || '').trim();
+    if (!name) {
+      var slug = slugFromLocation();
+      name = slug
+        ? slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); })
+        : 'WebTV';
     }
+    return { name: name, image: String(info.image || '').trim() };
+  }
+
+  function formatClock() {
+    var now = new Date();
+    var hh = now.getHours();
+    var mm = now.getMinutes();
+    return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+
+  function paintInfo() {
+    var info = channelInfo();
+    var nameEl = document.getElementById('webtv-info-name');
+    var timeEl = document.getElementById('webtv-info-time');
+    var logoBox = document.getElementById('webtv-info-logo');
+    var logoImg = document.getElementById('webtv-info-logo-img');
+
+    if (nameEl) nameEl.textContent = info.name;
+    if (timeEl) timeEl.textContent = formatClock();
+    if (!logoBox || !logoImg) return;
+
+    if (!info.image || info.image === _infoLogoFailed) {
+      logoBox.classList.add('webtv-info-no-logo');
+      return;
+    }
+    logoBox.classList.remove('webtv-info-no-logo');
+    if (logoImg.getAttribute('src') !== info.image) logoImg.setAttribute('src', info.image);
+  }
+
+  function showInfo() {
+    var band = document.getElementById('webtv-info');
+    if (!band) return;
+    paintInfo();
+    band.classList.add('webtv-info-visible');
+    band.setAttribute('aria-hidden', 'false');
+    if (_infoHideTimer) clearTimeout(_infoHideTimer);
+    _infoHideTimer = setTimeout(hideInfo, 6000);
+    if (_infoClockTimer) clearInterval(_infoClockTimer);
+    _infoClockTimer = setInterval(paintInfo, 1000);
+  }
+
+  function hideInfo() {
+    var band = document.getElementById('webtv-info');
+    if (band) {
+      band.classList.remove('webtv-info-visible');
+      band.setAttribute('aria-hidden', 'true');
+    }
+    if (_infoHideTimer) {
+      clearTimeout(_infoHideTimer);
+      _infoHideTimer = null;
+    }
+    if (_infoClockTimer) {
+      clearInterval(_infoClockTimer);
+      _infoClockTimer = null;
+    }
+  }
+
+  function toggleInfo() {
+    var band = document.getElementById('webtv-info');
+    if (!band) return;
+    if (band.classList.contains('webtv-info-visible')) hideInfo();
+    else showInfo();
   }
 
   // ─── 6. Hls.js ────────────────────────────────────────────────────
@@ -518,7 +607,6 @@
     if (!video) return;
 
     hideError();
-    setStatus('conectando...');
 
     try {
       if (window.__webtv_hls) {
@@ -548,23 +636,16 @@
       window.__webtv_hls = hls;
 
       hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        setStatus('LIVE');
         var promise = video.play();
         if (promise && promise.catch) promise.catch(showTap);
         postEvent('player:loaded', { duration: 0, isLive: true, url: url });
       });
 
-      hls.on(Hls.Events.LEVEL_LOADED, function (_event, data) {
-        if (data && data.details && data.details.live) setStatus('LIVE');
-      });
-
       hls.on(Hls.Events.ERROR, function (_event, data) {
         if (!data || !data.fatal) return;
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          setStatus('reconectando...');
           try { hls.startLoad(); } catch (e) {}
         } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-          setStatus('recuperando vídeo...');
           try { hls.recoverMediaError(); } catch (e) {}
         } else {
           showError('Stream indisponível (' + (data.details || data.type) + ')');
@@ -610,12 +691,6 @@
         currentTime: video.currentTime,
         duration: video.duration || 0
       });
-    });
-    video.addEventListener('waiting', function () {
-      setStatus('buffering...');
-    });
-    video.addEventListener('playing', function () {
-      setStatus('LIVE');
     });
     video.addEventListener('error', function () {
       postEvent('player:error', { message: video.error ? video.error.message : 'media error' });
@@ -866,14 +941,22 @@
     postEvent('player:audio:unlocked', { volume: 1 });
   };
 
-  // DPAD / teclado — Enter (13), DPAD_CENTER (23), Espaço (32),
+  // DPAD / teclado — OK/Enter (13), DPAD_CENTER (23) e KEYCODE_ENTER (66)
+  // abrem a faixa de informacoes do canal. Espaço (32),
   // MediaPlayPause (179) e Play (415) alternam play/pause.
-  var KEY_PLAY_PAUSE = [13, 23, 32, 179, 415];
+  var KEY_INFO = [13, 23, 66];
+  var KEY_PLAY_PAUSE = [32, 179, 415];
   document.addEventListener('keydown', function (event) {
-    if (KEY_PLAY_PAUSE.indexOf(event.keyCode) === -1) return;
     var tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
     if (document.activeElement && document.activeElement.isContentEditable) return;
+
+    if (KEY_INFO.indexOf(event.keyCode) !== -1) {
+      event.preventDefault();
+      toggleInfo();
+      return;
+    }
+    if (KEY_PLAY_PAUSE.indexOf(event.keyCode) === -1) return;
     event.preventDefault();
     var video = findVideo();
     if (!video) return;

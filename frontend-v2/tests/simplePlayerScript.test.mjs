@@ -3,10 +3,11 @@
  *
  * Verificam quatro coisas:
  *
- * 1. **O codigo e o da v1, intacto.** O arquivo e uma copia byte a byte
- *    de `frontend/docs/scripts/embedcanais-simple-player.js`. Se a v1
- *    mudar, a copia tem de mudar junto - senao as duas versoes divergem
- *    silenciosamente.
+ * 1. **O codigo evoluiu do script da v1.** O miolo (descoberta da URL,
+ *    Hls.js, contrato `window.WebTV.player`) continua o mesmo de
+ *    `frontend/docs/scripts/embedcanais-simple-player.js`, mas a v2 tem
+ *    mudancas proprias: sem selo "LIVE", sem controles nativos e com a
+ *    faixa de informacoes do canal (nome, logo e hora) no OK.
  *
  * 2. **O codigo sobrevive a escaping do Kotlin.** O `injectChannelScripts`
  *    embute o codigo numa string JS de aspas simples:
@@ -128,12 +129,27 @@ test('o script tem id e nome estaveis (o Kotlin deduplica pelo id)', () => {
  * O codigo e o da v1, intacto
  * ------------------------------------------------------------------ */
 
-test('o script e byte a byte o da v1', () => {
+test('o script da v2 evoluiu do original da v1 (miolo compartilhado)', () => {
   const v1 = readFileSync(V1_FILE, 'utf8')
-  assert.equal(
+  const marcadores = [
+    '__webtv_embedcanais_simple',
+    'vipPlayer.options.source',
+    'hls.loadSource',
+    'window.WebTV.player',
+  ]
+
+  for (const marcador of marcadores) {
+    assert.ok(v1.includes(marcador), `a v1 perdeu o marcador ${marcador}`)
+    assert.ok(
+      SIMPLE_PLAYER_SCRIPT_CODE.includes(marcador),
+      `a v2 perdeu o marcador ${marcador}`,
+    )
+  }
+
+  assert.notEqual(
     SIMPLE_PLAYER_SCRIPT_CODE,
     v1,
-    'a copia no v2 divergiu da v1 - copie de novo',
+    'a v2 tem a faixa de informacoes propria e nao e mais copia literal',
   )
 })
 
@@ -180,6 +196,42 @@ test('simplePlayerScript com canais: indexado por canal (o caminho rotation-proo
   assert.deepEqual(s.channelIds, ['1-amazonprimevideo'])
   // O canal e o que garante a injecao no host rotativo.
   assert.ok(s.channelIds.length > 0)
+})
+
+test('simplePlayerScript sem canal: entrega o codigo base intacto', () => {
+  assert.equal(simplePlayerScript().code, SIMPLE_PLAYER_SCRIPT_CODE)
+  assert.equal(simplePlayerScript({ channel: {} }).code, SIMPLE_PLAYER_SCRIPT_CODE)
+})
+
+test('simplePlayerScript embute nome e logo do canal na faixa', () => {
+  const image = 'https://1.embedcanaisdetv.com/images/globo.webp'
+  const s = simplePlayerScript({
+    channelIds: ['104-globodf'],
+    channel: { name: 'Globo DF', image },
+  })
+
+  const prefix = 'window.__webtv_channel_info = '
+  assert.ok(s.code.startsWith(prefix), 'o prefixo do canal precisa vir primeiro')
+  const end = s.code.indexOf(';\n')
+  assert.ok(end > prefix.length)
+  assert.deepEqual(JSON.parse(s.code.slice(prefix.length, end)), {
+    name: 'Globo DF',
+    image,
+  })
+  assert.ok(s.code.endsWith(SIMPLE_PLAYER_SCRIPT_CODE), 'o corpo base vem depois')
+})
+
+test('o prefixo do canal sobrevive ao escaping do Kotlin', () => {
+  const code = simplePlayerScript({
+    channel: {
+      name: "Canal d'Avila <HD>",
+      image: 'https://exemplo.test/logo.png?a=1&b=2',
+    },
+  }).code
+
+  const finalCode = eval(kotlinEmbed(code)) // eslint-disable-line no-eval
+  assert.equal(finalCode, code, 'o round-trip deve preservar o prefixo')
+  assert.ok(!code.includes('</script>'), 'nao deve conter fechamento de script')
 })
 
 test('simplePlayerScript sem dominios: nao ocupa espaco no LRU de dominios', () => {
@@ -300,6 +352,34 @@ test('o script substitui o DOM por um <video> unico', () => {
   // O player pesado (Clappr + P2P) e trocado por um <video> so.
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('document.documentElement.innerHTML'))
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('webtv-player-video'))
+})
+
+test('o script nao mostra o selo LIVE nem os controles nativos', () => {
+  assert.ok(!SIMPLE_PLAYER_SCRIPT_CODE.includes('webtv-status'))
+  assert.ok(!SIMPLE_PLAYER_SCRIPT_CODE.includes('setStatus('))
+  assert.ok(
+    !/<video[^>]*\bcontrols\b/.test(SIMPLE_PLAYER_SCRIPT_CODE),
+    'o <video> nao pode ter o atributo controls',
+  )
+})
+
+test('o script monta a faixa de informacoes do canal', () => {
+  for (const id of [
+    'webtv-info',
+    'webtv-info-logo',
+    'webtv-info-name',
+    'webtv-info-time',
+  ]) {
+    assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes(id), `faltou ${id}`)
+  }
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('__webtv_channel_info'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('formatClock'))
+})
+
+test('o OK/Enter abre a faixa e nao alterna play/pause', () => {
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('var KEY_INFO = [13, 23, 66]'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('var KEY_PLAY_PAUSE = [32, 179, 415]'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('toggleInfo()'))
 })
 
 test('o script usa Hls.js (o player minimo)', () => {

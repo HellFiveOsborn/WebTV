@@ -113,6 +113,28 @@ test('emitScriptsLoaded indexa o player simples pelo canal aberto', () => {
   )
 })
 
+test('emitScriptsLoaded repassa nome e logo do canal para a faixa', () => {
+  const body = emitScriptsLoadedBody()
+
+  assert.ok(
+    body.includes('channel,'),
+    'o player simples precisa receber os dados do canal',
+  )
+
+  const start = SOURCE.indexOf('const openChannel = useCallback(')
+  assert.ok(start > 0, 'nao encontrei openChannel')
+  const end = SOURCE.indexOf('setActive({ channel, key, type, url })', start)
+  assert.ok(end > start, 'nao encontrei o fim de openChannel')
+
+  const openBody = SOURCE.slice(start, end)
+  assert.ok(
+    openBody.includes(
+      'emitScriptsLoaded(key, { name: channel.name, image: channel.image })',
+    ),
+    'a abertura do canal precisa entregar nome e logo',
+  )
+})
+
 /* ------------------------------------------------------------------ *
  * A simulacao do LRU do Kotlin
  * ------------------------------------------------------------------ */

@@ -7,10 +7,13 @@
  * um `<video>` unico controlado por Hls.js, mantendo o contrato
  * `window.WebTV.player.*` (o app Kotlin depende dele).
  *
- * E o mesmo script que a v1 usa (`frontend/docs/scripts/embedcanais-simple-player.js`).
- * O arquivo esta **copiado byte a byte** para o bundle da v2 - nao e
- * importado da v1, porque a v2 e publicada em `/WebTV/v2/` e nao pode
- * depender de um arquivo de fora do seu diretorio de build.
+ * Nasceu do script da v1 (`frontend/docs/scripts/embedcanais-simple-player.js`)
+ * e foi evoluido na v2: sem o selo "LIVE", sem os controles nativos do
+ * `<video>` e com a faixa de informacoes do canal (nome, logo e hora)
+ * aberta pelo OK do controle remoto. O arquivo esta **copiado** para o
+ * bundle da v2 - nao e importado da v1, porque a v2 e publicada em
+ * `/WebTV/v2/` e nao pode depender de um arquivo de fora do seu diretorio
+ * de build.
  *
  * ## Por que a v2 precisa do seu proprio
  *
@@ -86,12 +89,58 @@ export const SIMPLE_PLAYER_SCRIPT_DOMAINS = [
 ]
 
 /**
- * Codigo do script de injecao.
+ * Dados do canal usados pela faixa de informacoes.
  *
- * Vem do arquivo `.js` copiado da v1 via `?raw` - o Vite embute o
- * conteudo como string no bundle (sem `eval`/`new Function`).
+ * A pagina do player so expoe o slug no `<title>`; nome e logo vem do
+ * catalogo da v2 e viajam embutidos no codigo entregue ao Kotlin.
+ */
+export interface SimplePlayerChannelInfo {
+  name?: string
+  image?: string
+}
+
+/**
+ * Codigo base do script de injecao.
+ *
+ * Vem do arquivo `.js` via `?raw` - o Vite embute o conteudo como string
+ * no bundle (sem `eval`/`new Function`).
  */
 export const SIMPLE_PLAYER_SCRIPT_CODE = SIMPLE_PLAYER_SOURCE
+
+/**
+ * Serializa os dados do canal sem deixar caracteres que quebrem parsers
+ * antigos de WebView (`<`, `>`, U+2028, U+2029).
+ */
+function jsonForScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
+/**
+ * Monta o codigo entregue ao Kotlin.
+ *
+ * O corpo do script e generico. Os dados do canal viajam num prefixo que
+ * define `window.__webtv_channel_info` antes do IIFE montar a faixa.
+ * Sem canal, o codigo e exatamente o arquivo base (o payload inicial do
+ * `scripts:loaded`).
+ */
+function buildScriptCode(channel?: SimplePlayerChannelInfo): string {
+  if (!channel) return SIMPLE_PLAYER_SCRIPT_CODE
+
+  const name = String(channel.name ?? '').trim()
+  const image = String(channel.image ?? '').trim()
+  if (!name && !image) return SIMPLE_PLAYER_SCRIPT_CODE
+
+  return (
+    'window.__webtv_channel_info = ' +
+    jsonForScript({ name, image }) +
+    ';\n' +
+    SIMPLE_PLAYER_SCRIPT_CODE
+  )
+}
 
 /**
  * O script de player simples, pronto para o formato do bridge.
@@ -115,10 +164,13 @@ export const SIMPLE_PLAYER_SCRIPT_CODE = SIMPLE_PLAYER_SOURCE
  *   independente do host rotativo.
  * @param options.domains Dominios estaveis. Indexa o script por
  *   dominio (rede de seguranca).
+ * @param options.channel Nome e logo do canal aberto. Vao embutidos no
+ *   codigo para a faixa de informacoes.
  */
 export function simplePlayerScript(options: {
   channelIds?: string[]
   domains?: string[]
+  channel?: SimplePlayerChannelInfo
 } = {}): {
   id: string
   name: string
@@ -133,7 +185,7 @@ export function simplePlayerScript(options: {
   return {
     id: SIMPLE_PLAYER_SCRIPT_ID,
     name: SIMPLE_PLAYER_SCRIPT_NAME,
-    code: SIMPLE_PLAYER_SCRIPT_CODE,
+    code: buildScriptCode(options.channel),
     // O Kotlin le com `optJSONArray`: ausente = nao indexa nessa dimensao.
     domains: domains.length > 0 ? [...domains] : undefined,
     urls: [],

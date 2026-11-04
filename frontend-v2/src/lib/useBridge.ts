@@ -191,7 +191,10 @@ export function useBridgeIntegration({
    * Assim a entrada do canal da v2 e a ultima a ser inserida (a mais
    * recente), e sobrevive ao LRU.
    */
-  const emitScriptsLoaded = useCallback((channelId?: string) => {
+  const emitScriptsLoaded = useCallback((
+    channelId?: string,
+    channel?: { name?: string; image?: string },
+  ) => {
     // 1) Os scripts do gist primeiro: eles enchem o LRU com as 50 vagas.
     const payload = toBridgeScripts(scriptsRef.current)
 
@@ -212,6 +215,8 @@ export function useBridgeIntegration({
       simplePlayerScript({
         channelIds: channelId ? [channelId] : undefined,
         domains: [...SIMPLE_PLAYER_SCRIPT_DOMAINS],
+        // Nome/logo do catalogo da v2: a pagina do player so tem o slug.
+        channel,
       }),
     )
 
@@ -321,8 +326,9 @@ export function useBridgeIntegration({
       //    precisa estar pronto antes da pagina do canal carregar.
       //
       //    O `channelScripts` do Kotlin e um LRU de 50: reindexar a
-      //    cada abertura mantem o canal atual na mao.
-      emitScriptsLoaded(key)
+      //    cada abertura mantem o canal atual na mao. Nome e logo vao
+      //    embutidos no script do player (faixa de informacoes).
+      emitScriptsLoaded(key, { name: channel.name, image: channel.image })
 
       // 2) `channel:clicked` - o Kotlin registra o canal ativo e, para
       //    redirect/mixed, arma a injecao de scripts.
