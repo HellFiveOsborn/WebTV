@@ -12,6 +12,18 @@
       }
     </script>
     <script>
+      // A raiz do Pages inicia o v2. O redirect fica no HTML para rodar
+      // antes do bundle do v1; em dev (localhost) o v1 continua normal.
+      ;(function () {
+        if (window !== window.parent) return
+        if (location.hostname !== 'hellfiveosborn.github.io') return
+        var path = location.pathname.replace(/\/index\.html$/, '/')
+        if (path === '/WebTV/' || path === '/WebTV') {
+          location.replace('/WebTV/v2/' + location.search + location.hash)
+        }
+      })()
+    </script>
+    <script>
       ;(function () {
         var redirect = sessionStorage.redirect
         delete sessionStorage.redirect
