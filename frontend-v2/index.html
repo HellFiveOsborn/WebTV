@@ -1,18 +1,29 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebTV v2 - Canais</title>
-    <style>
-      html, body, #root {
-        margin: 0;
-        padding: 0;
-        background: #0b0f14;
-        color: #e6edf3;
-        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      }
-    </style>
+    <title>WebTV - Canais</title>
+    <meta name="description" content="Catalogo de canais do embedcanais.online" />
+    <script>
+      /*
+       * Aplica o tema salvo ANTES da primeira pintura, evitando o
+       * "flash" de tema claro em quem prefere o escuro.
+       * Mesma logica de src/lib/theme.ts (mantida em duplicado de forma
+       * proposital: este script roda antes do bundle).
+       */
+      (function () {
+        try {
+          var saved = localStorage.getItem('webtv:v2:theme')
+          document.documentElement.setAttribute(
+            'data-theme',
+            saved === 'light' ? 'light' : 'dark',
+          )
+        } catch (e) {
+          /* localStorage indisponivel: mantem o dark padrao */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

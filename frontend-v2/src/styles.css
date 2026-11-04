@@ -1,138 +1,1506 @@
-/* Estilo propositalmente minimalista: o objetivo desta v2 e validar o parser. */
+/*
+ * WebTV v2 - visual de catalogo de streaming (referencia: tela "Top 10").
+ *
+ * Cards 16:9, linhas horizontais com rolagem e numero gigante no bloco
+ * "Top 10".
+ *
+ * TEMA: as cores vem de variaveis CSS. O atributo `data-theme` no <html>
+ * escolhe entre "dark" (padrao) e "light". Ver src/lib/theme.ts.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Variaveis de tema
+ * ------------------------------------------------------------------ */
+
+/* Gutter lateral do conteudo (usado por titulos, linhas e arrows). */
+:root {
+  --gutter: 4vw;
+}
+
+:root,
+html[data-theme='dark'] {
+  --bg: #0b0b0f;
+  --bg-glow: rgba(229, 9, 20, 0.16);
+  --bg-elevated: #16161c;
+  --bg-thumb: #131319;
+  --bg-input: rgba(255, 255, 255, 0.06);
+  --bg-input-focus: rgba(0, 0, 0, 0.6);
+  --fg: #f2f2f5;
+  --fg-muted: #b4b4bd;
+  --fg-dim: #8f8f99;
+  --fg-faint: #6b6b76;
+  --border: #26262f;
+  --border-soft: #1d1d24;
+  --accent: #e50914;
+  --accent-hover: #f6121d;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(229, 9, 20, 0.18);
+  --accent-text: #ff6b6b;
+  --ok: #6ee7a8;
+  --danger: #ff6b6b;
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-modal: 0 32px 80px rgba(0, 0, 0, 0.85);
+  /* Elevacao do item em foco (D-pad). */
+  --shadow-focus: 0 18px 36px rgba(0, 0, 0, 0.55);
+  --topbar-gradient: linear-gradient(
+    180deg,
+    #0b0b0f 0%,
+    rgba(11, 11, 15, 0.92) 70%,
+    transparent 100%
+  );
+  --modal-bg: linear-gradient(180deg, #1e1e27 0%, #14141b 100%);
+  --modal-border: #33333f;
+  --modal-overlay: rgba(0, 0, 0, 0.72);
+  --rank-stroke: rgba(255, 255, 255, 0.22);
+  --rank-stroke-soft: rgba(255, 255, 255, 0.3);
+  --thumb-fallback-fg: #4a4a56;
+  --hover-surface: rgba(255, 255, 255, 0.08);
+  --hover-surface-strong: rgba(255, 255, 255, 0.2);
+}
+
+/*
+ * Tema claro (estilo Apple TV): fundo off-white quente, sem branco puro,
+ * contraste suave e sombras discretas. O objetivo e conforto visual em
+ * ambientes iluminados - nada de preto sobre branco puro.
+ */
+html[data-theme='light'] {
+  --bg: #f5f5f7;
+  --bg-glow: rgba(216, 7, 18, 0.06);
+  --bg-elevated: #fbfbfd;
+  --bg-thumb: #eeeef1;
+  --bg-input: rgba(0, 0, 0, 0.04);
+  --bg-input-focus: #fbfbfd;
+  --fg: #35353a;
+  --fg-muted: #6e6e76;
+  --fg-dim: #86868c;
+  --fg-faint: #a1a1a8;
+  --border: #e3e3e8;
+  --border-soft: #ececf0;
+  --accent: #d02a30;
+  --accent-hover: #b8242a;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(208, 42, 48, 0.09);
+  --accent-text: #c0393f;
+  --ok: #3f8f5f;
+  --danger: #c0393f;
+  --shadow-card: 0 6px 18px rgba(60, 60, 67, 0.08);
+  --shadow-modal: 0 24px 60px rgba(60, 60, 67, 0.18);
+  /* Elevacao do item em foco (D-pad). */
+  --shadow-focus: 0 18px 36px rgba(60, 60, 67, 0.22);
+  --topbar-gradient: linear-gradient(
+    180deg,
+    rgba(245, 245, 247, 0.94) 0%,
+    rgba(245, 245, 247, 0.86) 70%,
+    transparent 100%
+  );
+  --modal-bg: linear-gradient(180deg, #fbfbfd 0%, #f4f4f7 100%);
+  --modal-border: #e6e6eb;
+  --modal-overlay: rgba(60, 60, 67, 0.28);
+  --rank-stroke: rgba(53, 53, 58, 0.13);
+  --rank-stroke-soft: rgba(53, 53, 58, 0.18);
+  --thumb-fallback-fg: #c4c4cc;
+  --hover-surface: rgba(0, 0, 0, 0.045);
+  --hover-surface-strong: rgba(0, 0, 0, 0.1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Reset / base
+ * ------------------------------------------------------------------ */
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  background: #0b0f14;
-  color: #e6edf3;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui,
+    -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, var(--bg-glow), transparent 60%),
+    var(--bg);
+  transition: background 0.2s ease;
 }
 
-h1 {
-  font-size: 18px;
-  margin: 0 0 8px;
+/* ------------------------------------------------------------------ *
+ * Barra superior
+ * ------------------------------------------------------------------ */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--topbar-gradient);
+  backdrop-filter: blur(8px);
 }
 
-h2 {
-  font-size: 15px;
-  margin: 16px 0 8px;
-}
-
-.status {
-  margin: 4px 0;
-  color: #8b949e;
-}
-
-.status.ok {
-  color: #7ee787;
-}
-
-.status.error {
-  color: #ff7b72;
-}
-
-.controls {
+.topbar-inner {
   display: flex;
-  gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
-  margin: 12px 0;
+  gap: 24px;
+  padding: 14px var(--gutter) 8px;
 }
 
-.controls input[type='search'],
-.controls select {
-  padding: 6px 8px;
-  background: #11161d;
-  color: #e6edf3;
-  border: 1px solid #2a323c;
-  border-radius: 4px;
-}
-
-.controls input[type='search'] {
-  min-width: 240px;
-}
-
-.count {
-  color: #8b949e;
-}
-
-.grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 8px;
-}
-
-.card {
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: #11161d;
-  border: 1px solid #21262d;
-  border-radius: 4px;
-}
-
-.logo {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  background: #0d1117;
-  border-radius: 4px;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
-.info {
-  min-width: 0;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
-.name {
+.brand-caret {
+  color: var(--fg);
+  opacity: 0.9;
+  display: inline-flex;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1 1 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topbar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-link {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--fg-muted);
+  font-size: 14px;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--fg);
+}
+
+.nav-link.active {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+}
+
+.topbar-count {
+  display: block;
+  padding: 0 var(--gutter) 10px;
+  color: var(--fg-dim);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Busca em tela cheia
+ * ------------------------------------------------------------------ */
+
+/*
+ * A busca cobre o CONTEUDO, mas fica ABAIXO da barra superior (z-index
+ * menor): assim o usuario ainda clica em "Inicio" ou nas categorias com a
+ * busca preenchida - o que antes era impossivel porque a overlay
+ * bloqueava os cliques.
+ */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 76px 24px 24px;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(12px) saturate(70%);
+  -webkit-backdrop-filter: blur(12px) saturate(70%);
+  animation: modal-fade 0.16s ease;
+}
+
+.search-overlay-inner {
+  width: min(760px, 100%);
+}
+
+.search-overlay-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+}
+
+.search-overlay-icon {
+  color: var(--fg-dim);
+  flex: 0 0 auto;
+}
+
+.search-overlay-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  /* Fonte grande: no celular abre o teclado virtual em tamanho util. */
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.search-overlay-input::placeholder {
+  color: var(--fg-faint);
+}
+
+.search-overlay-input::-webkit-search-cancel-button {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+html[data-theme='light'] .search-overlay-input::-webkit-search-cancel-button {
+  filter: none;
+}
+
+/* Botao de microfone */
+.mic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hover-surface);
+  color: var(--fg-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mic-button:hover {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+/* Ouvindo: pulso vermelho, como o botao de voz do Google/YouTube. */
+.mic-button.listening {
+  background: var(--accent);
+  color: var(--accent-fg);
+  animation: mic-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(229, 9, 20, 0);
+  }
+}
+
+.search-overlay-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hover-surface);
+  color: var(--fg-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.search-overlay-close:hover {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+.search-overlay-error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.search-overlay-hint {
+  margin: 14px 0 0;
+  color: var(--fg-dim);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ *
+ * Teclado virtual (on-screen)
+ * ------------------------------------------------------------------ */
+
+.vkb {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+}
+
+.vkb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.vkb-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.vkb-hide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hover-surface);
+  color: var(--fg-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vkb-hide:hover {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+.vkb-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vkb-row {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+}
+
+.vkb-key {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 54px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--hover-surface);
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 500;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.vkb-key:hover {
+  background: var(--hover-surface-strong);
+}
+
+.vkb-key:active {
+  transform: scale(0.94);
+}
+
+/*
+ * Tecla selecionada pelo controle remoto (D-pad).
+ *
+ * Sem contorno: a tecla ganha elevacao e o resto do teclado esmaece
+ * (o esmaecimento vem da regra `:has()` do bloco de foco do D-pad).
+ */
+.vkb-key.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  transform: scale(1.06);
+  z-index: 2;
+}
+
+.vkb-key--space {
+  max-width: 190px;
+}
+
+.vkb-key--ok {
+  max-width: 110px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.vkb-key--ok:hover {
+  background: var(--accent-hover);
+}
+
+.vkb-key--switch {
+  max-width: 88px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.vkb-key--mic {
+  max-width: 62px;
+}
+
+.vkb-key--mic.listening {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+  animation: mic-pulse 1.3s ease-in-out infinite;
+}
+
+/* Botao para reabrir o teclado recolhido. */
+.vkb-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--hover-surface);
+  color: var(--fg);
+  font-size: 14px;
   font-weight: 600;
 }
 
-.category,
-.slug,
-.url {
-  color: #8b949e;
+.vkb-show:hover {
+  background: var(--hover-surface-strong);
+}
+
+/* ------------------------------------------------------------------ *
+ * Conteudo
+ * ------------------------------------------------------------------ */
+
+.content {
+  padding: 0 0 40px;
+}
+
+.status {
+  margin: 8px var(--gutter);
+  color: var(--fg-dim);
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.section-head {
+  padding: 8px var(--gutter) 4px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.section-sub {
+  margin: 4px 0 0;
+  color: var(--fg-dim);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Modal dialog (estilo Android TV)
+ * ------------------------------------------------------------------ */
+
+/*
+ * Fundo do modal: escurece e desfoca o conteudo de tras, criando a
+ * profundidade tipica de TV. O `blur` garante que a area ao redor do
+ * painel fique claramente "fora de foco".
+ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5vh 24px;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(6px) saturate(80%);
+  -webkit-backdrop-filter: blur(6px) saturate(80%);
+  animation: modal-fade 0.16s ease;
+}
+
+.modal-panel {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    var(--shadow-modal);
+  animation: modal-pop 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.modal-panel:focus {
+  outline: none;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hover-surface);
+  color: var(--fg-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.modal-close:hover {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+.modal-body {
+  padding: 18px 20px 20px;
+  overflow-y: auto;
+}
+
+/*
+ * Foco visivel no modal: elevacao em vez de contorno (o anel
+ * vermelho de antes nao combina com o destaque Apple do resto).
+ * O `:focus-visible` mantem o comportamento do teclado do SO.
+ */
+.modal-body button:focus-visible,
+.modal-close:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-focus);
+}
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Icone de configuracoes
+ * ------------------------------------------------------------------ */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hover-surface);
+  color: var(--fg-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-button:hover,
+.icon-button.active {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+/* ------------------------------------------------------------------ *
+ * Conteudo do painel de configuracoes
+ * ------------------------------------------------------------------ */
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-section-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 14px;
+}
+
+.settings-label {
+  color: var(--fg);
+}
+
+.settings-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--fg-dim);
   font-size: 12px;
+}
+
+.settings-value {
+  color: var(--fg-muted);
+  font-weight: 600;
+  text-align: right;
+}
+
+.settings-value.ok {
+  color: var(--ok);
+}
+
+/* Toggle (switch) no estilo Android TV */
+.settings-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hover-surface-strong);
+  transition: background 0.18s ease;
+}
+
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.18s ease;
+}
+
+.settings-toggle[aria-pressed='true'] {
+  background: var(--accent);
+}
+
+.settings-toggle[aria-pressed='true']::after {
+  transform: translateX(20px);
+}
+
+/*
+ * Foco do toggle: um HALO no botao deslizante (e nao um contorno no
+ * switch inteiro). E o detalhe sutil pedido - o "OK" do controle remoto
+ * brilha no botao que se move.
+ *
+ * O switch em si NAO escala: o movimento do halo ja sinaliza o foco
+ * (escalar um interruptor pareceria "estragado").
+ */
+.settings-toggle.dpad-focused {
+  transform: none;
+  box-shadow: none;
+}
+
+.settings-toggle.dpad-focused::after {
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.4),
+    0 0 0 3px var(--accent-soft),
+    0 0 0 5px rgba(255, 255, 255, 0.35);
+}
+
+.settings-toggle.dpad-focused[aria-pressed='true']::after {
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.4),
+    0 0 0 3px rgba(255, 255, 255, 0.45),
+    0 0 14px rgba(255, 255, 255, 0.4);
+}
+
+/* Botoes de acao */
+.settings-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-actions button {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--hover-surface);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.settings-actions button:hover {
+  background: var(--hover-surface-strong);
+  transform: translateY(-1px);
+}
+
+.settings-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.settings-actions button.primary:hover {
+  background: var(--accent-hover);
+}
+
+.settings-actions button.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Log de tentativas */
+.settings-log-toggle {
+  width: 100%;
+  text-align: left;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--border-soft);
+  color: var(--fg-dim);
+  font-size: 12px;
+  transition: color 0.15s ease;
+}
+
+.settings-log-toggle:hover {
+  color: var(--fg);
+}
+
+.settings-attempts {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.settings-attempts li {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12px;
+}
+
+.settings-attempts li.ok {
+  color: var(--ok);
+}
+
+.settings-attempts li.fail {
+  color: var(--danger);
+}
+
+.settings-attempts .url {
+  display: block;
+  color: var(--fg-faint);
   overflow-wrap: anywhere;
 }
 
-.attempts ul {
-  list-style: none;
-  padding: 0;
+/* ------------------------------------------------------------------ *
+ * Bloco "Top 10" (card grande + cards menores ao lado)
+ * ------------------------------------------------------------------ */
+
+.top-section {
+  margin: 18px 0 8px;
+}
+
+.top-body {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 0 var(--gutter);
+}
+
+/*
+ * Numero gigante ao fundo da linha do #1.
+ * Fica a ESQUERDA do card grande (como na referencia) e atras do conteudo.
+ */
+.top-rank {
+  position: absolute;
+  left: calc(var(--gutter) - 6px);
+  top: 0;
+  z-index: 0;
+  font-size: 300px;
+  line-height: 0.78;
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 4px var(--rank-stroke);
+  user-select: none;
+  pointer-events: none;
+}
+
+.top-feature {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: min(520px, 42vw);
+  margin-left: 96px;
+}
+
+.top-thumb {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-thumb);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.top-thumb:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-modal);
+}
+
+.top-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 7%;
+}
+
+.top-info {
+  position: relative;
+  z-index: 1;
+  padding-top: 12px;
+}
+
+.top-title {
   margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
 }
 
-.attempts li {
-  padding: 6px 0;
-  border-bottom: 1px solid #21262d;
+.top-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  color: var(--fg-muted);
+  font-size: 13px;
 }
 
-.attempts li.ok {
-  color: #7ee787;
-}
-
-.attempts li.fail {
-  color: #ff7b72;
-}
-
-.raw pre {
-  background: #11161d;
-  border: 1px solid #21262d;
+.top-badge {
+  padding: 3px 8px;
   border-radius: 4px;
-  padding: 8px;
-  overflow: auto;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* Sinal que subiu o canal no ranking (ex.: "Vezes assistido"). */
+.top-reason {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--hover-surface);
+  color: var(--fg-muted);
   font-size: 12px;
+}
+
+/*
+ * Linha dos ranks 2..10: rolagem horizontal (como na referencia),
+ * com o numero gigante a esquerda de cada card.
+ */
+.top-list {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.top-list::-webkit-scrollbar {
+  display: none;
+}
+
+.top-list-item {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Numero do rank ao lado do card (estilo da referencia). */
+.top-list-rank {
+  flex: 0 0 auto;
+  font-size: 104px;
+  line-height: 0.8;
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 2.5px var(--rank-stroke-soft);
+  user-select: none;
+  pointer-events: none;
+}
+
+.top-list-item .card {
+  flex: 0 0 auto;
+  width: 168px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Linhas horizontais
+ * ------------------------------------------------------------------ */
+
+.row {
+  margin: 26px 0 8px;
+}
+
+.row-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 var(--gutter) 12px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.row-subtitle {
+  color: var(--fg-dim);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/*
+ * A linha e FULL-BLEED (ocupa a tela toda). O alinhamento com os
+ * titulos vem do padding interno do track, e nao de uma margem no
+ * container - assim os cards rolam ate a borda real da tela e os
+ * arrows ficam no limite da viewport, sem invadir o gutter.
+ */
+.row-body {
+  position: relative;
+}
+
+.row-track {
+  display: flex;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  /*
+   * O padding vertical reserva espaco para o ANEL de foco do D-pad:
+   * o card focado cresce (scale) e o anelUltrapassa a borda do track -
+   * sem esse espaco, o `overflow` cortaria o anel pela metade.
+   *
+   * O `margin` negativo compensa: o layout externo da linha nao muda.
+   */
+  padding: 16px var(--gutter);
+  margin-block: -16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  /* Alinha o primeiro card ao titulo mesmo apos rolar. */
+  scroll-padding-inline: var(--gutter);
+  /*
+   * A janela virtual monta/desmonta cards durante a rolagem; sem isso o
+   * navegador reposiciona o scroll sozinho e causa "pulos".
+   */
+  overflow-anchor: none;
+}
+
+.row-track::-webkit-scrollbar {
+  display: none;
+}
+
+.row-item {
+  flex: 0 0 auto;
+  width: 200px;
+  scroll-snap-align: start;
+}
+
+/*
+ * Espacador da rolagem infinita: ocupa o espaco dos canais que estao
+ * fora da janela virtual (desmontados do DOM), mantendo o tamanho total
+ * da barra de rolagem estavel.
+ */
+.row-spacer {
+  flex: 0 0 auto;
+  height: 1px;
+  pointer-events: none;
+}
+
+/*
+ * Os arrows ficam nas bordas reais da tela, sobre um GRADIENTE (scrim):
+ * o card que passa por baixo some suavemente, sem o retangulo duro
+ * cortado na borda. So aparecem quando ha algo para revelar.
+ */
+.row-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.row-body:hover .row-arrow {
+  opacity: 1;
+}
+
+.row-arrow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+}
+
+.row-arrow.right::before {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+}
+
+.row-arrow svg {
+  position: relative;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+  transition: transform 0.15s ease;
+}
+
+.row-arrow:hover svg {
+  transform: scale(1.12);
+}
+
+.row-arrow.left {
+  left: 0;
+}
+
+.row-arrow.right {
+  right: 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * Card
+ * ------------------------------------------------------------------ */
+
+.card {
+  position: relative;
+  display: block;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card:hover {
+  transform: scale(1.04);
+  box-shadow: var(--shadow-card);
+}
+
+.card-thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-thumb);
+  overflow: hidden;
+}
+
+.card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8%;
+}
+
+/*
+ * No tema claro, varios logos sao brancos com fundo transparente e
+ * somem em cima de um thumb claro. Um halo escuro simetrico em volta da
+ * imagem devolve o contorno sem escurecer o visual.
+ */
+html[data-theme='light'] .card-thumb img,
+html[data-theme='light'] .top-thumb img {
+  filter: drop-shadow(0 0 1px rgba(35, 35, 41, 0.75))
+    drop-shadow(0 0 4px rgba(35, 35, 41, 0.55));
+}
+
+.thumb-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--thumb-fallback-fg);
+  background: var(--bg-thumb);
+}
+
+.card-name {
+  display: block;
+  padding: 8px 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-cat {
+  display: block;
+  padding: 2px 10px 10px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------------ *
+ * Grid
+ * ------------------------------------------------------------------ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--gutter);
+}
+
+/* ------------------------------------------------------------------ *
+ * Foco do D-pad (controle remoto do Android TV)
+ * ------------------------------------------------------------------ */
+
+/*
+ * O foco NAO e um contorno. E um HIGHLIGHT: o item em foco ganha
+ * elevacao (escala + sombra) e o restante do grupo perde cor e
+ * opacidade. O olho vai direto para o item ativo - e o visual fica
+ * limpo, no estilo Apple TV.
+ *
+ * A classe e aplicada pelo motor (`DpadContext`), nao pelo `:focus`, para
+ * que o foco exista mesmo quando o elemento nao pode receber o foco
+ * nativo (links em `target="_blank"`, por exemplo).
+ */
+
+/* --- 1) O item em foco: elevacao + cor viva ----------------------- */
+.dpad-focused {
+  position: relative;
+  z-index: 3;
+  border-radius: 8px;
+  outline: none;
+  /*
+   * O outline nativo do navegador (o anel branco do `<a>`/`<button>`)
+   * e desligado: nao ha mais traçado de borda.
+   */
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.18s ease,
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+/*
+ * Cards e thumbs crescem um pouco e ganham elevacao.
+ * O `.top-thumb` cresce menos (ele ja e grande).
+ */
+.dpad-focused.card {
+  transform: scale(1.08);
+}
+
+.dpad-focused.top-thumb {
+  transform: scale(1.03);
+}
+
+/* Os itens de texto (nav) nao escalam: apenas ganham cor. */
+.dpad-focused.nav-link {
+  color: var(--fg);
+  transform: none;
+}
+
+/* --- 2) Os vizinhos perdem cor e opacidade ------------------------ */
+/*
+ * Quando existe um item em foco no grupo, os OUTROS itens do mesmo
+ * grupo ficam esmaecidos. Como o motor sabe qual elemento esta
+ * focado (via a classe), o esmaecimento e aplicado com `:has()` no
+ * container do grupo.
+ *
+ * `:has()` tem suporte em todos os navegadores Android TV (Chromium
+ * 105+). Onde nao houver, o foco continua funcionando - so nao ha o
+ * esmaecimento dos vizinhos.
+ */
+
+/* Carrosseis (linhas de canais): os vizinhos esmaecem. */
+.row:has(.dpad-focused) .row-item:not(:has(.dpad-focused)) {
+  opacity: 0.32;
+  filter: saturate(0.3);
+}
+
+/* Grid (categoria / busca): os vizinhos esmaecem. */
+.grid:has(.dpad-focused) .card:not(.dpad-focused) {
+  opacity: 0.32;
+  filter: saturate(0.3);
+}
+
+/* Top 10: o card em foco fica; o resto do bloco esmaece. */
+.top-body:has(.dpad-focused) .top-feature:not(:has(.dpad-focused)) {
+  opacity: 0.4;
+  filter: saturate(0.35);
+}
+
+.top-body:has(.dpad-focused) .top-list-item:not(:has(.dpad-focused)) {
+  opacity: 0.32;
+  filter: saturate(0.3);
+}
+
+/*
+ * A barra superior: as opcoes nao focadas perdem o destaque, mas
+ * continuam legiveis (o esmaecimento e mais suave - sao texto, nao
+ * imagens, e o usuario precisa saber o que existe).
+ *
+ * O item em foco ganha um peso tipografico maior: e o texto que mais
+ * chama atencao, sem nenhum contorno.
+ */
+.topbar:has(.dpad-focused) .nav-link:not(.dpad-focused),
+.topbar:has(.dpad-focused) .icon-button:not(.dpad-focused) {
+  opacity: 0.45;
+}
+
+.topbar .nav-link.dpad-focused {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.topbar .icon-button.dpad-focused {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+  transform: scale(1.08);
+}
+
+/*
+ * Os carrosséis tem `overflow-x: auto`: o item em foco cresce (scale)
+ * e seria cortado na borda. O padding vertical do track ja reserva
+ * esse espaco.
+ */
+.row-item {
+  overflow: visible;
+}
+
+/* --- 3) Teclado virtual ------------------------------------------- */
+/*
+ * A tecla ativa ganha cor; as outras esmaecem. O olho vai direto para
+ * a tecla que o "OK" vai digitar.
+ */
+.vkb:has(.vkb-key.active) .vkb-key:not(.active) {
+  opacity: 0.4;
+  filter: saturate(0.4);
+}
+
+.vkb-key {
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.16s ease,
+    opacity 0.16s ease,
+    filter 0.16s ease;
+}
+
+/* --- 4) Botoes do modal ------------------------------------------- */
+/*
+ * No modal, o botao em foco ganha elevacao e os outros esmaecem.
+ * O header (botao X) e o body (acoes) esmaecem SEPARADAMENTE: quando
+ * o foco esta em um, o outro nao escurece - senao o modal inteiro
+ * pareceria desabilitado.
+ */
+.modal-body:has(.dpad-focused) button:not(.dpad-focused) {
+  opacity: 0.45;
+}
+
+.modal-header:has(.dpad-focused) button:not(.dpad-focused) {
+  opacity: 0.45;
+}
+
+.modal-body button,
+.modal-close {
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.18s ease,
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+.modal-body button.dpad-focused,
+.modal-close.dpad-focused {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: var(--shadow-focus);
+}
+
+/*
+ * O toggle e a excecao: o destaque dele e o HALO no botao deslizante,
+ * entao o switch em si nao escala nem ganha sombra.
+ */
+.modal-body button.settings-toggle.dpad-focused {
+  transform: none;
+  box-shadow: none;
+}
+
+.row-item .card,
+.top-list-item .card {
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.18s ease,
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+/* ------------------------------------------------------------------ *
+ * Responsivo
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .top-rank {
+    font-size: 200px;
+  }
+
+  .top-feature {
+    width: min(420px, 60vw);
+    margin-left: 66px;
+  }
+
+  .row-item {
+    width: 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar-nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .top-rank {
+    font-size: 140px;
+  }
+
+  .top-title {
+    font-size: 24px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 }

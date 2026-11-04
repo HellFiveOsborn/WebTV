@@ -43,6 +43,158 @@ os dados + o log de tentativas.
 >
 > Detalhes do backend em [`../backend/README.md`](../backend/README.md).
 
+## Interface
+
+A v2 replica o visual de um catalogo de streaming (referencia: tela "Top 10").
+
+| Elemento | Onde | O que faz |
+|---|---|---|
+| Bloco "Top 10" | Home | Card grande do #1 com o numero gigante ao fundo + os demais em rolagem horizontal. |
+| Linhas horizontais | Home | Uma linha por categoria, com setas de navegacao (aparecem no hover). |
+| Grid | Categoria / busca | Todos os canais da categoria ou do resultado da busca. |
+| Busca | Icone na barra superior | Abre uma tela cheia com teclado virtual (celular) e **microfone** (Web Speech API, `pt-BR`). |
+| Configuracoes | Icone de engrenagem | Modal dialog (fundo desfocado, foco preso, navegacao por setas) com tema e acoes de cache. |
+
+**Clique no canal** abre o endereco *redirect* do catalogo
+(`https://embedcanaisdetv.xyz/e/index.php?canal=<slug>/`) em nova aba - e o
+player do canal no site de origem.
+
+## Events API (integracao com o app Kotlin)
+
+A v2 fala com o app Android pela **Events API** - o mesmo contrato da v1
+(documentado em [`../frontend/docs/EVENTS_API.md`](../frontend/docs/EVENTS_API.md)).
+
+O Kotlin expoe `window.WebTVBridge` (`addJavascriptInterface`) e assina
+`window.WebTV.events`. Cada evento da v2 chega no Kotlin como
+`WebTVBridge.onXxx(JSON.stringify(payload))`.
+
+### O payload vai no nivel raiz
+
+Este e o ponto mais importante do contrato. O guard do Kotlin faz:
+
+```js
+window.WebTV.events.on('channel:clicked', (event) => {
+  const channelId = event.id;              // <- payload-level
+  WebTVBridge.onChannelClicked(JSON.stringify(event));
+});
+```
+
+E o `WebTVBridge` le `json.getString("id")` no **nivel raiz** do JSON. Se o
+listener recebesse `{type, payload, timestamp}`, o `id` estaria um nivel
+abaixo e o Kotlin lancaria `JSONException`.
+
+Por isso o `on()` da v2 entrega o **payload**, e nao o evento inteiro - o
+mesmo contrato do `appBridge.js` que o proprio Kotlin injeta.
+
+### Eventos emitidos pela v2
+
+| Evento | Quando | Payload |
+|---|---|---|
+| `app:loaded` | Catalogo carregado | `{channels, categories, timestamp}` |
+| `channel:clicked` | Clique num card | `{id, name, type}` (`id`/`name`/`type` no nivel raiz) |
+| `scripts:loaded` | Scripts baixados | `{scripts: [...]}` - o Kotlin indexa por canal/URL/dominio |
+| `scripts:preloaded` | Antes de abrir um canal | `{url, scripts: [...]}` - os scripts que valem para a URL |
+| `search:changed` | Termo da busca mudou | `{query}` |
+| `category:changed` | Categoria escolhida | `{categoryId, categoryName}` |
+| `navigated:home` | Volta para a home | `{timestamp}` |
+| `channel:closing` / `player:closed` / `channel:close` | Fecha o canal | `{channelId, channelName, timestamp}` |
+
+### `window.WebTV.channel`
+
+API que o Kotlin e o site carregado no WebView chamam para fechar o canal:
+
+```js
+window.WebTV.channel.close()   // fecha o canal e avisa o Kotlin
+```
+
+### Detalhes que exigem cuidado
+
+| Caso | Como foi resolvido |
+|---|---|
+| **O flag `__webtvAppBridgeInjected`** | O guard do Kotlin so assina os eventos quando `window.WebTV`, `window.WebTV.events` **e** `window.__webtvAppBridgeInjected` existem. A v2 liga o flag no `installEventBus()` - senao o Kotlin nunca receberia nada. |
+| **A `appBridge.js` do Kotlin** | Ela sai cedo se o flag estiver ligado (`if (window.__webtvAppBridgeInjected) return;`) e assim **nao sobrescreve** o bus da v2. Se ela chegar primeiro (ordem invertida), a v2 **preserva** o bus do Kotlin e envolve o `emit` dele. As duas ordens funcionam. |
+| **`channel:close` x `onChannelClosed`** | O Kotlin expoe `onChannelClosed` (com "d"), mas o evento se chama `channel:close`. A conversao automatica geraria `onChannelClose` - que nao existe. Ha um mapa de excecoes em `lib/events.ts`. |
+| **Corrida do `app:loaded`** | O Kotlin assina no `onPageFinished`; a v2 resolve o catalogo do cache local em milissegundos. O `app:loaded` (e o `scripts:loaded`) sao guardedos por `emitWhenBridgeReady()`, que espera o flag `__webtvListenersActive` do Kotlin. |
+| **Nao emitir `player:opened`** | Ele faz o Kotlin injetar os scripts **imediatamente**. No fluxo `redirect` a pagina do canal ainda nao carregou - a injecao cairia na pagina da v2, e o script do player substitui o documento inteiro (destruindo a UI). A injecao acontece no `onPageFinished` do Kotlin, na pagina do canal. |
+| **Evitar laco de eventos** | O `emit` da v2 **nao** chama o `WebTVBridge` diretamente: quem encaminha e o guard que o Kotlin instala. Se o `emit` chamasse o bridge, os eventos injetados pelo Kotlin voltariam como `player:closed` -> `onPlayerClosed` -> re-emissao -> laco. |
+| **Os scripts de injecao** | Vem do mesmo gist da v1 (mesma fonte, sem divergencia). O gist envia `Access-Control-Allow-Origin: *`, entao a v2 le direto do browser. |
+
+## Navegacao por D-pad (controle remoto do Android TV)
+
+Toda a interface e navegavel pelo controle remoto. O motor vive em
+`src/lib/dpad.ts` (nucleo puro, sem React) + `src/components/DpadContext.tsx`
+(estado do foco).
+
+### Como funciona
+
+O D-pad funciona com **grupos** e **camadas**:
+
+| Conceito | O que e | Onde |
+|---|---|---|
+| **Grupo** | Um conjunto de itens da mesma tela. As setas andam dentro dele. | Barra superior, Top 10, cada linha de canais, grid. |
+| **Camada** | Um modal por cima (configuracoes, busca). Enquanto ela estiver no topo, as setas **nao vazam** para a pagina de tras. | `ModalDialog`, `SearchOverlay`. |
+
+Regras:
+
+- **Esquerda/Direita** andam dentro do grupo atual (uma linha de canais e
+  horizontal). No grid, quando nao ha nada a direita, avanca para o proximo
+  item (como um controle remoto de verdade).
+- **Cima/Baixo** mudam de grupo: o vizinho na ordem do DOM e escolhido
+  preservando a **coluna** (a posicao horizontal) do foco.
+- **Alinhamento manda**: o alvo na direcao pedida que esta mais alinhado com
+  o foco ganha (heuristica espacial em `lib/dpad.ts`).
+- **Enter/OK** ativa o item em foco (o clique nativo).
+- **Esc/Back** sobe um nivel: fecha o modal, sai da busca.
+- A direcao e **estrita**: no fim de uma lista o foco **para** - ele nao da
+  a volta nem troca de direcao.
+
+### Foco visual
+
+O foco **nao e um contorno**. E um *highlight*: o item em foco ganha
+elevacao (escala + sombra) e os **vizinhos perdem cor e opacidade**. O olho
+vai direto para o item ativo - e o visual fica limpo, no estilo Apple TV.
+
+| Onde | Item em foco | Vizinhos |
+|---|---|---|
+| Cards (linhas e grid) | `scale(1.08)` + sombra de elevacao | `opacity: .32` + `saturate(.3)` |
+| Bloco Top 10 | `scale(1.03)` (o card #1 ja e grande) | `opacity: .32` + `saturate(.3)` |
+| Barra superior | peso 700 + cor plena | `opacity: .45` (texto: precisa continuar legivel) |
+| Botoes do modal | `translateY(-1px) scale(1.02)` + sombra | `opacity: .45` |
+| Teclado virtual | cor de acento + `scale(1.06)` | `opacity: .4` + `saturate(.4)` |
+| **Toggle do tema** | **halo no botao deslizante** | `opacity: .45` |
+
+O esmaecimento dos vizinhos usa `:has()` no container do grupo (o motor
+sabe qual elemento esta focado via a classe `.dpad-focused`). Onde o
+navegador nao suportar `:has()`, o foco continua funcionando - so nao ha o
+esmaecimento.
+
+> **O toggle e a excecao:** o destaque dele e um halo no **botao deslizante**
+> (o `::after`), nao um contorno no switch - e o switch em si nao escala.
+> Escalar um interruptor pareceria "estragado".
+
+### Detalhes que exigem cuidado
+
+| Caso | Como foi resolvido |
+|---|---|
+| **Rolagem infinita** | A linha e uma janela virtual: o card vizinho pode nao estar montado. A linha recentraliza a janela e devolve `pending`; o motor espera o remount e o foco segue para o item recem-montado (`pendingIndexRef`). |
+| **Alinhamento no snap** | O `revealElement` alinha o item no ponto de `scroll-snap` do container (e nao numa rolagem minima) e desliga o snap durante o ajuste - senao o navegador re-snapa e puxa o item para fora do foco. |
+| **Teclado virtual** | Na TV (`pointer: coarse`) o teclado virtual e o metodo de entrada: as setas navegam entre as teclas e o foco do D-pad fica na tecla ativa. O campo de texto nao recebe foco (evita o teclado do SO). |
+| **Clique do mouse** | Tambem move o foco do D-pad - senao o controle remoto "pularia" para outro lugar depois de navegar com o mouse. |
+| **`outline` nativo** | Desligado (o anel branco do navegador). O destaque e desenhado com `box-shadow`, que nao e cortado pelo `overflow` dos carrosséis. |
+
+### Tema (claro / escuro)
+
+O tema **escuro** e o padrao. O toggle fica no modal de configuracoes e a
+preferencia e salva em `localStorage` (`webtv:v2:theme`). As cores vem de
+variaveis CSS (`html[data-theme]`), entao a troca e instantanea e nao ha
+"flash" no carregamento (um script no `index.html` aplica o tema salvo
+antes da primeira pintura).
+
+O tema claro segue o estilo Apple TV: fundo off-white, contraste suave,
+nenhum branco puro. Logos brancos com fundo transparente (Apple TV,
+Discovery Channel, Adult Swim...) recebem um halo discreto via
+`drop-shadow`, senao sumiriam no card claro.
+
 ## Cache local (localStorage)
 
 O catalogo muda com pouca frequencia, entao a v2 guarda o ultimo resultado em
@@ -112,11 +264,30 @@ npm run lint
   Se a rede falhar, o teste e *skipped* (nao reprova) para nao quebrar o build.
 - `tests/catalogCache.test.mjs` - 11 casos do cache local (TTL, JSON corrompido,
   storage que lanca, versao do formato, etc.).
+- `tests/storage.test.mjs` - 16 casos do storage unificado (IndexedDB +
+  fallback, namespaces, migracao).
+- `tests/theme.test.mjs` - 8 casos do tema (padrao, persistencia, fallback).
+- `tests/usage.test.mjs` - 7 casos do historico de uso.
+- `tests/ranking.test.mjs` - 14 casos do ranking inteligente.
+- `tests/dpad.test.mjs` - 12 casos da heuristica espacial do D-pad (nucleo
+  puro, roda em Node).
 - `tests/cache.e2e.test.mjs` - E2E no browser real via CDP do Edge: 1a carga
   consulta a API, 2a carga usa o cache com **zero** requisicoes, cache expirado
   revalida. Precisa do dev server e do backend local no ar.
 - `../backend/tests/server.test.mjs` - 4 casos do backend (CORS, preflight,
   404, 502 com upstream invalido).
+
+### Verificacoes de D-pad no browser (via CDP do Edge)
+
+```powershell
+$env:CDP_URL = "http://127.0.0.1:9333"
+
+node frontend-v2/tests/verify-dpad.mjs         # geral: barra, Top 10, linhas, modal
+node frontend-v2/tests/verify-dpad-navbar.mjs  # ordem estrita na barra (regressao)
+node frontend-v2/tests/verify-dpad-rows.mjs    # ordem estrita nos carrosseis
+node frontend-v2/tests/verify-dpad-grid.mjs    # grid (4 direcoes) + busca
+node frontend-v2/tests/verify-dpad-ok.mjs      # Enter/OK ativa o item em foco
+```
 
 Resultado atual contra o site real: **156 canais / 7 categorias**.
 
@@ -125,12 +296,27 @@ Resultado atual contra o site real: **156 canais / 7 categorias**.
 ```
 frontend-v2/
 ├── src/
-│   ├── App.tsx                  # UI minimalista de validacao
+│   ├── App.tsx                  # UI + Provider do D-pad
 │   ├── lib/
 │   │   ├── parseEmbedcanais.ts  # re-export tipado do parser compartilhado
 │   │   ├── catalogSource.ts     # COMO buscar: api / live / cors / snapshot
 │   │   ├── catalogLoader.ts     # QUANDO buscar: cache -> snapshot -> rede
-│   │   └── catalogCache.ts      # cache local (localStorage) + TTL
+│   │   ├── catalogCache.ts      # cache local (IndexedDB) + TTL
+│   │   ├── storage.ts           # storage unificado (IndexedDB + localStorage)
+│   │   ├── ranking.ts           # ranking inteligente do Top 10
+│   │   ├── usage.ts             # historico de uso dos canais
+│   │   ├── theme.ts             # tema claro/escuro
+│   │   └── dpad.ts              # MOTOR do D-pad (nucleo puro, sem React)
+│   ├── components/
+│   │   ├── DpadContext.tsx      # provider do D-pad (foco, grupos, camadas)
+│   │   ├── useDpad.ts           # hooks publicos (useDpad, useDpadGroup)
+│   │   ├── Header.tsx           # barra superior + busca em tela cheia
+│   │   ├── TopRow.tsx           # bloco "Top 10"
+│   │   ├── Row.tsx              # linha de canais (rolagem infinita)
+│   │   ├── ChannelCard.tsx      # card de canal
+│   │   ├── ModalDialog.tsx      # modal dialog (camada do D-pad)
+│   │   ├── SettingsPanel.tsx    # conteudo do modal de configuracoes
+│   │   └── VirtualKeyboard.tsx  # teclado virtual (on-screen)
 │   ├── main.tsx
 │   └── styles.css
 ├── scripts/

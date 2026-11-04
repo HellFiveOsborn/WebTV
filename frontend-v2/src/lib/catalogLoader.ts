@@ -23,9 +23,9 @@ import {
   loadSnapshot,
   saveCatalogCache,
   SNAPSHOT_URL,
-} from './catalogSource'
-import { clearCache, getCacheStatus } from './catalogCache'
-import { EmbedcanaisCatalog } from './parseEmbedcanais'
+} from './catalogSource.js'
+import { clearCache, getCacheStatus } from './catalogCache.js'
+import { EmbedcanaisCatalog } from './parseEmbedcanais.js'
 
 export interface InitialLoad {
   /** Dados prontos para render (cache, snapshot ou rede). Null se tudo falhou. */
@@ -53,14 +53,14 @@ export async function loadInitialCatalog(options?: {
   let cacheCleared = false
 
   if (options?.forceRefresh) {
-    clearCache()
+    await clearCache()
     cacheCleared = true
   }
 
   // 1) Cache local (instantaneo, sem rede).
-  const status = getCacheStatus<EmbedcanaisCatalog>()
+  const status = await getCacheStatus<EmbedcanaisCatalog>()
   if (!options?.forceRefresh && status.entry && status.usable) {
-    const cached = loadCachedCatalog()
+    const cached = await loadCachedCatalog()
     if (cached) {
       return {
         result: cached,
@@ -79,7 +79,7 @@ export async function loadInitialCatalog(options?: {
   if (snapshot.ok) {
     // O snapshot e um artefato de build: a "idade" do dado e o
     // `generatedAt` dele, nao o momento em que o arquivo foi lido.
-    cacheSnapshot(snapshot.result.catalog, SNAPSHOT_URL)
+    await cacheSnapshot(snapshot.result.catalog, SNAPSHOT_URL)
     return {
       result: snapshot.result,
       strategy: 'snapshot',
@@ -122,7 +122,10 @@ export async function revalidateCatalog(options?: {
  * Grava um catalogo no cache local usando o `generatedAt` do proprio arquivo
  * (o snapshot do build e antigo por definicao - nao usar "agora").
  */
-export function cacheSnapshot(catalog: EmbedcanaisCatalog, source: string): boolean {
+export async function cacheSnapshot(
+  catalog: EmbedcanaisCatalog,
+  source: string,
+): Promise<boolean> {
   const generatedAt = Date.parse((catalog as unknown as { generatedAt?: string }).generatedAt ?? '')
   return saveCatalogCache(catalog, source, Number.isFinite(generatedAt) ? generatedAt : undefined)
 }

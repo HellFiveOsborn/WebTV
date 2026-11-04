@@ -1,13 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Attempt,
   STRATEGY_LABEL,
   clearLocalCache,
   getLocalCacheStatus,
 } from './lib/catalogSource'
+import { CacheStatus } from './lib/catalogCache'
 import { loadInitialCatalog, revalidateCatalog } from './lib/catalogLoader'
-import { formatAge } from './lib/catalogCache'
-import { EmbedcanaisCatalog, EmbedcanaisChannel } from './lib/parseEmbedcanais'
+import { EmbedcanaisCatalog } from './lib/parseEmbedcanais'
+import { Theme, readTheme, writeTheme } from './lib/theme'
+import { UsageMap, readUsage, recordOpen } from './lib/usage'
+import { RankedChannel, rankChannels } from './lib/ranking'
+import { eventBus } from './lib/events'
+import { useBridgeIntegration } from './lib/useBridge'
+import { Header } from './components/Header'
+import { TopRow } from './components/TopRow'
+import { Row } from './components/Row'
+import { ChannelCard } from './components/ChannelCard'
+import { SettingsPanel } from './components/SettingsPanel'
+import { DpadProvider } from './components/DpadContext'
+import { useDpad, useDpadGroup } from './components/useDpad'
+
+/** Altura da barra superior fixa (a rolagem do D-pad respeita). */
+const TOPBAR_HEIGHT = 96
 
 interface CatalogState {
   catalog: EmbedcanaisCatalog
@@ -15,45 +30,50 @@ interface CatalogState {
   source: string
   fetchedAt: number
 }
-
-function ChannelCard({ channel }: { channel: EmbedcanaisChannel }) {
+export default function App() {
   return (
-    <li className="card">
-      <img
-        className="logo"
-        src={channel.image}
-        alt={`Logo ${channel.name}`}
-        loading="lazy"
-        onError={e => {
-          e.currentTarget.style.visibility = 'hidden'
-        }}
-      />
-      <div className="info">
-        <div className="name">{channel.name || '(sem nome)'}</div>
-        <div className="category">{channel.category}</div>
-        <div className="slug">slug: {channel.slug}</div>
-        <div className="url" title={channel.href}>
-          {channel.href}
-        </div>
-      </div>
-    </li>
+    <DpadProvider stickyTop={TOPBAR_HEIGHT}>
+      <AppContent />
+    </DpadProvider>
   )
 }
 
-export default function App() {
+function AppContent() {
   const [state, setState] = useState<CatalogState | null>(null)
   const [loading, setLoading] = useState(true)
   const [livePending, setLivePending] = useState(false)
-  const [liveDone, setLiveDone] = useState(false)
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [liveError, setLiveError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('all')
-  const [showDetails, setShowDetails] = useState(false)
+  const [category, setCategory] = useState('')
+  const [showAttempts, setShowAttempts] = useState(false)
   /** Idade do cache local em ms (null se nao veio do cache). */
   const [cacheAgeMs, setCacheAgeMs] = useState<number | null>(null)
-  /** true quando os dados veio do cache e nao houve requisicao a rede. */
-  const [fromCacheOnly, setFromCacheOnly] = useState(false)
+  /** Status do cache local (idade + freshness), para o painel de config. */
+  const [cacheStatus, setCacheStatus] = useState<CacheStatus<EmbedcanaisCatalog> | null>(null)
+  /** Tema da interface (dark = padrao). */
+  const [theme, setTheme] = useState<Theme>('dark')
+  /** Historico de uso dos canais (alimenta o ranking do Top 10). */
+  const [usage, setUsage] = useState<UsageMap>({})
+
+  // Carrega tema e historico do storage unificado (assincrono).
+  useEffect(() => {
+    void readTheme().then(setTheme)
+    void readUsage().then(setUsage)
+  }, [])
+
+  // Aplica o tema no <html> (as cores sao controladas por CSS vars).
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next: Theme = prev === 'dark' ? 'light' : 'dark'
+      void writeTheme(next)
+      return next
+    })
+  }, [])
 
   /**
    * Carrega o catalogo.
@@ -74,22 +94,20 @@ export default function App() {
       setLoading(false)
     }
 
+    // Status do cache para o painel de configuracoes.
+    void getLocalCacheStatus().then(setCacheStatus)
+
     // 2) Cache fresco: nada a fazer, nenhuma requisicao de rede.
     if (!initial.needsRevalidation) {
       setLivePending(false)
-      setLiveDone(true)
-      setFromCacheOnly(true)
       return
     }
-
-    setFromCacheOnly(false)
 
     // 3) Revalidacao em background (stale-while-revalidate).
     const res = await revalidateCatalog()
 
     setAttempts(res.attempts)
     setLivePending(false)
-    setLiveDone(true)
 
     if (res.result) {
       // Dados frescos: substituem o cache/snapshot.
@@ -97,9 +115,7 @@ export default function App() {
       setCacheAgeMs(null)
     } else if (initial.result) {
       // Rede falhou: mantem o que ja esta em tela (cache/snapshot) e avisa.
-      setLiveError(
-        'Nao foi possivel atualizar o catalogo online - mostrando a ultima versao salva.',
-      )
+      setLiveError('Nao foi possivel atualizar o catalogo online.')
     } else {
       setLiveError('Nao foi possivel consultar o catalogo online.')
     }
@@ -111,142 +127,241 @@ export default function App() {
 
   const catalog = state?.catalog ?? null
 
-  const filtered = useMemo(() => {
+  /** Canais filtrados pela busca (case/accent-insensitive). */
+  const searched = useMemo(() => {
     if (!catalog) return []
     const q = query.trim().toLocaleLowerCase('pt-BR')
+    if (!q) return catalog.channels
+    return catalog.channels.filter(ch =>
+      `${ch.name} ${ch.category} ${ch.slug}`.toLocaleLowerCase('pt-BR').includes(q),
+    )
+  }, [catalog, query])
 
-    return catalog.channels.filter(ch => {
-      if (category !== 'all' && ch.category !== category) return false
-      if (!q) return true
-      return `${ch.name} ${ch.category} ${ch.slug}`.toLocaleLowerCase('pt-BR').includes(q)
+  /** Canais da categoria selecionada ("" = todas). */
+  const byCategory = useMemo(() => {
+    if (!catalog) return []
+    if (!category) return searched
+    return searched.filter(ch => ch.category === category)
+  }, [catalog, searched, category])
+
+  /**
+   * Top 10 ranqueado: sinais do catalogo (categoria, posicao no site,
+   * marca) + sinais do usuario (frequencia, recencia). Ver lib/ranking.ts.
+   */
+  const featured = useMemo<RankedChannel[]>(() => {
+    if (!catalog) return []
+    return rankChannels(catalog.channels, usage, Date.now(), 10)
+  }, [catalog, usage])
+
+  /** Registra a abertura de um canal (alimenta o ranking futuro). */
+  const handleChannelOpen = useCallback((channel: { slug: string }) => {
+    void recordOpen(channel.slug).then(() => readUsage()).then(setUsage)
+  }, [])
+
+  /*
+   * Integracao com o app Kotlin (Events API).
+   *
+   * O `openChannel` e o que substitui o `href` do card: ele emite
+   * `channel:clicked` (com `id`/`name`/`type` no nivel raiz do
+   * payload) e mantem o Kotlin sincronizado com o canal ativo.
+   */
+  const { active, openChannel, closeChannel, notifyNavigatedHome } =
+    useBridgeIntegration({
+      channels: catalog?.channels.length ?? 0,
+      categories: catalog?.categories.length ?? 0,
+      onOpen: handleChannelOpen,
     })
-  }, [catalog, query, category])
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const ch of catalog?.channels ?? []) {
-      map.set(ch.category, (map.get(ch.category) ?? 0) + 1)
-    }
-    return map
-  }, [catalog])
+  /*
+   * "Back" (Esc) fecha o canal aberto.
+   *
+   * O tratador fica na pilha do D-pad: como o canal esta no topo, ele
+   * tem prioridade sobre os modais (configuracoes, busca) - que sao
+   * camadas registradas depois.
+   */
+  const { pushBack } = useDpad()
+  useEffect(() => {
+    if (!active) return
+    return pushBack(closeChannel)
+  }, [active, closeChannel, pushBack])
 
-  const cacheInfo = getLocalCacheStatus()
+  /**
+   * Linhas horizontais: agrupadas por categoria.
+   * A categoria do canal em destaque fica de fora (ja aparece em destaque).
+   */
+  const rows = useMemo(() => {
+    if (!catalog) return []
+    const featuredCategory = featured[0]?.channel.category
+    return catalog.categories
+      .filter(cat => cat !== featuredCategory)
+      .map(cat => ({
+        category: cat,
+        label: catalog.categoryLabels[cat] || cat,
+        channels: searched.filter(ch => ch.category === cat),
+      }))
+      .filter(row => row.channels.length > 0)
+  }, [catalog, searched, featured])
+
+  const handleSelectCategory = (next: string) => {
+    setCategory(next)
+    // Voltar para a Home limpa a busca: a busca e um filtro global e
+    // esconderia a home inteira enquanto estiver preenchida.
+    if (next === '') setQuery('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    // Avisa o app Kotlin qual categoria foi escolhida.
+    eventBus.emit('category:changed', {
+      categoryId: next || null,
+      categoryName: next
+        ? catalog?.categoryLabels[next] || next
+        : 'Início',
+    })
+
+    // Voltar para a home reseta o estado de injecao do Kotlin.
+    if (next === '') notifyNavigatedHome()
+  }
+
+  /**
+   * Avisa o app Kotlin que a busca mudou.
+   *
+   * O `query` e controlled pelo Header (a busca vive em tela cheia),
+   * entao o evento sai daqui, no unico lugar que conhece o valor.
+   */
+  const handleQueryChange = useCallback((next: string) => {
+    setQuery(next)
+    eventBus.emit('search:changed', { query: next })
+  }, [])
+
+  const handleClearCache = () => {
+    // Limpa o cache e recarrega a pagina: a proxima carga parte do zero.
+    void clearLocalCache().then(() => window.location.reload())
+  }
+
+  /**
+   * O grid (categoria ou resultado de busca) e um grupo do D-pad com as
+   * QUATRO direcoes: as setas andam entre os cards (em linha e em
+   * coluna), como em um app de TV.
+   */
+  const gridRef = useRef<HTMLUListElement | null>(null)
+  const setGridRef = useDpadGroup('grid', {
+    priority: 80,
+    axes: 'both',
+  })
+
+  const attachGrid = useCallback(
+    (node: HTMLUListElement | null) => {
+      gridRef.current = node
+      setGridRef(node)
+    },
+    [setGridRef],
+  )
 
   return (
-    <div className="app">
-      <header>
-        <h1>WebTV v2 - parser embedcanais.online</h1>
+    <div className="app" data-strategy={state?.strategy ?? ''}>
+      <Header
+        categories={catalog?.categories ?? []}
+        categoryLabels={catalog?.categoryLabels ?? {}}
+        activeCategory={category}
+        onSelectCategory={handleSelectCategory}
+        query={query}
+        onQueryChange={handleQueryChange}
+        total={catalog?.channels.length ?? 0}
+        settingsTitle="Configuracoes"
+        settings={
+          <SettingsPanel
+            cacheAgeMs={cacheAgeMs ?? cacheStatus?.ageMs ?? null}
+            cacheFresh={cacheStatus?.fresh ?? false}
+            strategyLabel={state ? STRATEGY_LABEL[state.strategy] : '-'}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            attempts={attempts}
+            showAttempts={showAttempts}
+            onToggleAttempts={() => setShowAttempts(v => !v)}
+            onRefresh={() => void run(true)}
+            onClearCache={handleClearCache}
+          />
+        }
+      />
 
-        {loading && <p className="status">Carregando...</p>}
+      <main className="content">
+        {loading && !state && <p className="status">Carregando catalogo...</p>}
 
-        {state && (
-          <p className="status ok">
-            {state.catalog.channels.length} canais | dados via:{' '}
-            {STRATEGY_LABEL[state.strategy]} | fonte: {state.source}
-          </p>
-        )}
-
-        {fromCacheOnly && (
-          <p className="status ok">
-            Cache local valido ({formatAge(cacheAgeMs)}) - nenhuma requisicao a rede foi feita.
-          </p>
-        )}
-
-        {livePending && <p className="status">Consultando catalogo online...</p>}
-
-        {liveDone && !livePending && state?.strategy === 'api' && (
-          <p className="status ok">Catalogo obtido da API.</p>
-        )}
-
-        {liveDone && !livePending && state?.strategy === 'live' && (
-          <p className="status ok">Requisicao ao vivo concluida com sucesso.</p>
-        )}
+        {livePending && state && <p className="status">Atualizando catalogo...</p>}
 
         {liveError && <p className="status error">{liveError}</p>}
 
         {!loading && !state && <p className="status error">Nao foi possivel carregar os canais.</p>}
 
-        <div className="controls">
-          <button type="button" onClick={() => void run(true)}>
-            Atualizar (ignora cache)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              // Limpa o cache e recarrega a pagina: a proxima carga parte
-              // do zero (vai consultar a rede de novo).
-              clearLocalCache()
-              window.location.reload()
-            }}
-          >
-            Limpar cache
-          </button>
-          <span className="count">
-            cache: {cacheInfo.entry ? formatAge(cacheInfo.ageMs) : 'vazio'}
-            {cacheInfo.entry ? (cacheInfo.fresh ? ' (fresco)' : ' (expirado)') : ''}
-          </span>
-        </div>
-      </header>
-
-      {attempts.length > 0 && (
-        <section className="attempts">
-          <h2>Tentativas de consulta ao catalogo</h2>
-          <ul>
-            {attempts.map((a, i) => (
-              <li key={i} className={a.ok ? 'ok' : 'fail'}>
-                <b>{STRATEGY_LABEL[a.strategy]}</b> {a.ok ? 'OK' : 'FALHOU: ' + a.error}
-                <div className="url">{a.url}</div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {catalog && (
-        <>
-          <section className="controls">
-            <input
-              type="search"
-              placeholder="Buscar canal..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
+        {/* ---------- HOME ---------- */}
+        {catalog && !category && !query && (
+          <>
+            <TopRow
+              title="Top 10"
+              subtitle={
+                Object.keys(usage).length > 0 ? 'seu ranking' : 'destaques do catalogo'
+              }
+              channels={featured}
+              onOpen={openChannel}
             />
-            <select value={category} onChange={e => setCategory(e.target.value)}>
-              <option value="all">Todas ({catalog.channels.length})</option>
-              {catalog.categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {catalog.categoryLabels[cat] || cat} ({counts.get(cat) ?? 0})
-                </option>
-              ))}
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={showDetails}
-                onChange={e => setShowDetails(e.target.checked)}
-              />{' '}
-              Detalhes
-            </label>
-            <span className="count">{filtered.length} exibidos</span>
-          </section>
 
-          <section>
-            <ul className="grid">
-              {filtered.map(ch => (
-                <ChannelCard key={ch.id || ch.slug} channel={ch} />
+            {rows.map(row => (
+              <Row
+                key={row.category}
+                title={row.label}
+                subtitle={`${row.channels.length} canais`}
+                channels={row.channels}
+                onOpen={openChannel}
+              />
+            ))}
+          </>
+        )}
+
+        {/* ---------- CATEGORIA ---------- */}
+        {catalog && category && !query && (
+          <>
+            <section className="section-head">
+              <h2 className="section-title">
+                {catalog.categoryLabels[category] || category}
+              </h2>
+              <p className="section-sub">
+                {byCategory.length} canais nesta categoria
+              </p>
+            </section>
+
+            <ul className="grid" ref={attachGrid}>
+              {byCategory.map(ch => (
+                <li key={ch.id || ch.slug}>
+                  <ChannelCard channel={ch} onSelect={openChannel} />
+                </li>
               ))}
             </ul>
-            {filtered.length === 0 && <p className="status">Nenhum canal encontrado.</p>}
-          </section>
+          </>
+        )}
 
-          {showDetails && catalog.channels[0] && (
-            <section className="raw">
-              <h2>JSON bruto (primeiro canal)</h2>
-              <pre>{JSON.stringify(catalog.channels[0], null, 2)}</pre>
+        {/* ---------- BUSCA ---------- */}
+        {catalog && query && (
+          <>
+            <section className="section-head">
+              <h2 className="section-title">
+                Resultados para &quot;{query}&quot;
+              </h2>
+              <p className="section-sub">{byCategory.length} canais encontrados</p>
             </section>
-          )}
-        </>
-      )}
+
+            {byCategory.length > 0 ? (
+              <ul className="grid" ref={attachGrid}>
+                {byCategory.map(ch => (
+                  <li key={ch.id || ch.slug}>
+                    <ChannelCard channel={ch} onSelect={openChannel} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="status">Nenhum canal encontrado.</p>
+            )}
+          </>
+        )}
+      </main>
     </div>
   )
 }

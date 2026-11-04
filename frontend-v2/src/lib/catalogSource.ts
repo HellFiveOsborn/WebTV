@@ -27,15 +27,14 @@ import {
   EMBEDCANAIS_SOURCE_URL,
   EmbedcanaisCatalog,
   parseEmbedcanaisHtml,
-} from './parseEmbedcanais'
+} from './parseEmbedcanais.js'
 import {
   CacheStatus,
   clearCache,
   getCacheStatus,
   readCache,
   writeCache,
-} from './catalogCache'
-
+} from './catalogCache.js'
 export type LoadStrategy = 'cache' | 'api' | 'live' | 'cors' | 'snapshot'
 
 export interface CatalogResult {
@@ -184,11 +183,11 @@ export async function loadSnapshot(): Promise<
 }
 
 /* ------------------------------------------------------------------ *
- * Cache local (localStorage)
+ * Cache local (storage unificado)
  * ------------------------------------------------------------------ */
 
 /** Status do cache local (idade, freshness). */
-export function getLocalCacheStatus(): CacheStatus<EmbedcanaisCatalog> {
+export async function getLocalCacheStatus(): Promise<CacheStatus<EmbedcanaisCatalog>> {
   return getCacheStatus<EmbedcanaisCatalog>()
 }
 
@@ -196,8 +195,8 @@ export function getLocalCacheStatus(): CacheStatus<EmbedcanaisCatalog> {
  * Le o catalogo guardado no cache local.
  * Devolve null se nao houver cache utilizavel.
  */
-export function loadCachedCatalog(): CatalogResult | null {
-  const status = getCacheStatus<EmbedcanaisCatalog>()
+export async function loadCachedCatalog(): Promise<CatalogResult | null> {
+  const status = await getCacheStatus<EmbedcanaisCatalog>()
   if (!status.entry || !status.usable) return null
 
   return {
@@ -218,21 +217,21 @@ export function loadCachedCatalog(): CatalogResult | null {
  * Nao sobrescreve uma entrada mais nova: o snapshot do build (antigo) nunca
  * deve derrubar um resultado de API recem-baixado.
  */
-export function saveCatalogCache(
+export async function saveCatalogCache(
   catalog: EmbedcanaisCatalog,
   origin: string,
   savedAt?: number,
-): boolean {
-  const current = readCache<EmbedcanaisCatalog>()
+): Promise<boolean> {
+  const current = await readCache<EmbedcanaisCatalog>()
   const stamp = savedAt ?? Date.now()
   if (current && current.savedAt > stamp) return false
 
-  return writeCache<EmbedcanaisCatalog>(catalog, origin, undefined, stamp)
+  return writeCache<EmbedcanaisCatalog>(catalog, origin, stamp)
 }
 
 /** Limpa o cache local (usado pelo botao "limpar cache"). */
-export function clearLocalCache(): void {
-  clearCache()
+export async function clearLocalCache(): Promise<void> {
+  await clearCache()
 }
 
 /* ------------------------------------------------------------------ *
@@ -271,8 +270,12 @@ export async function loadCatalog(options?: LoadCatalogOptions): Promise<{
   const apiUrl = options?.apiUrl ?? API_URL
   const useCache = options?.cache !== false
 
-  const finish = (catalog: EmbedcanaisCatalog, strategy: LoadStrategy, source: string) => {
-    if (useCache) saveCatalogCache(catalog, source)
+  const finish = async (
+    catalog: EmbedcanaisCatalog,
+    strategy: LoadStrategy,
+    source: string,
+  ) => {
+    if (useCache) await saveCatalogCache(catalog, source)
     return {
       ok: true,
       result: { catalog, strategy, source, fetchedAt: Date.now() },
@@ -318,7 +321,7 @@ export async function loadCatalog(options?: LoadCatalogOptions): Promise<{
         (outcome.result.catalog as unknown as { generatedAt?: string }).generatedAt ?? '',
       )
       if (useCache) {
-        saveCatalogCache(
+        await saveCatalogCache(
           outcome.result.catalog,
           SNAPSHOT_URL,
           Number.isFinite(generatedAt) ? generatedAt : undefined,
