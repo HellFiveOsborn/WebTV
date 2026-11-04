@@ -8,6 +8,10 @@ import react from '@vitejs/plugin-react'
  *   /api/channels    -> backend local (backend/server.mjs, porta 8080)
  *   /api/embedcanais -> o site embedcanais.online (mesma origem => sem CORS)
  *
+ * A URL BASE da API em dev e `/api` (o `API_URL`): o app acrescenta o
+ * `/channels` e consulta `/api/channels`, que o proxy leva para o
+ * backend local.
+ *
  * Em PRODUCAO (GitHub Pages) nao ha proxy: o app usa a API publica
  * (Netlify Function, via VITE_API_URL) e o snapshot gerado no build.
  */

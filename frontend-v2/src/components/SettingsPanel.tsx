@@ -2,6 +2,7 @@ import { Attempt, STRATEGY_LABEL } from '../lib/catalogSource'
 import { formatAge } from '../lib/catalogCache'
 import { Theme } from '../lib/theme'
 import { DPAD_ITEM_ATTR } from '../lib/dpad.js'
+import { ApiUrlField } from './ApiUrlField'
 
 interface SettingsPanelProps {
   /** Idade do cache local em ms (null se nao houver). */
@@ -21,6 +22,14 @@ interface SettingsPanelProps {
   onToggleAttempts: () => void
   onRefresh: () => void
   onClearCache: () => void
+  /** URL da API embutida no build (o padrao). */
+  buildApiUrl: string
+  /** URL efetiva em uso (override do usuario ou a do build). */
+  currentApiUrl: string
+  /** Grava a URL escolhida. */
+  onSaveApiUrl: (url: string) => void
+  /** Volta para a URL do build (apaga o override). */
+  onResetApiUrl: () => void
 }
 
 /**
@@ -40,6 +49,10 @@ export function SettingsPanel({
   onToggleAttempts,
   onRefresh,
   onClearCache,
+  buildApiUrl,
+  currentApiUrl,
+  onSaveApiUrl,
+  onResetApiUrl,
 }: SettingsPanelProps) {
   const isDark = theme === 'dark'
 
@@ -128,6 +141,18 @@ export function SettingsPanel({
             Limpar cache
           </button>
         </div>
+      </section>
+
+      {/* ---------- API ---------- */}
+      <section className="settings-section">
+        <h3 className="settings-section-title">API</h3>
+
+        <ApiUrlField
+          buildApiUrl={buildApiUrl}
+          currentApiUrl={currentApiUrl}
+          onSave={onSaveApiUrl}
+          onReset={onResetApiUrl}
+        />
       </section>
 
       {/* ---------- Diagnostico ---------- */}

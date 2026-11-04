@@ -35,6 +35,7 @@ import {
   readCache,
   writeCache,
 } from './catalogCache.js'
+import { readApiUrl, pickApiUrl, resolveChannelsUrl } from './apiUrl.js'
 export type LoadStrategy = 'cache' | 'api' | 'live' | 'cors' | 'snapshot'
 
 export interface CatalogResult {
@@ -54,7 +55,7 @@ export interface Attempt {
 
 export const STRATEGY_LABEL: Record<LoadStrategy, string> = {
   cache: 'cache local',
-  api: 'API (Suga)',
+  api: 'API (backend)',
   live: 'live (direto)',
   cors: 'proxy CORS',
   snapshot: 'snapshot (build)',
@@ -64,16 +65,38 @@ export const STRATEGY_LABEL: Record<LoadStrategy, string> = {
 export const SNAPSHOT_URL = `${import.meta.env.BASE_URL}data/embedcanais.json`
 
 /**
- * URL da API do catalogo (Netlify Function).
+ * URL BASE da API do catalogo (Netlify Function) - PADRAO do build.
  *
- * Em dev o Vite faz proxy de `/api/channels` para o backend local
- * (http://127.0.0.1:8080), entao o app roda sem configuracao extra.
+ * Este e o valor PADRAO: a API real do projeto, embutida no bundle.
+ * A var de repositorio `VITE_API_URL` pode sobrescreve-lo no build.
  *
- * Em producao a API vive no Netlify. Defina `VITE_API_URL` no build
- * (ou ajuste aqui) para apontar para ela.
+ * Em dev o Vite tambem expoe o proxy `/api/channels` (backend local,
+ * porta 8080): basta definir `VITE_API_URL=/api` no `.env` local para
+ * usar o backend em vez da API publicada.
+ *
+ * Este valor e a BASE: o app acrescenta o `/channels` para montar o
+ * endpoint (ver `lib/apiUrl.ts`).
+ *
+ * O usuario pode TROCAR essa URL na tela de fallback (sem rebuild):
+ * o override fica no storage (`lib/apiUrl.ts`) e vence este valor.
  */
 export const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) || '/api/channels'
+  (import.meta.env.VITE_API_URL as string | undefined) || 'https://webtv-api.netlify.app'
+
+/**
+ * URL BASE que o app usa AGORA (override do usuario ou a do build).
+ */
+export async function getEffectiveApiUrl(): Promise<string> {
+  const override = await readApiUrl()
+  return pickApiUrl(override, API_URL)
+}
+
+/**
+ * ENDPOINT que sera consultado (a base + `/channels`).
+ */
+export async function getEffectiveApiEndpoint(): Promise<string> {
+  return resolveChannelsUrl(await getEffectiveApiUrl())
+}
 
 /**
  * Em dev, o Vite tem um proxy para o site (mesma origem => sem CORS).
@@ -267,7 +290,11 @@ export async function loadCatalog(options?: LoadCatalogOptions): Promise<{
   attempts: Attempt[]
 }> {
   const attempts: Attempt[] = []
-  const apiUrl = options?.apiUrl ?? API_URL
+  // Sem `apiUrl` explicito, usa a URL base efetiva (override do usuario
+  // ou a do build) e deriva o endpoint (+ /channels). A leitura do
+  // storage e async - por isso a funcao ja e async.
+  const baseUrl = options?.apiUrl ?? (await getEffectiveApiUrl())
+  const apiUrl = resolveChannelsUrl(baseUrl)
   const useCache = options?.cache !== false
 
   const finish = async (

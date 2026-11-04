@@ -20,8 +20,8 @@ interface VirtualKeyboardProps {
   value: string
   /** Chamado quando o texto muda (digitacao ou backspace). */
   onChange: (value: string) => void
-  /** Chamado no botao de microfone. */
-  onMic: () => void
+  /** Chamado no botao de microfone (omitido quando `showMic` e false). */
+  onMic?: () => void
   /** Chamado no botao de confirmar (fecha a busca). */
   onOk: () => void
   /** Chamado no botao de recolher o teclado. */
@@ -36,10 +36,19 @@ interface VirtualKeyboardProps {
    * campo de texto nao recebe foco (evita o teclado nativo do sistema).
    */
   exclusive?: boolean
+  /**
+   * false = esconde a tecla de microfone.
+   *
+   * Usado quando a busca por voz nao faz sentido (digitar uma URL, por
+   * exemplo).
+   */
+  showMic?: boolean
+  /** Rotulo da tecla de confirmar (padrao: "Buscar"). */
+  okLabel?: string
 }
 
 /** Constrói as linhas do teclado de letras. */
-function letterRows(): KeyDef[][] {
+function letterRows(showMic: boolean, okLabel: string): KeyDef[][] {
   const chars = (s: string): KeyDef[] => s.split('').map(c => ({ kind: 'char', value: c }))
   return [
     chars('qwertyuiop'),
@@ -48,16 +57,16 @@ function letterRows(): KeyDef[][] {
     [
       { kind: 'switch', label: '123', ariaLabel: 'Trocar para simbolos' },
       { kind: 'esc', label: 'Esc', ariaLabel: 'Esc - fechar busca' },
-      { kind: 'mic', ariaLabel: 'Pesquisar por voz' },
+      ...(showMic ? [{ kind: 'mic' as const, ariaLabel: 'Pesquisar por voz' }] : []),
       { kind: 'space', label: 'Espaco', ariaLabel: 'Espaco' },
       { kind: 'backspace', ariaLabel: 'Apagar' },
-      { kind: 'ok', label: 'Buscar', ariaLabel: 'Buscar' },
+      { kind: 'ok', label: okLabel, ariaLabel: okLabel },
     ],
   ]
 }
 
 /** Constrói as linhas do teclado de numeros e simbolos. */
-function symbolRows(): KeyDef[][] {
+function symbolRows(showMic: boolean, okLabel: string): KeyDef[][] {
   const chars = (s: string): KeyDef[] => s.split('').map(c => ({ kind: 'char', value: c }))
   return [
     chars('1234567890'),
@@ -66,10 +75,10 @@ function symbolRows(): KeyDef[][] {
     [
       { kind: 'switch', label: 'ABC', ariaLabel: 'Trocar para letras' },
       { kind: 'esc', label: 'Esc', ariaLabel: 'Esc - fechar busca' },
-      { kind: 'mic', ariaLabel: 'Pesquisar por voz' },
+      ...(showMic ? [{ kind: 'mic' as const, ariaLabel: 'Pesquisar por voz' }] : []),
       { kind: 'space', label: 'Espaco', ariaLabel: 'Espaco' },
       { kind: 'backspace', ariaLabel: 'Apagar' },
-      { kind: 'ok', label: 'Buscar', ariaLabel: 'Buscar' },
+      { kind: 'ok', label: okLabel, ariaLabel: okLabel },
     ],
   ]
 }
@@ -90,14 +99,35 @@ export function VirtualKeyboard({
   onClose,
   listening = false,
   exclusive = false,
+  showMic = true,
+  okLabel = 'Buscar',
 }: VirtualKeyboardProps) {
   const [symbols, setSymbols] = useState(false)
   const [row, setRow] = useState(0)
   const [col, setCol] = useState(0)
   const keyRefs = useRef<Array<Array<HTMLButtonElement | null>>>([])
-  const { setFocus } = useDpad()
+  const rootRef = useRef<HTMLDivElement>(null)
+  const { setFocus, pushLayer } = useDpad()
 
-  const rows = symbols ? symbolRows() : letterRows()
+  const rows = symbols ? symbolRows(showMic, okLabel) : letterRows(showMic, okLabel)
+
+  /**
+   * O teclado virtual e a PROPRIA camada do D-pad.
+   *
+   * `captureArrows: true`: as setas sao do teclado (ele tem o proprio
+   * listener) - o motor nao pode roubar a tecla.
+   *
+   * `autoFocus: false`: o foco nao vai para o primeiro item do DOM, e
+   * sim para a TECLA ATIVA - que e o que o usuario ve destacado.
+   */
+  useEffect(() => {
+    return pushLayer({
+      id: 'vkb',
+      root: rootRef.current,
+      captureArrows: true,
+      autoFocus: false,
+    })
+  }, [pushLayer])
 
   /** Move a selecao para a tecla mais proxima da linha alvo. */
   const moveTo = useCallback(
@@ -124,7 +154,7 @@ export function VirtualKeyboard({
           onChange(value.slice(0, -1))
           break
         case 'mic':
-          onMic()
+          onMic?.()
           break
         case 'ok':
           onOk()
@@ -224,7 +254,7 @@ export function VirtualKeyboard({
   }, [row, col, exclusive, setFocus])
 
   return (
-    <div className="vkb" aria-label="Teclado virtual">
+    <div className="vkb" aria-label="Teclado virtual" ref={rootRef} data-dpad-capture-arrows>
       <div className="vkb-head">
         <span className="vkb-title">{symbols ? 'Simbolos' : 'Letras'}</span>
         <button
@@ -254,13 +284,11 @@ export function VirtualKeyboard({
               const label =
                 key.kind === 'char'
                   ? key.value
-                  : key.kind === 'switch'
+                  : key.kind === 'switch' || key.kind === 'esc' || key.kind === 'ok'
                     ? key.label
                     : key.kind === 'space'
                       ? ''
-                      : key.kind === 'ok'
-                        ? key.label
-                        : ''
+                      : ''
 
               return (
                 <button

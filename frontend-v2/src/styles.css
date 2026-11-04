@@ -895,6 +895,258 @@ html[data-theme='light'] .search-overlay-input::-webkit-search-cancel-button {
 }
 
 /* ------------------------------------------------------------------ *
+ * Tela de fallback (API fora do ar, sem cache)
+ * ------------------------------------------------------------------ */
+
+/*
+ * A tela aparece SO quando nao ha nada para renderizar: nem cache, nem
+ * snapshot, nem rede. E o lugar onde o usuario troca a URL da API sem
+ * precisar de rebuild/deploy.
+ */
+.api-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--bg-glow), transparent 60%),
+    var(--bg);
+}
+
+.api-fallback-card {
+  width: min(560px, 100%);
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+}
+
+.api-fallback-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.api-fallback-title {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.api-fallback-text {
+  margin: 0 0 24px;
+  color: var(--fg-muted);
+  line-height: 1.55;
+}
+
+.api-fallback-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.api-fallback-field-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.api-fallback-field-row .api-fallback-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Botao que abre o teclado virtual (controle remoto). */
+.api-fallback-keyboard-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--hover-surface);
+  color: var(--fg-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.api-fallback-keyboard-btn:hover {
+  background: var(--hover-surface-strong);
+  color: var(--fg);
+}
+
+.api-fallback-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--fg);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 14px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.api-fallback-input:focus {
+  outline: none;
+  /*
+   * O foco usa uma cor NEUTRA: o `--accent` da casa e vermelho e
+   * pareceria um erro (a URL estava valida).
+   */
+  border-color: var(--fg-dim);
+  background: var(--bg-input-focus);
+  box-shadow: 0 0 0 3px var(--hover-surface);
+}
+
+.api-fallback-input[aria-invalid='true'] {
+  border-color: var(--danger);
+  background: var(--accent-soft);
+}
+
+.api-fallback-error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.api-fallback-hint {
+  margin: 12px 0 0;
+  color: var(--fg-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Previa do endpoint que sera consultado. */
+.api-fallback-endpoint {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--fg-muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.api-fallback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.api-fallback-actions button {
+  flex: 1 1 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--hover-surface);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.api-fallback-actions button:hover:not(:disabled) {
+  background: var(--hover-surface-strong);
+  transform: translateY(-1px);
+}
+
+.api-fallback-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.api-fallback-actions button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.api-fallback-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Diagnostico */
+.api-fallback-details {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.api-fallback-details summary {
+  color: var(--fg-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.api-fallback-details summary:hover {
+  color: var(--fg);
+}
+
+.api-fallback-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
+.api-fallback-meta dt {
+  color: var(--fg-faint);
+}
+
+.api-fallback-meta dd {
+  margin: 0;
+  color: var(--fg-muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.api-fallback-attempts {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.api-fallback-attempts li {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12px;
+}
+
+.api-fallback-attempts li.ok {
+  color: var(--ok);
+}
+
+.api-fallback-attempts li.fail {
+  color: var(--danger);
+}
+
+.api-fallback-attempts .url {
+  display: block;
+  color: var(--fg-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ *
  * Bloco "Top 10" (card grande + cards menores ao lado)
  * ------------------------------------------------------------------ */
 

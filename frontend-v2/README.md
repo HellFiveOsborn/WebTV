@@ -43,6 +43,38 @@ os dados + o log de tentativas.
 >
 > Detalhes do backend em [`../backend/README.md`](../backend/README.md).
 
+### Trocar a URL da API sem publicar nada
+
+A URL da API fica **embutida no bundle** (`VITE_API_URL`). Isso significa que
+trocar a API exigiria rebuild + deploy - ou seja, um push a cada queda.
+
+Para evitar isso, a v2 tem um **override local** da URL da API:
+
+- A tela de **fallback** (quando a API cai e nao ha cache para renderizar)
+  deixa trocar a URL **na hora**, com o teclado virtual do controle remoto.
+- O painel de **configuracoes** tem o mesmo campo, para trocar a API a
+  qualquer momento.
+- O override fica no storage unificado (namespace `apiUrl`) e **vence** a URL
+  do build. Ele e local: **nao altera o bundle publicado** - serve para o
+  aparelho do usuario continuar funcionando enquanto a API oficial volta.
+
+**So a base e necessaria.** O app acrescenta o `/channels` sozinho:
+
+| O usuario digita | O app consulta |
+|---|---|
+| `https://api.exemplo.com` | `https://api.exemplo.com/channels` |
+| `https://api.exemplo.com/v1` | `https://api.exemplo.com/v1/channels` |
+| `https://api.exemplo.com/channels` | `https://api.exemplo.com/channels` |
+
+> **O que aparece no campo:** a URL BASE em uso (a do build ou a que o
+> usuario trocou). O path `/channels` e responsabilidade do app - quem
+> configura a API informa so o host.
+
+> **Quando a tela de fallback aparece:** SO quando nao ha nada para
+> renderizar - nem cache local, nem snapshot do build, nem rede. Com o
+> cache ou o snapshot disponivel, a app mostra o catalogo velho e avisa que
+> a atualizacao online falhou.
+
 ## Interface
 
 A v2 replica o visual de um catalogo de streaming (referencia: tela "Top 10").
@@ -53,7 +85,8 @@ A v2 replica o visual de um catalogo de streaming (referencia: tela "Top 10").
 | Linhas horizontais | Home | Uma linha por categoria, com setas de navegacao (aparecem no hover). |
 | Grid | Categoria / busca | Todos os canais da categoria ou do resultado da busca. |
 | Busca | Icone na barra superior | Abre uma tela cheia com teclado virtual (celular) e **microfone** (Web Speech API, `pt-BR`). |
-| Configuracoes | Icone de engrenagem | Modal dialog (fundo desfocado, foco preso, navegacao por setas) com tema e acoes de cache. |
+| Configuracoes | Icone de engrenagem | Modal dialog (fundo desfocado, foco preso, navegacao por setas) com tema, acoes de cache e a **URL da API**. |
+| Tela de fallback | So quando nao ha dados | Explica a falha e permite **trocar a URL da API** (com teclado virtual). |
 
 **Clique no canal** abre o endereco *redirect* do catalogo
 (`https://embedcanaisdetv.xyz/e/index.php?canal=<slug>/`) em nova aba - e o
@@ -302,6 +335,7 @@ frontend-v2/
 │   │   ├── catalogSource.ts     # COMO buscar: api / live / cors / snapshot
 │   │   ├── catalogLoader.ts     # QUANDO buscar: cache -> snapshot -> rede
 │   │   ├── catalogCache.ts      # cache local (IndexedDB) + TTL
+│   │   ├── apiUrl.ts             # override da URL da API (local, sem rebuild)
 │   │   ├── storage.ts           # storage unificado (IndexedDB + localStorage)
 │   │   ├── ranking.ts           # ranking inteligente do Top 10
 │   │   ├── usage.ts             # historico de uso dos canais
@@ -316,6 +350,8 @@ frontend-v2/
 │   │   ├── ChannelCard.tsx      # card de canal
 │   │   ├── ModalDialog.tsx      # modal dialog (camada do D-pad)
 │   │   ├── SettingsPanel.tsx    # conteudo do modal de configuracoes
+│   │   ├── ApiFallbackScreen.tsx # tela de fallback (API fora do ar, sem cache)
+│   │   ├── ApiUrlField.tsx      # campo da URL da API (com teclado virtual)
 │   │   └── VirtualKeyboard.tsx  # teclado virtual (on-screen)
 │   ├── main.tsx
 │   └── styles.css
@@ -336,6 +372,11 @@ frontend-v2/
   repositorio **`VITE_API_URL`** (definida como
   `https://webtv-api.netlify.app/channels`). Sem essa var, o frontend cai para
   o snapshot do build.
+
+> **A URL da API pode ser trocada em runtime.** A var do repositorio define o
+> PADRAO do build; o usuario pode apontar para outra API na tela de fallback
+> (ou no painel de configuracoes) sem nenhum deploy. Ver "Trocar a URL da API
+> sem publicar nada".
 
 > **Um workflow so.** `actions/upload-pages-artifact` envia o site inteiro, entao
 > dois workflows publicando no mesmo Pages sobrescrevem um ao outro (o ultimo a

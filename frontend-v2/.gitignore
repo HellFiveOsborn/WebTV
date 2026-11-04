@@ -2,6 +2,11 @@
 dist/
 node_modules/
 
+# Env local (o .env.example e versionado)
+.env
+.env.local
+.env.*.local
+
 # O snapshot E versionado como fallback (o CI regenera a cada build).
 # Comente a linha abaixo para nao versionar.
 # public/data/embedcanais.json

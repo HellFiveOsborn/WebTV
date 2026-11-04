@@ -69,7 +69,7 @@ const mod = await loadModule()
 const { get, set, remove, clearAll, info, convertLegacy, NAMESPACES, LEGACY_KEYS } = mod
 
 test('storage: os namespaces esperados existem', () => {
-  assert.deepEqual([...NAMESPACES], ['catalog', 'usage', 'theme'])
+  assert.deepEqual([...NAMESPACES], ['catalog', 'usage', 'theme', 'apiUrl'])
 })
 
 test('storage: grava, le e apaga um valor', async () => {

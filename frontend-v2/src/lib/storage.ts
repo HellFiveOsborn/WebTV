@@ -14,6 +14,7 @@
  *   `catalog`  - catalogo de canais (cache da API/snapshot)
  *   `usage`    - historico de uso (canais abertos: frequencia/recencia)
  *   `theme`    - preferencia de tema (claro/escuro)
+ *   `apiUrl`   - URL da API do catalogo escolhida pelo usuario
  *
  * REGRAS:
  *   - a API e assincrona (Promise), igual em todos os stores;
@@ -24,10 +25,15 @@
  */
 
 /** Nome de um namespace (store) do banco local. */
-export type Namespace = 'catalog' | 'usage' | 'theme'
+export type Namespace = 'catalog' | 'usage' | 'theme' | 'apiUrl'
 
 /** Todos os namespaces conhecidos. */
-export const NAMESPACES: readonly Namespace[] = ['catalog', 'usage', 'theme'] as const
+export const NAMESPACES: readonly Namespace[] = [
+  'catalog',
+  'usage',
+  'theme',
+  'apiUrl',
+] as const
 
 /** Versao do banco local. Incrementar dispara a migracao. */
 export const DB_VERSION = 1
@@ -43,6 +49,7 @@ export const LEGACY_KEYS: Record<Namespace, string> = {
   catalog: 'webtv:v2:catalog',
   usage: 'webtv:v2:usage',
   theme: 'webtv:v2:theme',
+  apiUrl: 'webtv:v2:apiUrl',
 }
 
 /* ------------------------------------------------------------------ *
@@ -328,6 +335,14 @@ export function convertLegacy(namespace: Namespace, value: unknown): unknown | u
 
     case 'theme': {
       if (value === 'dark' || value === 'light') return { theme: value }
+      return undefined
+    }
+
+    case 'apiUrl': {
+      // legado: a URL era guardada como texto puro.
+      if (typeof value === 'string' && value) return { url: value }
+      const v = value as { url?: unknown } | null
+      if (v && typeof v.url === 'string' && v.url) return { url: v.url }
       return undefined
     }
 
