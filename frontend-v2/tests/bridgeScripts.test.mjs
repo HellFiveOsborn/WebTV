@@ -78,6 +78,18 @@ test('emitScriptsLoaded monta o payload com o gist primeiro', () => {
   )
 })
 
+test('emitScriptsLoaded NAO usa unshift (o script do canal ficaria antes do gist)', () => {
+  // O `unshift` colocaria o script do canal ANTES do gist no payload. O
+  // Kotlin indexa na ordem do payload, entao a chave do canal entraria
+  // primeiro no LRU de 50 - e o gist (70 channelIds) a expulsaria.
+  const body = emitScriptsLoadedBody()
+
+  assert.ok(
+    !/unshift\(/.test(body),
+    'nao pode usar unshift: o canal precisa ser indexado depois do gist',
+  )
+})
+
 test('emitScriptsLoaded entrega o player simples no payload', () => {
   const body = emitScriptsLoadedBody()
 
@@ -215,6 +227,29 @@ test('com a ordem antiga, o canal da v2 era expulso (o bug)', () => {
     scripts,
     undefined,
     'a ordem antiga expulsa o canal - e o player simples nunca era injetado',
+  )
+})
+
+test('um script da v2 antes do gist faz o BANNER ser expulso', () => {
+  // O `channelScripts` do Kotlin guarda uma LISTA por canal. O que
+  // importa e a POSICAO da CHAVE do canal no LRU, nao a do script.
+  //
+  // Se o banner fosse indexado antes do gist (com `unshift`), a chave do
+  // canal entraria primeiro no LRU de 50 - e o gist (70 channelIds) a
+  // expulsaria. O banner (e o player simples) ficariam sem injetar.
+  const channelScripts = new KotlinLru(50)
+
+  const vip = { id: VIP_ID, channelIds: [V2_CHANNEL] }
+  const simple = { id: PLAYER_ID, channelIds: [V2_CHANNEL] }
+
+  // Banner na frente (o que o `unshift` faria), player simples atras.
+  indexScripts(channelScripts, [vip, ...GIST, simple])
+
+  const scripts = channelScripts.peek(V2_CHANNEL)
+  assert.ok(scripts, 'o canal esta no LRU')
+  assert.ok(
+    !scripts.includes(VIP_ID),
+    'com o banner indexado antes do gist, ele seria expulso do LRU',
   )
 })
 

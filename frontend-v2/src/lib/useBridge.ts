@@ -197,13 +197,18 @@ export function useBridgeIntegration({
 
     // 2) Os scripts da v2 depois, indexados pelo canal aberto: ficam
     //    como as entradas mais recentes do LRU e nao sao expulsos.
-    payload.unshift(
+    //
+    //    Os DOIS precisam ir depois do gist: o `channelScripts` do
+    //    Kotlin guarda uma LISTA por canal, entao o que importa e que
+    //    a CHAVE do canal entre depois (e nao a posicao do script no
+    //    payload). Se o canal fosse indexado antes, o gist (70
+    //    channelIds) expulsaria a chave do LRU de 50 - e nem o banner
+    //    nem o player simples seriam injetados.
+    payload.push(
       vipBannerScript({
         channelIds: channelId ? [channelId] : undefined,
         domains: [...VIP_BANNER_SCRIPT_DOMAINS],
       }),
-    )
-    payload.push(
       simplePlayerScript({
         channelIds: channelId ? [channelId] : undefined,
         domains: [...SIMPLE_PLAYER_SCRIPT_DOMAINS],
