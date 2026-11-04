@@ -941,15 +941,125 @@
     postEvent('player:audio:unlocked', { volume: 1 });
   };
 
+  // ─── 10.1 Fechar o canal (Back do controle remoto) ─────────────────
+  //
+  // O "Back" do controle remoto chega na pagina do canal como evento de
+  // DOM: 'Escape', 'Backspace' (D-pad antigo), 'BrowserBack' (Chromium)
+  // ou 'GoBack' (Android TV).
+  //
+  // Quando o WebView consome a tecla, o 'onBackPressed' do Kotlin NAO e
+  // chamado - e o canal ficaria aberto, sem volta para a grade. Por isso
+  // o script trata o "Back" aqui.
+  //
+  // O 'window.WebTV.channel.close()' da 'appBridge.js' do Kotlin so
+  // funciona quando o 'activeId' foi setado na MESMA pagina - e na
+  // pagina do canal ele nao foi (o 'channel:clicked' saiu na grade). Por
+  // isso o script chama o bridge do Kotlin direto, como a v1 faz
+  // ('frontend/src/main.tsx').
+  var BACK_KEY_NAMES = ['Escape', 'Backspace', 'BrowserBack', 'GoBack'];
+  // 4 = KEYCODE_BACK do Android; 166 = BrowserBack (keyCode legado).
+  var BACK_KEY_CODES = [4, 166];
+
+  function isBackKey(event) {
+    if (!event) return false;
+    if (BACK_KEY_NAMES.indexOf(event.key) !== -1) return true;
+    return BACK_KEY_CODES.indexOf(event.keyCode) !== -1;
+  }
+
+  /**
+   * Fecha o canal e avisa o app.
+   *
+   * A ordem importa:
+   *
+   *   1. 'channel:closing' - a 'appBridge.js' do Kotlin usa este evento
+   *      para a transicao de fade (a tela escurece antes de voltar).
+   *   2. o bridge do Kotlin ('onPlayerClosed') - e o que efetivamente
+   *      manda o app voltar para a grade.
+   *   3. 'player:closed' / 'channel:close' - o contrato da Events API.
+   *
+   * @returns true quando o app foi avisado (o "Back" foi consumido).
+   */
+  function closeChannelToApp() {
+    var raw = window.__webtv_channel_info || {};
+    var channelId = String(raw.id || window.__webtvActiveChannelId || '').trim();
+    var channelName = String(
+      raw.name || window.__webtvActiveChannelName || channelInfo().name || ''
+    ).trim();
+    var payload = {
+      channelId: channelId,
+      channelName: channelName,
+      timestamp: Date.now()
+    };
+
+    // 1) O fade de fechamento (o 'appBridge.js' escurece a tela).
+    postEvent('channel:closing', payload);
+
+    // 2) Fecha pelo app.
+    //
+    //    O 'close' da 'appBridge.js' so funciona com 'activeId' - e ele
+    //    nao foi setado na pagina do canal. O script repara o estado e
+    //    chama o bridge direto quando o 'close' nao serve.
+    var channelApi = window.WebTV && window.WebTV.channel;
+    if (channelApi && !channelApi.activeId && channelId) {
+      channelApi.activeId = channelId;
+      channelApi.activeName = channelName;
+    }
+
+    var closed = false;
+    if (channelApi && typeof channelApi.close === 'function' && channelApi.activeId) {
+      try {
+        channelApi.close();
+        closed = true;
+      } catch (e) {}
+    }
+
+    if (!closed && window.WebTVBridge) {
+      var json = JSON.stringify(payload);
+      try {
+        if (typeof window.WebTVBridge.onPlayerClosed === 'function') {
+          window.WebTVBridge.onPlayerClosed(json);
+          closed = true;
+        } else if (typeof window.WebTVBridge.onChannelClosed === 'function') {
+          window.WebTVBridge.onChannelClosed(json);
+          closed = true;
+        }
+      } catch (e) {}
+    }
+
+    // 3) O contrato da Events API.
+    postEvent('player:closed', payload);
+    postEvent('channel:close', payload);
+
+    return closed;
+  }
+
   // DPAD / teclado — OK/Enter (13), DPAD_CENTER (23) e KEYCODE_ENTER (66)
   // abrem a faixa de informacoes do canal. Espaço (32),
   // MediaPlayPause (179) e Play (415) alternam play/pause.
   var KEY_INFO = [13, 23, 66];
   var KEY_PLAY_PAUSE = [32, 179, 415];
   document.addEventListener('keydown', function (event) {
-    var tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    if (document.activeElement && document.activeElement.isContentEditable) return;
+    var active = document.activeElement;
+    var tag = (active && active.tagName || '').toLowerCase();
+    var editable = tag === 'input' || tag === 'textarea' || tag === 'select' ||
+      !!(active && active.isContentEditable);
+
+    // --- Back: fecha o canal ------------------------------------------
+    // Vem antes de tudo: e a acao mais importante do "Back".
+    if (isBackKey(event)) {
+      // Backspace num campo editavel e edicao normal, nao "voltar".
+      if (event.key === 'Backspace' && editable) return;
+      var closed = closeChannelToApp();
+      // So consome a tecla quando o app foi avisado: se nao houver
+      // bridge (navegador), o "Back" nativo continua funcionando.
+      if (closed) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
+    if (editable) return;
 
     if (KEY_INFO.indexOf(event.keyCode) !== -1) {
       event.preventDefault();

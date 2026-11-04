@@ -215,10 +215,40 @@ test('simplePlayerScript embute nome e logo do canal na faixa', () => {
   const end = s.code.indexOf(';\n')
   assert.ok(end > prefix.length)
   assert.deepEqual(JSON.parse(s.code.slice(prefix.length, end)), {
+    id: '',
     name: 'Globo DF',
     image,
   })
   assert.ok(s.code.endsWith(SIMPLE_PLAYER_SCRIPT_CODE), 'o corpo base vem depois')
+})
+
+test('simplePlayerScript embute o id do canal (o "Back" precisa dele)', () => {
+  // O `WebTVBridge.onPlayerClosed` do Kotlin le `json.getString("channelId")`.
+  // O id viaja no prefixo para o script da pagina do canal poder fechar
+  // o canal - la nao existe `window.WebTV.channel.activeId`.
+  const s = simplePlayerScript({
+    channelIds: ['104-globodf'],
+    channel: { id: '104-globodf', name: 'Globo DF' },
+  })
+
+  const prefix = 'window.__webtv_channel_info = '
+  const end = s.code.indexOf(';\n')
+  const info = JSON.parse(s.code.slice(prefix.length, end))
+
+  assert.equal(info.id, '104-globodf')
+  assert.equal(info.name, 'Globo DF')
+})
+
+test('simplePlayerScript sem nome/logo mas com id: embute so o id', () => {
+  const s = simplePlayerScript({ channel: { id: '104-globodf' } })
+
+  const prefix = 'window.__webtv_channel_info = '
+  const end = s.code.indexOf(';\n')
+  const info = JSON.parse(s.code.slice(prefix.length, end))
+
+  assert.equal(info.id, '104-globodf')
+  assert.equal(info.name, '')
+  assert.equal(info.image, '')
 })
 
 test('o prefixo do canal sobrevive ao escaping do Kotlin', () => {
@@ -380,6 +410,59 @@ test('o OK/Enter abre a faixa e nao alterna play/pause', () => {
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('var KEY_INFO = [13, 23, 66]'))
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('var KEY_PLAY_PAUSE = [32, 179, 415]'))
   assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('toggleInfo()'))
+})
+
+/* ------------------------------------------------------------------ *
+ * O "Back" fecha o canal (pagina do canal)
+ * ------------------------------------------------------------------ */
+
+test('o script reconhece as teclas de "Back" do controle remoto', () => {
+  // Sem isso, o "Back" na pagina do canal nao fecharia o canal: o
+  // WebView consome a tecla e o `onBackPressed` do Kotlin nao roda.
+  for (const key of ['Escape', 'Backspace', 'BrowserBack', 'GoBack']) {
+    assert.ok(
+      SIMPLE_PLAYER_SCRIPT_CODE.includes(`'${key}'`),
+      `a tecla ${key} precisa ser reconhecida`,
+    )
+  }
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('function isBackKey(event)'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('function closeChannelToApp()'))
+})
+
+test('o "Back" fecha o canal chamando o bridge do Kotlin', () => {
+  // O `window.WebTV.channel.close()` da `appBridge.js` do Kotlin so
+  // funciona com `activeId` setado - e na pagina do canal ele nao foi.
+  // Por isso o script chama o bridge direto (como a v1 faz).
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('window.WebTVBridge.onPlayerClosed'))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('window.WebTVBridge.onChannelClosed'))
+})
+
+test('o "Back" repara o estado do canal antes de fechar', () => {
+  // `channelApi.activeId = channelId` - e o que faz o
+  // `window.WebTV.channel.close()` funcionar na pagina do canal.
+  assert.ok(
+    SIMPLE_PLAYER_SCRIPT_CODE.includes('channelApi.activeId = channelId'),
+    'o script precisa setar o activeId na pagina do canal',
+  )
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes('window.__webtvActiveChannelId'))
+})
+
+test('o "Back" emite os eventos de fechamento do contrato', () => {
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes("postEvent('channel:closing', payload)"))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes("postEvent('player:closed', payload)"))
+  assert.ok(SIMPLE_PLAYER_SCRIPT_CODE.includes("postEvent('channel:close', payload)"))
+})
+
+test('o "Back" e tratado antes do OK e do play/pause', () => {
+  // Se o "Back" viesse depois, o `KEY_INFO`/`KEY_PLAY_PAUSE` nao
+  // atrapalhariam (teclas diferentes) - mas o tratamento precisa
+  // acontecer antes do `return` dos atalhos.
+  const iBack = SIMPLE_PLAYER_SCRIPT_CODE.indexOf('if (isBackKey(event))')
+  const iInfo = SIMPLE_PLAYER_SCRIPT_CODE.indexOf('KEY_INFO.indexOf(event.keyCode)')
+
+  assert.ok(iBack > 0, 'o Back precisa ser tratado')
+  assert.ok(iInfo > 0, 'o OK precisa ser tratado')
+  assert.ok(iBack < iInfo, 'o Back vem antes dos atalhos')
 })
 
 test('o script usa Hls.js (o player minimo)', () => {

@@ -130,7 +130,51 @@ mesmo contrato do `appBridge.js` que o proprio Kotlin injeta.
 | `search:changed` | Termo da busca mudou | `{query}` |
 | `category:changed` | Categoria escolhida | `{categoryId, categoryName}` |
 | `navigated:home` | Volta para a home | `{timestamp}` |
-| `channel:closing` / `player:closed` / `channel:close` | Fecha o canal | `{channelId, channelName, timestamp}` |
+| `channel:closing` / `player:closed` / `channel:close` | Fecha o canal | `{channelId, channelName, timestamp}` (no **nivel raiz**) |
+
+### Fechar o canal
+
+O fechamento tem tres eventos, **na ordem**:
+
+```
+channel:closing  ->  player:closed  ->  channel:close
+```
+
+- `channel:closing` - o app comeca a fechar (a `appBridge.js` do Kotlin
+  usa este evento para o fade de fechamento).
+- `player:closed` - o canal fechou. E o **unico** destes tres que o guard
+  do Kotlin assina - e o que faz o app voltar para a grade.
+- `channel:close` - o fechamento foi confirmado. O guard do Kotlin nao
+  assina este evento: ele e injetado pelo Kotlin na grade, depois que a
+  grade recarrega.
+
+`channelId` e `channelName` vao no **nivel raiz** do payload: e o que o
+`WebTVBridge` do Kotlin le (`json.getString("channelId")`).
+
+A regra mora em `src/lib/channelClose.ts` (modulo puro, sem React) e o
+`useBridge.ts` so orquestra.
+
+### O "Back" do controle remoto
+
+O "Back" fecha o canal em **duas** paginas:
+
+| Pagina | Quem trata | Como |
+|---|---|---|
+| A grade (a v2) | `DpadContext.tsx` | `Escape`, `Backspace`, `BrowserBack` ou `GoBack` chamam o `closeChannel` da v2. |
+| A pagina do canal | `embedcanais-simple-player.js` (injetado pelo Kotlin) | O script trata a tecla e avisa o app pelo `WebTVBridge`. |
+
+O caso da pagina do canal e o critico: quando o WebView consome a tecla
+do "Back", o `onBackPressed` do Kotlin **nao e chamado** - e o canal
+ficaria aberto. Por isso o script injetado:
+
+1. repara o `window.WebTV.channel.activeId` (o `channel:clicked` saiu na
+   grade, entao o `activeId` nunca chegou na pagina do canal);
+2. chama o `window.WebTV.channel.close()` ou, na falta dele, o
+   `WebTVBridge.onPlayerClosed` **direto** (como a v1 faz);
+3. emite os tres eventos do contrato.
+
+O `id` do canal viaja no prefixo `window.__webtv_channel_info` (o
+script precisa dele: o `WebTVBridge.onPlayerClosed` exige `channelId`).
 
 ### `window.WebTV.channel`
 
@@ -153,6 +197,8 @@ window.WebTV.channel.close()   // fecha o canal e avisa o Kotlin
 | **Os scripts de injecao** | Vem do mesmo gist da v1 (mesma fonte, sem divergencia). O gist envia `Access-Control-Allow-Origin: *`, entao a v2 le direto do browser. |
 | **O player simples nao vem do gist** | O gist tem o script, mas indexado pelos ids de canal da **v1** (`1779525189328`) e pelas URLs do Gist - nenhum casa com a chave da v2 (`${id}-${slug}`). A v2 entrega o seu proprio, indexado pelo canal (ver abaixo). |
 | **A ordem do `scripts:loaded`** | O `channelScripts` do Kotlin e um LRU de **50** entradas, e o gist traz **70 `channelIds`** - que enchem o LRU e expulsam o canal da v2. Por isso o payload vai **gist primeiro, scripts da v2 depois**: o canal indexado por ultimo fica como a entrada mais recente. Ver `lib/useBridge.ts`. |
+| **O fechamento emite uma vez so** | O `player:closed` faz o Kotlin navegar para a grade: emitir duas vezes faria o app fechar, recarregar a grade e fechar de novo. E o updater do `setActive` pode rodar mais de uma vez (StrictMode) - por isso o `closeChannel` le o canal ativo de um **ref** e emite os eventos **fora** do updater. Ver `lib/channelClose.ts`. |
+| **O `player:closed` volta do Kotlin** | O Kotlin injeta `player:closed` na pagina quando o canal fecha. O listener da v2 **nao re-emite** (senao: `player:closed` -> Kotlin -> `player:closed` -> ...): ele so limpa o estado local. |
 
 ## Scripts de injecao (o que o Kotlin injeta na pagina do canal)
 
@@ -174,9 +220,11 @@ evoluido na v2: sem o selo "LIVE", sem controles nativos e com a faixa de
 informacoes do canal. O arquivo e importado com `?raw` e embutido no
 bundle - sem `eval`, sem `new Function`.
 
-O `simplePlayerScript()` aceita `channel: { name, image }` e embute esses
+O `simplePlayerScript()` aceita `channel: { id, name, image }` e embute esses
 dados num prefixo `window.__webtv_channel_info` antes do corpo do script.
 O nome e o logo vem do catalogo da v2; a pagina do player so expoe o slug.
+O `id` e o mesmo que o Kotlin guarda em `activeChannelId` - e o que o
+"Back" usa para fechar o canal (ver "Fechar o canal", acima).
 
 O que ele faz, em resumo:
 
@@ -195,6 +243,10 @@ O que ele faz, em resumo:
    faixa ocupa a metade inferior da tela e some sozinha depois de 6 s.
 6. **Mantem o contrato `window.WebTV.player.*`** (`play`, `pause`, `seek`,
    `volumeUp`, `getStatus`, `quality`, ...) que o app usa.
+7. **Fecha o canal no "Back"** (`Escape`, `Backspace`, `BrowserBack`,
+   `GoBack`): repara o `window.WebTV.channel.activeId` e avisa o app pelo
+   `WebTVBridge` - o `onBackPressed` do Kotlin nao roda quando o WebView
+   consome a tecla.
 
 O E2E (`tests/verify-simple-player.mjs`) verifica o fluxo completo no
 player real: o DOM e trocado, o player original e destruido, o stream
@@ -225,7 +277,9 @@ Regras:
 - **Alinhamento manda**: o alvo na direcao pedida que esta mais alinhado com
   o foco ganha (heuristica espacial em `lib/dpad.ts`).
 - **Enter/OK** ativa o item em foco (o clique nativo).
-- **Esc/Back** sobe um nivel: fecha o modal, sai da busca.
+- **Esc/Back** sobe um nivel: fecha o modal, sai da busca, fecha o canal
+  aberto. As teclas sao `Escape`, `Backspace`, `BrowserBack` e `GoBack`
+  (as mesmas da v1 - ver `lib/channelClose.ts`).
 - A direcao e **estrita**: no fim de uma lista o foco **para** - ele nao da
   a volta nem troca de direcao.
 
@@ -352,6 +406,15 @@ npm run lint
 - `tests/ranking.test.mjs` - 14 casos do ranking inteligente.
 - `tests/dpad.test.mjs` - 12 casos da heuristica espacial do D-pad (nucleo
   puro, roda em Node).
+- `tests/channelClose.test.mjs` - 11 casos do contrato de fechamento (as
+  teclas de Back, a ordem dos tres eventos, o payload no nivel raiz e o
+  "fecha so uma vez").
+- `tests/bridgeScripts.test.mjs` - a entrega dos scripts ao Kotlin (a
+  ordem do payload contra o LRU de 50, a corrida do gist e as invariantes
+  do fechamento).
+- `tests/simplePlayerScript.test.mjs` - o script de injecao do player
+  simples (o prefixo do canal, o "Back", o escaping do Kotlin e o
+  validador do admin).
 - `tests/cache.e2e.test.mjs` - E2E no browser real via CDP do Edge: 1a carga
   consulta a API, 2a carga usa o cache com **zero** requisicoes, cache expirado
   revalida. Precisa do dev server e do backend local no ar.
@@ -368,6 +431,9 @@ node frontend-v2/tests/verify-dpad-navbar.mjs  # ordem estrita na barra (regress
 node frontend-v2/tests/verify-dpad-rows.mjs    # ordem estrita nos carrosseis
 node frontend-v2/tests/verify-dpad-grid.mjs    # grid (4 direcoes) + busca
 node frontend-v2/tests/verify-dpad-ok.mjs      # Enter/OK ativa o item em foco
+node frontend-v2/tests/verify-dpad-back.mjs    # Back/Backspace fecha o canal
+node frontend-v2/tests/verify-bridge.mjs       # contrato com o Kotlin (Events API)
+node frontend-v2/tests/verify-simple-player.mjs # o player e o "Back" na pagina do canal
 ```
 
 Resultado atual contra o site real: **156 canais / 7 categorias**.
@@ -389,6 +455,7 @@ frontend-v2/
 │   │   ├── usage.ts             # historico de uso dos canais
 │   │   ├── theme.ts             # tema claro/escuro
 │   │   ├── dpad.ts              # MOTOR do D-pad (nucleo puro, sem React)
+│   │   ├── channelClose.ts      # CONTRATO do fechamento (nucleo puro, sem React)
 │   │   ├── injectionScripts.ts  # script do banner VIP (injetado pelo Kotlin)
 │   │   ├── simplePlayerScript.ts # script do player simples (EmbedDeCanais)
 │   │   ├── embedcanais-simple-player.js # script do player simples (via ?raw)

@@ -206,11 +206,15 @@ function AppContent() {
     })
 
   /*
-   * "Back" (Esc) fecha o canal aberto.
+   * "Back" (Esc / Backspace / BrowserBack / GoBack) fecha o canal aberto.
    *
-   * O tratador fica na pilha do D-pad: como o canal esta no topo, ele
-   * tem prioridade sobre os modais (configuracoes, busca) - que sao
-   * camadas registradas depois.
+   * O tratador fica na pilha do D-pad. A pilha e LIFO: o ultimo
+   * registrado e o primeiro a responder - e os modais (configuracoes,
+   * busca) sao registrados DEPOIS do canal, entao eles fecham antes.
+   *
+   * O "Back" da pagina do canal (a pagina externa, injetada pelo
+   * Kotlin) e tratado pelo script do player simples - ver
+   * `lib/embedcanais-simple-player.js`.
    */
   const { pushBack } = useDpad()
   useEffect(() => {

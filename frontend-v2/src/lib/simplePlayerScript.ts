@@ -95,6 +95,15 @@ export const SIMPLE_PLAYER_SCRIPT_DOMAINS = [
  * catalogo da v2 e viajam embutidos no codigo entregue ao Kotlin.
  */
 export interface SimplePlayerChannelInfo {
+  /**
+   * Id/chave do canal (`${id}-${slug}`).
+   *
+   * E o mesmo id que o Kotlin guarda em `activeChannelId` - e o que o
+   * `WebTVBridge.onPlayerClosed` exige no payload
+   * (`json.getString("channelId")`). Sem ele, o "Back" na pagina do
+   * canal nao conseguiria fechar o canal.
+   */
+  id?: string
   name?: string
   image?: string
 }
@@ -130,13 +139,14 @@ function jsonForScript(value: unknown): string {
 function buildScriptCode(channel?: SimplePlayerChannelInfo): string {
   if (!channel) return SIMPLE_PLAYER_SCRIPT_CODE
 
+  const id = String(channel.id ?? '').trim()
   const name = String(channel.name ?? '').trim()
   const image = String(channel.image ?? '').trim()
-  if (!name && !image) return SIMPLE_PLAYER_SCRIPT_CODE
+  if (!id && !name && !image) return SIMPLE_PLAYER_SCRIPT_CODE
 
   return (
     'window.__webtv_channel_info = ' +
-    jsonForScript({ name, image }) +
+    jsonForScript({ id, name, image }) +
     ';\n' +
     SIMPLE_PLAYER_SCRIPT_CODE
   )

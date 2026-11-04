@@ -62,6 +62,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EmbedcanaisChannel } from './parseEmbedcanais.js'
 import { emitWhenBridgeReady, eventBus } from './events.js'
+import { emitCloseEvents } from './channelClose.js'
 import { ChannelType, channelKeyOf, channelTypeOf, playerUrlOf } from './channelSession.js'
 import {
   InjectionScript,
@@ -120,6 +121,26 @@ export function useBridgeIntegration({
     name?: string
     image?: string
   } | null>(null)
+  /**
+   * Espelho do canal ativo.
+   *
+   * O `closeChannel` emite eventos - e evento nao pode ser emitido de
+   * dentro de um updater do `setActive`: o React pode executar o
+   * updater mais de uma vez (StrictMode, render concorrente) e o
+   * `player:closed` sairia duas vezes (o que faz o app fechar,
+   * recarregar a grade e fechar de novo).
+   *
+   * O espelho da o canal ativo sem depender do estado - e permite
+   * emitir os eventos FORA do updater.
+   */
+  const activeRef = useRef<ActiveChannel | null>(null)
+  /**
+   * true = o fechamento ja foi emitido.
+   *
+   * Garante que os eventos de fechamento saiam **uma vez** por canal
+   * aberto. Ver `lib/channelClose.ts`.
+   */
+  const closedRef = useRef(false)
 
   /* ------------------------------------------------------------------ *
    * 1) app:loaded
@@ -237,8 +258,10 @@ export function useBridgeIntegration({
       simplePlayerScript({
         channelIds: channelId ? [channelId] : undefined,
         domains: [...SIMPLE_PLAYER_SCRIPT_DOMAINS],
-        // Nome/logo do catalogo da v2: a pagina do player so tem o slug.
-        channel,
+        // Id/nome/logo do catalogo da v2: a pagina do player so tem o
+        // slug. O id e o mesmo que o Kotlin guarda em `activeChannelId`
+        // - e o que o "Back" usa para fechar o canal.
+        channel: channelId ? { id: channelId, ...channel } : channel,
       }),
     )
 
@@ -250,30 +273,50 @@ export function useBridgeIntegration({
    *
    * Chamado pela UI (`closeChannel`) ou por `window.WebTV.channel.close()`
    * (que e o que o Kotlin e o site carregado no WebView chamam).
+   *
+   * ## O que ele emite
+   *
+   * `channel:closing` -> `player:closed` -> `channel:close`, todos com
+   * `channelId`/`channelName` no **nivel raiz** (e o que o `WebTVBridge`
+   * do Kotlin le). O `player:closed` e o evento que o guard do Kotlin
+   * assina - e o que faz o app voltar para a grade.
+   *
+   * ## Por que fora do updater
+   *
+   * O updater do `setActive` pode ser executado mais de uma vez pelo
+   * React. Emitir os eventos de dentro dele duplicaria o fechamento
+   * (o app fecharia, recarregaria a grade e fecharia de novo). Por isso
+   * o canal ativo vem de um ref (`activeRef`) e os eventos saem antes do
+   * `setActive`.
    * ------------------------------------------------------------------ */
   const closeChannel = useCallback(() => {
-    setActive(current => {
-      if (!current) return null
+    const current = activeRef.current
+    if (!current) return
 
-      eventBus.emit('channel:closing', {})
-      eventBus.emit('player:closed', {
+    // O `alreadyClosed` e lido ANTES de marcar: e ele que decide se os
+    // eventos saem ou nao.
+    const alreadyClosed = closedRef.current
+    closedRef.current = true
+
+    emitCloseEvents(
+      (type, payload) => eventBus.emit(type, payload),
+      {
         channelId: current.key,
         channelName: current.channel.name,
-      })
-      eventBus.emit('channel:close', {
-        channelId: current.key,
-        channelName: current.channel.name,
-        timestamp: Date.now(),
-      })
+        alreadyClosed,
+      },
+    )
 
-      const api = window.WebTV?.channel
-      if (api) {
-        api.activeId = null
-        api.activeName = null
-      }
+    // Limpa a API do canal: o Kotlin e o site leem `activeId`/`activeName`.
+    const api = window.WebTV?.channel
+    if (api) {
+      api.activeId = null
+      api.activeName = null
+    }
 
-      return null
-    })
+    // Limpa o estado (fora do updater - os efeitos ja sairam acima).
+    activeRef.current = null
+    setActive(null)
   }, [])
 
   /* ------------------------------------------------------------------ *
@@ -304,23 +347,32 @@ export function useBridgeIntegration({
    *
    * O evento chega injetado na pagina (`window.WebTV.events.emit`),
    * com o payload no nivel raiz.
+   *
+   * Este caminho NAO emite nada: o fechamento ja saiu do outro lado
+   * (o Kotlin injetou o evento). Aqui so se limpa o estado local - e
+   * sem emitir, para nao criar um laco (`player:closed` -> Kotlin ->
+   * `player:closed` -> ...).
    * ------------------------------------------------------------------ */
   useEffect(() => {
     const onClosed = (payload: { channelId?: string }) => {
-      setActive(current => {
-        if (!current) return null
-        // O Kotlin pode fechar um canal que nao e o ativo: so limpa se
-        // for o mesmo (ou se nao veio id nenhum).
-        const channelId = payload?.channelId
-        if (channelId && channelId !== current.key) return current
+      const current = activeRef.current
+      if (!current) return
 
-        const api = window.WebTV?.channel
-        if (api) {
-          api.activeId = null
-          api.activeName = null
-        }
-        return null
-      })
+      // O Kotlin pode fechar um canal que nao e o ativo: so limpa se
+      // for o mesmo (ou se nao veio id nenhum).
+      const channelId = payload?.channelId
+      if (channelId && channelId !== current.key) return
+
+      activeRef.current = null
+      closedRef.current = true
+
+      const api = window.WebTV?.channel
+      if (api) {
+        api.activeId = null
+        api.activeName = null
+      }
+
+      setActive(null)
     }
 
     const offPlayer = eventBus.on('player:closed', onClosed)
@@ -383,6 +435,11 @@ export function useBridgeIntegration({
       // esse payload e injeta junto com os scripts indexados, quando a
       // pagina do canal termina de carregar.
       preloadScripts(url)
+
+      // Espelha o canal ativo (o `closeChannel` le daqui) e libera o
+      // fechamento: um canal novo pode ser fechado de novo.
+      activeRef.current = { channel, key, type, url }
+      closedRef.current = false
 
       setActive({ channel, key, type, url })
     },

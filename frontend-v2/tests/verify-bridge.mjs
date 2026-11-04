@@ -272,11 +272,32 @@ const closeResult = await page.evaluate(async () => {
   const api = window.WebTV?.channel
   if (!api?.close) return { erro: 'sem window.WebTV.channel.close' }
 
+  // Assina os tres eventos de fechamento para conferir a ordem.
+  const eventos = []
+  const offs = ['channel:closing', 'player:closed', 'channel:close'].map(type =>
+    window.WebTV.events.on(type, payload => eventos.push({ type, payload })),
+  )
+
+  const activeIdAntes = api.activeId
+  const activeNameAntes = api.activeName
+
   api.close()
   await new Promise(r => setTimeout(r, 300))
 
+  // Fecha DE NOVO: o fechamento nao pode ser duplicado (o `player:closed`
+  // faz o Kotlin navegar para a grade - duas vezes seria o app fechar,
+  // recarregar a grade e fechar de novo).
+  api.close()
+  await new Promise(r => setTimeout(r, 200))
+
+  offs.forEach(off => off())
+
   return {
     chamadas: window.__kotlinCalls.map(c => c.name),
+    payloads: window.__kotlinCalls.map(c => c.payload),
+    eventos,
+    activeIdAntes,
+    activeNameAntes,
     activeId: api.activeId,
     activeName: api.activeName,
   }
@@ -289,6 +310,33 @@ check(
   `chamadas: ${closeResult.chamadas?.join(', ')}`,
 )
 check('channel.close() limpou o canal ativo', closeResult.activeId === null)
+
+check(
+  'os tres eventos de fechamento saem na ordem do contrato',
+  JSON.stringify(closeResult.eventos?.map(e => e.type)) ===
+    JSON.stringify(['channel:closing', 'player:closed', 'channel:close']),
+  `eventos: ${closeResult.eventos?.map(e => e.type).join(', ')}`,
+)
+
+const playerClosed = closeResult.eventos?.find(e => e.type === 'player:closed')
+check(
+  'o player:closed leva channelId/channelName no nivel raiz',
+  typeof playerClosed?.payload?.channelId === 'string' &&
+    typeof playerClosed?.payload?.channelName === 'string',
+  JSON.stringify(playerClosed?.payload),
+)
+check(
+  'o player:closed leva o id do canal que estava aberto',
+  playerClosed?.payload?.channelId === closeResult.activeIdAntes,
+  `${playerClosed?.payload?.channelId} (esperado ${closeResult.activeIdAntes})`,
+)
+
+check(
+  'o fechamento NAO foi duplicado',
+  (closeResult.chamadas?.filter(c => c === 'onPlayerClosed').length ?? 0) <= 1 &&
+    (closeResult.chamadas?.filter(c => c === 'onChannelClosed').length ?? 0) <= 1,
+  `chamadas: ${closeResult.chamadas?.join(', ')}`,
+)
 
 /* ------------------------------------------------------------------ *
  * 7) Evento injetado pelo Kotlin (Kotlin -> JS)

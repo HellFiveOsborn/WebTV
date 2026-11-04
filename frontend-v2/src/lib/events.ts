@@ -66,7 +66,11 @@ export interface EventPayloads {
     type: 'iframe' | 'redirect' | 'mixed'
     channels?: unknown[]
   }
-  'channel:closing': Record<string, never>
+  'channel:closing': {
+    channelId?: string
+    channelName?: string
+    timestamp?: number
+  }
   'channel:close': { channelId: string; channelName: string; timestamp: number }
   'player:opened': { channelId: string; channelName: string; url: string }
   'player:closed': { channelId: string; channelName: string }

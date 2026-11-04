@@ -45,6 +45,7 @@ import {
   revealElement,
   toDpadItems,
 } from '../lib/dpad.js'
+import { isBackKey } from '../lib/channelClose.js'
 
 /** Teclas de seta do D-pad. */
 const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'])
@@ -334,7 +335,10 @@ export function DpadProvider({
       // --- Escape / Back ----------------------------------------------
       // Vem antes de tudo: fechar um modal ou a busca e a acao mais
       // importante do "Back" no controle remoto.
-      if (e.key === 'Escape' || e.key === 'BrowserBack' || e.key === 'GoBack') {
+      //
+      // As teclas sao as mesmas da v1 (`Escape`, `Backspace`,
+      // `BrowserBack`, `GoBack`) - ver `lib/channelClose.ts`.
+      if (isBackKey(e.key)) {
         const handler = backHandlersRef.current[backHandlersRef.current.length - 1]
         if (handler) {
           e.preventDefault()

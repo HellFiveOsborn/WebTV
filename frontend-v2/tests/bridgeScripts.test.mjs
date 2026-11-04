@@ -357,3 +357,144 @@ test('com a reemissao tardia, o canal sobrevive ao LRU de 50', () => {
   assert.ok(scripts.includes(PLAYER_ID), 'o player simples nao foi indexado')
   assert.ok(scripts.includes(VIP_ID), 'o banner nao foi indexado')
 })
+
+/* ------------------------------------------------------------------ *
+ * O fechamento do canal
+ * ------------------------------------------------------------------ */
+
+/** Extrai o corpo da funcao `closeChannel`. */
+function closeChannelBody() {
+  const start = SOURCE.indexOf('const closeChannel = useCallback(')
+  assert.ok(start > 0, 'nao encontrei closeChannel')
+  const end = SOURCE.indexOf('}, [])', start)
+  assert.ok(end > start, 'nao encontrei o fim de closeChannel')
+  return SOURCE.slice(start, end)
+}
+
+test('closeChannel emite os eventos FORA do updater do setActive', () => {
+  // O updater do `setActive` pode ser executado mais de uma vez pelo
+  // React (StrictMode, render concorrente). Emitir o `player:closed`
+  // de dentro dele faria o app fechar, recarregar a grade e fechar de
+  // novo.
+  const body = closeChannelBody()
+
+  assert.ok(
+    !/setActive\s*\(\s*current\s*=>/.test(body),
+    'closeChannel nao pode usar um updater com efeito colateral',
+  )
+  assert.ok(
+    body.includes('activeRef.current'),
+    'o canal ativo vem de um ref (espelho do estado)',
+  )
+  assert.ok(
+    body.includes('setActive(null)'),
+    'o estado e limpo com setActive(null)',
+  )
+})
+
+test('closeChannel usa o contrato de fechamento (emitCloseEvents)', () => {
+  const body = closeChannelBody()
+
+  assert.ok(
+    body.includes('emitCloseEvents('),
+    'os eventos precisam sair pelo modulo de contrato (lib/channelClose.ts)',
+  )
+  assert.ok(
+    body.includes('channelId: current.key'),
+    'o payload precisa do id do canal',
+  )
+  assert.ok(
+    body.includes('channelName: current.channel.name'),
+    'o payload precisa do nome do canal',
+  )
+})
+
+test('closeChannel limpa a API do canal (activeId/activeName)', () => {
+  // O Kotlin e o site leem `window.WebTV.channel.activeId`.
+  const body = closeChannelBody()
+
+  assert.ok(body.includes('api.activeId = null'))
+  assert.ok(body.includes('api.activeName = null'))
+})
+
+test('closeChannel fecha so uma vez (o alreadyClosed trava o segundo)', () => {
+  const body = closeChannelBody()
+
+  assert.ok(
+    body.includes('const alreadyClosed = closedRef.current'),
+    'o fechamento precisa ler o flag antes de marcar',
+  )
+  assert.ok(
+    body.includes('closedRef.current = true'),
+    'o fechamento precisa marcar o canal como fechado',
+  )
+  assert.ok(
+    body.includes('alreadyClosed,'),
+    'o flag precisa ser repassado para o contrato',
+  )
+})
+
+test('o listener de player:closed/channel:close nao emite nada', () => {
+  // O Kotlin injeta o `player:closed` quando o canal fecha. Se o
+  // listener re-emitisse, teriamos um laco
+  // (`player:closed` -> Kotlin -> `player:closed` -> ...).
+  const start = SOURCE.indexOf('const onClosed = (payload:')
+  assert.ok(start > 0, 'nao encontrei onClosed')
+  const end = SOURCE.indexOf('const offPlayer', start)
+  assert.ok(end > start, 'nao encontrei o fim de onClosed')
+
+  const body = SOURCE.slice(start, end)
+  assert.ok(
+    !body.includes('eventBus.emit('),
+    'o listener so limpa o estado - nao pode emitir',
+  )
+  assert.ok(body.includes('activeRef.current = null'))
+  assert.ok(body.includes('setActive(null)'))
+})
+
+test('openChannel arma o espelho do canal e libera o fechamento', () => {
+  const start = SOURCE.indexOf('const openChannel = useCallback(')
+  assert.ok(start > 0, 'nao encontrei openChannel')
+  const end = SOURCE.indexOf('setActive({ channel, key, type, url })', start)
+  assert.ok(end > start, 'nao encontrei o fim de openChannel')
+
+  const body = SOURCE.slice(start, end)
+  assert.ok(
+    body.includes('activeRef.current = { channel, key, type, url }'),
+    'o canal aberto precisa ser espelhado no ref',
+  )
+  assert.ok(
+    body.includes('closedRef.current = false'),
+    'um canal novo pode ser fechado de novo',
+  )
+})
+
+test('o D-pad usa as teclas de Back da v1 (inclui Backspace)', () => {
+  // O `Backspace` faltava: o D-pad antigo do Android TV mandava essa
+  // tecla, e a v1 a tratava (`shouldCloseOnKeyDown.ts`).
+  const dpad = readFileSync(resolve(V2_ROOT, 'src/components/DpadContext.tsx'), 'utf8')
+
+  assert.ok(
+    dpad.includes("import { isBackKey } from '../lib/channelClose.js'"),
+    'o D-pad precisa usar o conjunto de teclas de Back',
+  )
+  assert.ok(
+    dpad.includes('if (isBackKey(e.key))'),
+    'o tratamento do Back precisa usar isBackKey',
+  )
+  assert.ok(
+    !dpad.includes("e.key === 'BrowserBack'"),
+    'a lista antiga (sem Backspace) nao pode ficar',
+  )
+})
+
+test('o player simples recebe o id do canal (para fechar na pagina do canal)', () => {
+  // Na pagina do canal nao existe `window.WebTV.channel.activeId` - o
+  // id precisa viajar no script, senao o "Back" nao consegue fechar.
+  const body = emitScriptsLoadedBody()
+
+  assert.ok(
+    body.includes('channel: channelId ? { id: channelId, ...channel } : channel'),
+    'o player simples precisa receber o id do canal',
+  )
+})

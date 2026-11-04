@@ -35,6 +35,7 @@ const { chromium } = await import(
 
 /** Dados que o `simplePlayerScript` embute antes do corpo do script. */
 const CHANNEL_INFO = {
+  id: '104-globodf',
   name: 'Globo DF',
   image: 'https://1.embedcanaisdetv.com/images/globo.webp',
 }
@@ -272,6 +273,125 @@ const faixaFechada = await page.evaluate(
   () => !document.getElementById('webtv-info')?.classList.contains('webtv-info-visible'),
 )
 check('o segundo OK/Enter fecha a faixa', faixaFechada)
+
+// --- 2.2) O Back fecha o canal --------------------------------------
+console.log('\n--- 2.2) o Back fecha o canal ---')
+
+// O "Back" do controle remoto chega na pagina do canal como evento de
+// DOM. Quando o WebView consome a tecla, o `onBackPressed` do Kotlin
+// NAO roda - e o script precisa avisar o app pelo bridge.
+//
+// O fake reproduz a `appBridge.js` do Kotlin: o `close` so funciona com
+// `activeId` setado e chama o `onChannelClosed`.
+await page.evaluate(() => {
+  window.__bridgeCalls = []
+  window.__closeEvents = []
+  window.WebTVBridge = {
+    onPlayerClosed(payload) {
+      window.__bridgeCalls.push({ method: 'onPlayerClosed', payload: JSON.parse(payload) })
+    },
+    onChannelClosed(payload) {
+      window.__bridgeCalls.push({ method: 'onChannelClosed', payload: JSON.parse(payload) })
+    },
+  }
+  window.WebTV = window.WebTV || {}
+  window.WebTV.events = {
+    on() {},
+    emit(type, payload) {
+      window.__closeEvents.push({ type, payload })
+    },
+  }
+  window.WebTV.channel = {
+    activeId: null,
+    activeName: null,
+    close: function () {
+      if (!this.activeId) return
+      window.WebTVBridge.onChannelClosed(
+        JSON.stringify({
+          channelId: this.activeId,
+          channelName: this.activeName,
+          timestamp: Date.now(),
+        }),
+      )
+      this.activeId = null
+      this.activeName = null
+    },
+  }
+})
+
+await page.keyboard.press('Escape')
+await page.waitForTimeout(400)
+
+const depoisDoBack = await page.evaluate(() => ({
+  calls: window.__bridgeCalls || [],
+  activeId: window.WebTV?.channel?.activeId ?? null,
+  eventos: (window.__closeEvents || []).map(e => e.type),
+}))
+
+check(
+  'o Back avisou o app Kotlin (bridge chamado)',
+  depoisDoBack.calls.length > 0,
+  JSON.stringify(depoisDoBack.calls).slice(0, 160),
+)
+check(
+  'o bridge recebeu channelId/channelName na raiz',
+  typeof depoisDoBack.calls[0]?.payload?.channelId === 'string' &&
+    typeof depoisDoBack.calls[0]?.payload?.channelName === 'string',
+  JSON.stringify(depoisDoBack.calls[0]?.payload),
+)
+check(
+  'o payload traz o id do canal',
+  depoisDoBack.calls[0]?.payload?.channelId === CHANNEL_INFO.id,
+  String(depoisDoBack.calls[0]?.payload?.channelId),
+)
+check(
+  'o payload traz o nome do canal',
+  depoisDoBack.calls[0]?.payload?.channelName === CHANNEL_INFO.name,
+  String(depoisDoBack.calls[0]?.payload?.channelName),
+)
+check(
+  'o Back emitted os eventos do contrato',
+  ['channel:closing', 'player:closed', 'channel:close'].every(t =>
+    depoisDoBack.eventos.includes(t),
+  ),
+  JSON.stringify(depoisDoBack.eventos),
+)
+
+// Sem `window.WebTV.channel` (a `appBridge.js` nao chegou): o script
+// precisa chamar o bridge do Kotlin direto.
+await page.evaluate(() => {
+  window.__bridgeCalls = []
+  window.__closeEvents = []
+  delete window.WebTV.channel
+})
+await page.keyboard.press('Escape')
+await page.waitForTimeout(400)
+
+const semApi = await page.evaluate(() => window.__bridgeCalls || [])
+check(
+  'sem a API do canal, o script chama o bridge direto',
+  semApi.length > 0 && semApi[0]?.method === 'onPlayerClosed',
+  JSON.stringify(semApi).slice(0, 160),
+)
+check(
+  'o bridge direto tambem leva o id do canal',
+  semApi[0]?.payload?.channelId === CHANNEL_INFO.id,
+  String(semApi[0]?.payload?.channelId),
+)
+
+// O Backspace tambem e um "Back" (D-pad antigo) - paridade com a v1.
+await page.evaluate(() => {
+  window.__bridgeCalls = []
+})
+await page.keyboard.press('Backspace')
+await page.waitForTimeout(400)
+
+const depoisDoBackspace = await page.evaluate(() => window.__bridgeCalls || [])
+check(
+  'o Backspace tambem fecha o canal (paridade com a v1)',
+  depoisDoBackspace.length > 0,
+  JSON.stringify(depoisDoBackspace).slice(0, 160),
+)
 
 // --- 3) O stream toca -----------------------------------------------
 console.log('\n--- 3) o stream toca ---')
