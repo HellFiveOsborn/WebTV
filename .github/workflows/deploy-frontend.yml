@@ -17,6 +17,7 @@ on:
       - 'frontend/**'
       - 'frontend-v2/**'
       - 'shared/**'
+      - 'backend/**'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
@@ -71,7 +72,7 @@ jobs:
         run: npm run fetch:channels
         working-directory: frontend-v2
 
-      # URL da API do backend (Deno Function na Suga) vem de var do repo.
+      # URL da API do catalogo (Netlify Function) vem de var do repo.
       # Sem ela, o v2 usa o snapshot do build.
       - name: Build v2
         run: npm run build:offline

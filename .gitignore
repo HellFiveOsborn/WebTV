@@ -7,3 +7,6 @@ Thumbs.db
 
 # Editor
 .playwright-mcp/
+
+# Local Netlify folder
+.netlify

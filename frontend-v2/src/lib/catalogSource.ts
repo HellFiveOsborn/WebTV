@@ -9,8 +9,8 @@
  *
  *  1. CACHE   - localStorage. Resultado da ultima consulta valida. Dentro do
  *               TTL nao ha NENHUMA requisicao de rede (ver catalogCache.ts).
- *  2. API     - backend na Suga (Deno Function). Busca o site no servidor
- *               (sem restricao de CORS) e devolve JSON limpo com
+ *  2. API     - backend no Netlify (Function `channels`). Busca o site no
+ *               servidor (sem restricao de CORS) e devolve JSON limpo com
  *               `Access-Control-Allow-Origin: *`. E a via principal em
  *               producao e resolve o problema de CORS de vez.
  *  3. LIVE    - fetch direto ao site. Funciona em dev local (proxy do Vite
@@ -64,13 +64,13 @@ export const STRATEGY_LABEL: Record<LoadStrategy, string> = {
 export const SNAPSHOT_URL = `${import.meta.env.BASE_URL}data/embedcanais.json`
 
 /**
- * URL da API do backend (Suga).
+ * URL da API do catalogo (Netlify Function).
  *
  * Em dev o Vite faz proxy de `/api/channels` para o backend local
  * (http://127.0.0.1:8080), entao o app roda sem configuracao extra.
  *
- * Em producao o backend vive na Suga, com URL publica gerada por ela.
- * Defina `VITE_API_URL` no build (ou ajuste aqui) para apontar para ele.
+ * Em producao a API vive no Netlify. Defina `VITE_API_URL` no build
+ * (ou ajuste aqui) para apontar para ela.
  */
 export const API_URL =
   (import.meta.env.VITE_API_URL as string | undefined) || '/api/channels'

@@ -1,0 +1,54 @@
+# Configuracao do Netlify para a API do catalogo do WebTV v2.
+#
+# A Function vive em `netlify/functions/channels.mjs` e usa a logica
+# compartilhada de `backend/catalogApi.mjs` (o mesmo modulo do servidor
+# Node). O esbuild do Netlify empacota esse import no bundle da Function.
+#
+# Rotas publicas:
+#
+#   https://webtv-api.netlify.app/channels
+#   https://webtv-api.netlify.app/health
+#
+# O frontend v2 usa `VITE_API_URL` apontando para o host do site com
+# `/channels` no final.
+
+[build]
+  # Sem build step: o runtime e Node puro. `netlify/static` tem apenas a
+  # pagina de indice da API (nao publica o codigo das Functions).
+  publish = "netlify/static"
+  command = "echo 'sem build step (Node puro)'"
+
+[functions]
+  # Node 20+ (ESM; o projeto usa "type": "module").
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/channels"
+  to = "/.netlify/functions/channels"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/channels/*"
+  to = "/.netlify/functions/channels"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/channels"
+  to = "/.netlify/functions/channels"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/channels"
+  status = 200
+  force = true
+
+# Qualquer outra rota: 404 em JSON (mesmo contrato da Function).
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/channels"
+  status = 404

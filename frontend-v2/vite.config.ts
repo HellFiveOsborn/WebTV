@@ -8,8 +8,8 @@ import react from '@vitejs/plugin-react'
  *   /api/channels    -> backend local (backend/server.mjs, porta 8080)
  *   /api/embedcanais -> o site embedcanais.online (mesma origem => sem CORS)
  *
- * Em PRODUCAO (GitHub Pages) nao ha proxy: o app usa a API publica do
- * backend na Suga (via VITE_API_URL) e o snapshot gerado no build.
+ * Em PRODUCAO (GitHub Pages) nao ha proxy: o app usa a API publica
+ * (Netlify Function, via VITE_API_URL) e o snapshot gerado no build.
  */
 
 export default defineConfig({

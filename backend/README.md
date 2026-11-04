@@ -1,7 +1,14 @@
-# Backend WebTV - proxy do catalogo (Suga)
+# Backend WebTV - proxy do catalogo
 
-Container Node que busca a listagem de canais em `https://embedcanais.online/`
-e devolve **JSON limpo com CORS liberado**.
+Busca a listagem de canais em `https://embedcanais.online/` e devolve
+**JSON limpo com CORS liberado**.
+
+- **Producao:** Netlify Function em `netlify/functions/channels.mjs`
+  -> <https://webtv-api.netlify.app/channels>
+- **Dev / container:** `backend/server.mjs` (Node puro, porta 8080)
+
+Os dois runtimes usam a **mesma logica** de rota/cache/CORS em
+`backend/catalogApi.mjs`; o parser e unico em `shared/parseEmbedcanais.mjs`.
 
 ## Por que existe
 
@@ -88,11 +95,31 @@ Set-Location ./backend; node --test tests/server.test.mjs
 Cobrem: `/health`, `/channels` com CORS, preflight `OPTIONS`, 404 e 502 com
 upstream invalido.
 
-## Deploy na Suga
+## Deploy no Netlify (producao)
 
-> **Status: implantado.** Deno Function `backend` no ambiente `production` do
-> projeto `international-warbler` (org `quaint-aardvark`, tier hobby).
-> URL publica: `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run`
+> **Status: no ar.** Projeto `webtv-api`, time `hellfiveosborn`.
+> URL publica: `https://webtv-api.netlify.app` (rotas `/channels` e `/health`).
+
+A Function e `netlify/functions/channels.mjs`; o `netlify.toml` na raiz mapeia
+`/channels`, `/channels/*` e `/health` para ela. Toda a logica vem de
+`backend/catalogApi.mjs` (o mesmo modulo do servidor Node), empacotada pelo
+esbuild do Netlify.
+
+```powershell
+# deploy manual (CLI ja autenticada)
+netlify deploy --prod --dir "netlify\static" --functions "netlify\functions"
+
+# validar
+Invoke-WebRequest https://webtv-api.netlify.app/health
+Invoke-WebRequest https://webtv-api.netlify.app/channels
+```
+
+## Deploy na Suga (legado)
+
+> **Substituido pelo Netlify.** A URL antiga
+> `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run` responde 404
+> porque o ambiente perdeu a allocation publica. O container abaixo continua
+> valido como alternativa, mas nao e mais o caminho de producao.
 
 ### Por que Deno Function (e nao container)
 
@@ -169,6 +196,8 @@ node scripts/test-suga-function.mjs
 
 - O parser vive em `shared/parseEmbedcanais.mjs` (fonte unica de verdade,
   usada pelo frontend, pelo backend e pelo script de build do snapshot).
+- A logica de rota vive em `backend/catalogApi.mjs` (fonte unica entre o
+  servidor Node e a Netlify Function).
 - O backend nao usa `eval()` nem `new Function()` - restricao do validador de
   scripts de injecao do WebTV.
 - `Access-Control-Allow-Origin: *` e seguro aqui: o servico so devolve dados

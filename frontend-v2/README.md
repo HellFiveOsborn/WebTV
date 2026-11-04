@@ -25,7 +25,7 @@ um scanner que respeita strings e escapes.
 | Via | Quando | Como |
 |---|---|---|
 | `cache` | Padrao (localStorage) | Ultimo catalogo salvo no navegador. Dentro do TTL **nao ha requisicao nenhuma**. |
-| `api` | Producao (principal) | Backend Node na **Suga**. Busca o site no servidor (sem restricao de CORS) e devolve JSON limpo com `Access-Control-Allow-Origin: *`. **Resolve o CORS de vez.** |
+| `api` | Producao (principal) | Backend Node no **Netlify** (Function `channels`). Busca o site no servidor (sem restricao de CORS) e devolve JSON limpo com `Access-Control-Allow-Origin: *`. **Resolve o CORS de vez.** |
 | `live` | Dev local | `fetch` direto ao site, via proxy do Vite (mesma origem => sem CORS). Tambem funciona se o site liberar CORS no futuro. |
 | `snapshot` | Build (fallback) | `npm run fetch:channels` baixa o site no build e gera `public/data/embedcanais.json`, servido como arquivo estatico. |
 
@@ -33,13 +33,13 @@ O app le o **cache local** e o **snapshot do build** primeiro (instantaneo, sem
 rede) e so entao consulta as vias online. A UI sempre mostra qual via forneceu
 os dados + o log de tentativas.
 
-> **Por que o backend na Suga:** `embedcanais.online` **nao envia headers CORS**.
+> **Por que um backend proprio:** `embedcanais.online` **nao envia headers CORS**.
 > Testado em browser real, o `fetch` direto e bloqueado pela Same-Origin Policy.
 > Como GitHub Pages e 100% estatico (sem Node/Bun no runtime), nao existe proxy
 > proprio em producao. Os proxies publicos de CORS sao instaveis (522/520) e
 > falham justamente quando o header `Origin` e enviado - ou seja, falham
-> exatamente no caso do browser. O backend na Suga e a unica via confiavel em
-> producao estatica.
+> exatamente no caso do browser. A Function no Netlify e a unica via confiavel
+> em producao estatica.
 >
 > Detalhes do backend em [`../backend/README.md`](../backend/README.md).
 
@@ -331,10 +331,11 @@ frontend-v2/
   Actions (Node roda no CI, nunca no runtime), publica v1 na raiz e v2 em
   `/v2/` do **mesmo** Pages.
   URL: <https://hellfiveosborn.github.io/WebTV/v2/>
-- **Backend:** Deno Function na Suga (ver `../backend/README.md`). A URL publica
-  entra no build via a var de repositorio **`VITE_API_URL`** (definida como
-  `https://eje2jjyhdwfy-production-whwjs283.us-central1.suga.run/channels`).
-  Sem essa var, o frontend cai para o snapshot do build.
+- **Backend:** Netlify Function em `netlify/functions/channels.mjs` (ver
+  `../backend/README.md`). A URL publica entra no build via a var de
+  repositorio **`VITE_API_URL`** (definida como
+  `https://webtv-api.netlify.app/channels`). Sem essa var, o frontend cai para
+  o snapshot do build.
 
 > **Um workflow so.** `actions/upload-pages-artifact` envia o site inteiro, entao
 > dois workflows publicando no mesmo Pages sobrescrevem um ao outro (o ultimo a
@@ -347,8 +348,8 @@ frontend-v2/
   (id 69 em *Esportes* e id 97 em *Filmes e Series*) com a mesma URL. O parser
   reproduz o dado como no site; a chave de renderizacao usa `id`, nao `slug`.
 - A via `live` em producao falha com CORS (o site nao envia o header). A API
-  na Suga e o snapshot cobrem esse caso. Se a CORS for liberada no site, a via
-  `live` passa a valer.
+  no Netlify e o snapshot cobrem esse caso. Se a CORS for liberada no site, a
+  via `live` passa a valer.
 
 ## WebAssembly: nao resolve o problema de CORS
 
